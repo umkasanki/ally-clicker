@@ -134,18 +134,25 @@ ally-clicker/
 
 ### Шаг 2.1 — Cursor Tracker
 - `core/cursor_tracker.py` — класс `CursorTracker`:
-  - Фоновый поток, опрашивает позицию курсора каждые 50мс
+  - **Не polling** — подписка на глобальные события мыши через `WH_MOUSE_LL` hook (Windows low-level mouse hook via ctypes). Аналог `CGEventTap` из DwellClick (macOS)
+  - Hook срабатывает на каждое движение мыши — точнее и эффективнее чем цикл каждые 50мс
   - Хранит `last_pos_outside_panel: tuple[int, int]`
   - Принимает callback `is_in_panel(x, y) -> bool` для определения зоны панели
   - Публичный метод `get_last_outside_pos() -> tuple[int, int]`
   - Методы `start()`, `stop()`
+  - Hook живёт в отдельном потоке с win32 message loop
 
 ### Шаг 2.2 — Dwell Engine
 - `core/dwell.py` — класс `DwellEngine`:
-  - Принимает задержку в секундах
+  - **Стейт-машина** (по аналогии с DwellClick): `Off → MoveDetect → DwellDetect → ButtonDown`
+    - `MoveDetect` — мышь двигается, ждём остановки
+    - `DwellDetect` — мышь остановилась, отсчёт таймера
+    - `ButtonDown` — пауза если пользователь сам нажал физическую кнопку
+  - **Jitter radius** (`dwell_radius`, дефолт 2px) — курсор считается остановившимся пока не вышел за радиус
+  - **Move radius** (`move_radius`, дефолт 10px) — минимальное смещение для регистрации движения и сброса таймера
+  - Оба радиуса берутся из `Settings.sensitivity`
   - Методы: `start(callback)`, `cancel()`
   - Использует `threading.Timer`
-  - Поддерживает смену задержки на лету (для разных кнопок)
   - Потокобезопасен
 
 ### Шаг 2.3 — Стейт-машина активной функции
