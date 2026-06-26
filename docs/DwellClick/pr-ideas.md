@@ -100,52 +100,40 @@
 
 **Проблема:** На macOS нет нативного auto-scroll по middle click. Пользователь хедтрекера не может скроллить страницу без этой функции.
 
-**Механика:**
-1. Dwell на кнопке Middle Click → фиксируется якорная точка `(x0, y0)`
-2. Фоновый поток отслеживает смещение курсора по Y от якоря
-3. Генерируется `CGScrollWheelEvent` с дельтой пропорциональной смещению
-4. Чем дальше от якоря → тем быстрее скролл
-5. Зигзагообразное движение — скролл продолжается (курсор не останавливается → dwell не срабатывает)
-6. Single Click (dwell в любой точке) → выход из Auto-Scroll
+**Готовая реализация:** [LinearMouse](https://github.com/linearmouse/linearmouse) — MIT лицензия, Swift.
+Файл `LinearMouse/EventTransformer/AutoScrollTransformer.swift` содержит полноценный Auto-Scroll.
 
-**Реализация** (на основе кода Scroll Reverser):
-```objc
-// новый файл: src/DCAutoScrollController.m
-- (void)startAutoScrollFromPoint:(CGPoint)origin
-{
-    self.anchorPoint = origin;
-    self.scrollTimer = [NSTimer scheduledTimerWithTimeInterval:0.05
-                                                       target:self
-                                                     selector:@selector(scrollTick)
-                                                     userInfo:nil
-                                                      repeats:YES];
-}
+**Механика (из LinearMouse):**
+1. Middle Click → фиксируется якорная точка
+2. Dead zone 10px — движение меньше 10px от якоря игнорируется
+3. Смещение курсора → генерируется `CGScrollWheelEvent` 60 FPS
+4. Нелинейная скорость: `base + sqrt(adjusted) * boost`, макс 160px/тик
+5. Два режима: `toggle` (клик → вкл/выкл) и `hold` (зажать → скролл, отпустить → стоп)
+6. `preserveNativeMiddleClick` — если курсор над ссылкой/вкладкой → обычный middle click; если над прокручиваемым контентом → auto-scroll
+7. Визуальный индикатор якоря на экране
+8. Горизонтальный и вертикальный скролл одновременно
 
-- (void)scrollTick
-{
-    CGPoint current = [DCMouseTap currentMouseLocation];
-    CGFloat delta = (self.anchorPoint.y - current.y) / 50.0; // скорость
-    
-    CGEventRef event = CGEventCreateScrollWheelEvent(
-        NULL, kCGScrollEventUnitLine, 1, (int32_t)delta
-    );
-    CGEventPost(kCGHIDEventTap, event);
-    CFRelease(event);
-}
-
-- (void)stopAutoScroll
-{
-    [self.scrollTimer invalidate];
-    self.scrollTimer = nil;
-}
+**Генерация scroll события (Swift):**
+```swift
+let event = CGEvent(scrollWheelEvent2Source: nil,
+                    units: .pixel, wheelCount: 2,
+                    wheel1: 0, wheel2: 0, wheel3: 0)
+event?.setDoubleValueField(.scrollWheelEventPointDeltaAxis1, value: vertical)
+event?.setDoubleValueField(.scrollWheelEventPointDeltaAxis2, value: horizontal)
+event?.post(tap: .cgSessionEventTap)
 ```
 
+**Стратегия интеграции в DwellClick:**
+- Портировать `AutoScrollTransformer.swift` из LinearMouse (MIT → Apache 2.0 совместимо)
+- Создать `DCAutoScrollController` на основе этого кода
+- Интегрировать в `DCEngine.m` — активация через Middle Click, выход через single click
+
 **Файлы:**
-- `src/DCAutoScrollController.h/.m` — новый контроллер
-- `src/DCEngine.m` — интеграция, выход из режима по single click
+- `src/DCAutoScrollController.h/.m` — новый контроллер (порт из LinearMouse)
+- `src/DCEngine.m` — интеграция
 - `src/DCClick.h` — добавить `DCClickTypeAutoScroll`
 
-**Сложность:** Высокая.
+**Сложность:** Средняя (готовый алгоритм из LinearMouse, нужна только интеграция).
 
 ---
 
