@@ -1,418 +1,249 @@
-# AllyClicker — Implementation Plan
+# AllyClicker — Implementation Plan (macOS / Swift)
 
-> Фазы выполняются последовательно. Каждый шаг — атомарная единица работы,
-> которую можно реализовать и закоммитить отдельно.
+> Фазы выполняются последовательно. Каждый шаг — атомарная единица работы.
+> Источники: `references/point-n-click/config/` — готовые Swift-файлы и документация.
 
 ---
 
-## Структура проекта
+## Структура проекта (целевая)
 
 ```
-ally-clicker/
-├── ally_clicker/
-│   ├── __init__.py
-│   ├── input/                  # Слой ввода (абстракция + реализации)
-│   │   ├── __init__.py
-│   │   ├── base.py             # Абстрактный InputBackend
-│   │   ├── windows.py          # Windows: SendInput, GetCursorPos
-│   │   └── macos.py            # macOS: CGEventPost (будущее)
-│   ├── core/                   # Бизнес-логика, не зависит от GUI
-│   │   ├── __init__.py
-│   │   ├── cursor_tracker.py   # Фоновый трекинг позиции курсора
-│   │   ├── dwell.py            # Движок dwell-click (таймер, отмена)
-│   │   ├── active_function.py  # Стейт-машина текущей активной функции
-│   │   └── settings.py         # Модель настроек (dataclass)
-│   ├── config/                 # Хранение настроек
-│   │   ├── __init__.py
-│   │   └── store.py            # Чтение/запись JSON-конфига
-│   ├── panel/                  # Основная панель
-│   │   ├── __init__.py
-│   │   ├── app.py              # Точка входа панели
-│   │   ├── window.py           # Окно панели (tkinter)
-│   │   └── buttons/
-│   │       ├── __init__.py
-│   │       ├── base.py         # Базовый класс кнопки
-│   │       ├── on_off.py
-│   │       ├── left_click.py
-│   │       ├── right_click.py
-│   │       ├── selection.py
-│   │       ├── double_click.py
-│   │       ├── middle_click.py
-│   │       └── keyboard.py
-│   └── configure/              # Приложение настройки
-│       ├── __init__.py
-│       ├── app.py              # Точка входа configure
-│       ├── window.py           # Главное окно Configure AllyClicker
-│       └── dialogs/
-│           ├── __init__.py
-│           ├── auto_mouse_delay.py
-│           ├── auto_select_delay.py
-│           ├── sensitivity.py
-│           ├── transparency.py
-│           ├── form_size.py
-│           ├── automouse_functions.py
-│           ├── color_selections.py
-│           └── about.py
-├── assets/
-│   └── icons/                  # SVG/PNG иконки кнопок
-├── tests/
-│   ├── test_dwell.py
-│   ├── test_active_function.py
-│   ├── test_config.py
-│   └── test_input_backend.py
+AllyClicker/
+├── AllyClicker.xcodeproj/
+├── AllyClicker/
+│   ├── App/
+│   │   └── AppDelegate.swift          # Точка входа, запрос Accessibility permission
+│   ├── Engine/
+│   │   ├── DwellEngine.swift          # Pure state machine (из references)
+│   │   └── PNCSettings.swift          # Settings model Codable (из references)
+│   ├── Input/
+│   │   └── InputController.swift      # CGEvent: click injection, drag, scroll
+│   ├── Panel/
+│   │   ├── PanelWindow.swift          # NSPanel (nonactivating, always-on-top)
+│   │   ├── PanelViewController.swift  # Управление кнопками, зона панели
+│   │   └── PanelButton.swift          # NSView кнопки с dwell-прогрессом
+│   ├── Settings/
+│   │   ├── SettingsWindowController.swift
+│   │   └── SettingsStore.swift        # Чтение/запись JSON
+│   └── Assets.xcassets/               # Иконки из PNCIcons.xcassets
+├── AllyClickerTests/
+│   ├── DwellEngineTests.swift
+│   └── PNCSettingsTests.swift
 ├── docs/
-│   ├── spec.md
-│   └── plan.md
-├── main_panel.py               # $ python main_panel.py
-├── main_configure.py           # $ python main_configure.py
-└── pyproject.toml
+└── references/
 ```
 
 ---
 
-## Фаза 1 — Фундамент проекта
+## Фаза 1 — Фундамент (Xcode + Engine + Permissions)
 
-> Цель: настроить окружение, зависимости, базовые абстракции. Без GUI.
+> Цель: проект компилируется, инъекция клика работает, DwellEngine покрыт тестами.
 
-### Шаг 1.1 — Инициализация проекта
-- Создать `pyproject.toml` (Python 3.12, зависимости, точки входа)
-- Создать структуру пакетов (`__init__.py` во всех директориях)
-- Настроить `.gitignore`
-- Создать `main_panel.py` и `main_configure.py` — пустые точки входа
+### Шаг 1.1 — Создать Xcode проект
+- Новый macOS App (AppKit, Swift), bundle ID `com.allyclicker.app`
+- Минимальная версия: macOS 14
+- Добавить `NSAccessibilityUsageDescription` в `Info.plist`
+- Скопировать из `references/point-n-click/config/`:
+  - `DwellEngineSpec.swift` → `Engine/DwellEngine.swift`
+  - `PNCSettings.swift` → `Engine/PNCSettings.swift`
+- Скопировать `PNCIcons.xcassets` → `Assets.xcassets`
 
-### Шаг 1.2 — Модель настроек
-- `core/settings.py` — датакласс `Settings` со всеми параметрами:
-  - `automouse_delay: float` (по умолч. 0.80)
-  - `autoselect_delay_down: float` (по умолч. 0.32)
-  - `autoselect_delay_up: float` (по умолч. 0.21)
-  - `default_to_left_click: bool`
-  - `automatic_cancel: bool`
-  - `run_at_boot: bool`
-  - `visible_when_active: bool`
-  - `audio_feedback: bool`
-  - `transparency: float`
-  - `panel_direction: str` ("right" | "down")
-  - `keyboard_app_path: str` (по умолч. "osk.exe")
-  - `sensitivity: float`
-  - `panel_position: tuple[int, int]`
+### Шаг 1.2 — Accessibility permission
+- `AppDelegate.swift`: при запуске — проверка `AXIsProcessTrustedWithOptions`
+- Если нет доступа → `NSAlert` с инструкцией открыть System Settings → Accessibility
+- Приложение должно показывать чёткое объяснение зачем разрешение нужно
 
-### Шаг 1.3 — Хранение конфига
-- `config/store.py` — класс `ConfigStore`:
-  - Читает/пишет `settings.json` в папке пользователя (`%APPDATA%/AllyClicker/`)
-  - Методы: `load() -> Settings`, `save(settings: Settings)`
-  - Обработка отсутствующего файла → возврат дефолтных значений
+### Шаг 1.3 — InputController (spike: один клик)
+- `Input/InputController.swift`:
+  - `leftClick(at: CGPoint)`
+  - `rightClick(at: CGPoint)`
+  - `doubleClick(at: CGPoint)`
+  - `middleClick(at: CGPoint)`
+  - `mouseDown(at: CGPoint)` / `mouseUp(at: CGPoint)`
+- Реализация через `CGEvent.post(tap: .cgSessionEventTap)`
+- Smoke-test: хоткей → инъекция клика в текущую позицию
 
-### Шаг 1.4 — Абстрактный InputBackend
-- `input/base.py` — абстрактный класс `InputBackend`:
-  - `left_click(x, y)`
-  - `right_click(x, y)`
-  - `double_click(x, y)`
-  - `middle_click(x, y)`
-  - `mouse_down(x, y)`
-  - `mouse_up(x, y)`
-  - `move_cursor(x, y)`
-  - `get_cursor_pos() -> tuple[int, int]`
+### Шаг 1.4 — SettingsStore
+- `Settings/SettingsStore.swift`:
+  - Чтение/запись `PNCSettings` как JSON
+  - Путь: `~/Library/Application Support/AllyClicker/settings.json`
+  - Отсутствующий файл → дефолтные значения из `PNCSettings()`
 
-### Шаг 1.5 — Windows InputBackend
-- `input/windows.py` — класс `WindowsInputBackend(InputBackend)`:
-  - Реализация всех методов через `ctypes` + `SendInput`
-  - `SetCursorPos`, `GetCursorPos`
-  - Структуры `MOUSEINPUT`, `INPUT`
-  - Выполнение в отдельном потоке (не блокирует GUI)
-
-### Шаг 1.6 — Фабрика InputBackend
-- `input/__init__.py` — функция `get_backend() -> InputBackend`:
-  - Определяет платформу (`sys.platform`)
-  - Возвращает нужный бэкенд
-  - На не-Windows платформе — заглушка с `NotImplementedError`
+### Шаг 1.5 — Юнит-тесты DwellEngine
+- `AllyClickerTests/DwellEngineTests.swift`:
+  - Тест: курсор стоит → `fire` через `dwellTimeMouseSeconds`
+  - Тест: курсор двигается → таймер сбрасывается
+  - Тест: курсор входит в панель → `armedAction = nil`
+  - Тест: `defaultLeft = true` → после fire → `armed = .left`
+  - Тест: `defaultLeft = false` → после fire → `armed = nil`
 
 ---
 
-## Фаза 2 — Движок ядра (Core Engine)
+## Фаза 2 — NSPanel (панель без логики кликов)
 
-> Цель: реализовать всю бизнес-логику без GUI. Покрыть тестами.
+> Цель: плавающая панель у края экрана, кнопки с hover-состояниями.
 
-### Шаг 2.1 — Cursor Tracker
-- `core/cursor_tracker.py` — класс `CursorTracker`:
-  - **Не polling** — подписка на глобальные события мыши через `WH_MOUSE_LL` hook (Windows low-level mouse hook via ctypes). Аналог `CGEventTap` из DwellClick (macOS)
-  - Hook срабатывает на каждое движение мыши — точнее и эффективнее чем цикл каждые 50мс
-  - Хранит `last_pos_outside_panel: tuple[int, int]`
-  - Принимает callback `is_in_panel(x, y) -> bool` для определения зоны панели
-  - Публичный метод `get_last_outside_pos() -> tuple[int, int]`
-  - Методы `start()`, `stop()`
-  - Hook живёт в отдельном потоке с win32 message loop
+### Шаг 2.1 — PanelWindow
+- `Panel/PanelWindow.swift`:
+  - `NSPanel` subclass с `.nonactivatingPanel` style mask
+  - `window.level = .floating` (или `.screenSaver - 1`)
+  - Позиция: у правого края экрана, Y = 204px (из PNCSettings defaults)
+  - Без заголовка, без рамки (`borderless`)
 
-### Шаг 2.2 — Dwell Engine
-- `core/dwell.py` — класс `DwellEngine`:
-  - **Стейт-машина** (по аналогии с DwellClick): `Off → MoveDetect → DwellDetect → ButtonDown`
-    - `MoveDetect` — мышь двигается, ждём остановки
-    - `DwellDetect` — мышь остановилась, отсчёт таймера
-    - `ButtonDown` — пауза если пользователь сам нажал физическую кнопку
-  - **Jitter radius** (`dwell_radius`, дефолт 2px) — курсор считается остановившимся пока не вышел за радиус
-  - **Move radius** (`move_radius`, дефолт 10px) — минимальное смещение для регистрации движения и сброса таймера
-  - Оба радиуса берутся из `Settings.sensitivity`
-  - Методы: `start(callback)`, `cancel()`
-  - Использует `threading.Timer`
-  - Потокобезопасен
+### Шаг 2.2 — PanelButton
+- `Panel/PanelButton.swift` — `NSView` subclass:
+  - Иконка (PDF из Assets)
+  - Состояния: normal / hover (yellow) / armed (red) / progress (yellow fill 0–1)
+  - `CALayer`-based анимация dwell countdown (заполнение цветом)
+  - Метод `setProgress(_ fraction: Double)` — обновляет fill
 
-### Шаг 2.3 — Стейт-машина активной функции
-- `core/active_function.py` — класс `ActiveFunctionManager`:
-  - Хранит текущую активную функцию (`FunctionType` enum: LEFT, RIGHT, SELECTION, DOUBLE, MIDDLE, NONE)
-  - Методы:
-    - `set_active(fn: FunctionType)`
-    - `get_active() -> FunctionType`
-    - `reset()` — сброс (с учётом Default to Left Click)
-    - `on_action_executed()` — вызывается после выполнения действия (с учётом Automatic Cancel)
-  - Принимает `Settings` как зависимость
+### Шаг 2.3 — PanelViewController
+- `Panel/PanelViewController.swift`:
+  - 7 кнопок: ON/OFF, LEFT, RIGHT, DRAG, DOUBLE, MIDDLE, KEYBOARD
+  - Вертикальный stack layout
+  - Hit-testing: `cursorZone(for point: CGPoint) -> CursorZone`
+  - Методы обновления состояний кнопок по `DwellEffect`
 
-### Шаг 2.4 — Тесты ядра
-- `tests/test_dwell.py` — тесты DwellEngine (срабатывание, отмена, смена задержки)
-- `tests/test_active_function.py` — тесты всех комбинаций Default to Left Click / Automatic Cancel
-- `tests/test_config.py` — тесты сохранения/загрузки настроек
+### Шаг 2.4 — Сворачивание панели (ON/OFF)
+- Кнопка ON/OFF: dwell → показать / скрыть остальные кнопки
+- Анимация: вертикальный collapse (высота панели → только ON/OFF кнопка)
 
 ---
 
-## Фаза 3 — Основная панель (UI)
+## Фаза 3 — Интеграция DwellEngine
 
-> Цель: отображение панели, кнопки без логики кликов.
+> Цель: курсор останавливается → клик выполняется. Панель реагирует визуально.
 
-### Шаг 3.1 — Базовое окно панели
-- `panel/window.py` — класс `PanelWindow`:
-  - `tkinter.Tk`, `overrideredirect(True)`, `attributes("-topmost", True)`
-  - `WS_EX_NOACTIVATE` через `ctypes` — не перехватывает фокус
-  - Позиционирование у правого края экрана
-  - Метод `is_in_panel(x, y) -> bool` для CursorTracker
+### Шаг 3.1 — Polling cursor position
+- `AppDelegate` или отдельный `CursorTracker`:
+  - Timer каждые `trackerIntervalMs` (5мс) = `DispatchSourceTimer`
+  - Читает `NSEvent.mouseLocation`
+  - Вычисляет `CursorZone` через `PanelViewController.cursorZone`
+  - Вызывает `engine.tick(cursor:zone:dt:)`
 
-### Шаг 3.2 — Базовый класс кнопки
-- `panel/buttons/base.py` — класс `BaseButton`:
-  - Обёртка над `tkinter.Frame` + `tkinter.Label`
-  - Поддержка иконки и подписи
-  - Состояния: `NORMAL`, `HOVER`, `ACTIVE` (текущая активная функция), `FIRED`
-  - Методы: `set_state(state)`, `on_enter()`, `on_leave()`
-  - Хук `on_dwell_complete()` — переопределяется в подклассах
-  - Интеграция с `DwellEngine`
+### Шаг 3.2 — Применение DwellEffect
+- Разбор массива `[DwellEffect]` из `engine.tick`:
+  - `.setArmed(action?)` → обновить red highlight на кнопке
+  - `.dwellProgress(button, fraction)` → `button.setProgress(fraction)`
+  - `.clearProgress` → сбросить все прогресс-бары
+  - `.fire(action, at)` → `InputController.execute(action, at: point)`
+  - `.requestExit` → скрыть панель (ON/OFF)
 
-### Шаг 3.3 — Кнопка ON/OFF
-- `panel/buttons/on_off.py` — класс `OnOffButton(BaseButton)`:
-  - Иконка питания
-  - По dwell: разворачивает / сворачивает панель
-  - Анимация разворота (вправо или вниз, из настроек)
+### Шаг 3.3 — Last position outside panel
+- `CursorTracker` хранит последнюю позицию **вне панели**
+- `InputController.execute` использует её как target point для клика
 
-### Шаг 3.4 — Иконки кнопок
-- Создать иконки для всех 7 кнопок (PNG 48×48)
-- Подключить к кнопкам через `tkinter.PhotoImage`
+### Шаг 3.4 — DRAG (двухфазная механика)
+- Отдельный мини-стейт-машин в `InputController`:
+  - `phase1`: курсор стоит `autoselect_delay_down` → `mouseDown`
+  - Пользователь двигает курсор (mouseDown удержан)
+  - `phase2`: курсор стоит `autoselect_delay_up` → `mouseUp`
+- Отмена при входе в панель: если `mouseDown` был → `mouseUp` немедленно
 
-### Шаг 3.5 — Все кнопки панели (UI-оболочки, без действий)
-- Реализовать классы для кнопок 2-7, наследующихся от `BaseButton`
-- Только визуал и hover-состояния, без реальных кликов
-
-### Шаг 3.6 — Сборка панели
-- `panel/app.py` — создаёт `PanelWindow`, монтирует все кнопки, запускает `CursorTracker`
-- `main_panel.py` — вызывает `panel/app.py`
-
----
-
-## Фаза 4 — Действия кнопок
-
-> Цель: подключить реальные клики и логику активной функции.
-
-### Шаг 4.1 — Подключение InputBackend к панели
-- Инициализация `get_backend()` в `panel/app.py`
-- Передача бэкенда в каждую кнопку
-
-### Шаг 4.2 — LEFT click
-- `panel/buttons/left_click.py`:
-  - По dwell: получает `last_outside_pos` из `CursorTracker`
-  - Вызывает `backend.left_click(x, y)` в отдельном потоке
-  - Уведомляет `ActiveFunctionManager.on_action_executed()`
-
-### Шаг 4.3 — RIGHT click
-- Аналогично LEFT, `backend.right_click(x, y)`
-
-### Шаг 4.4 — DOUBLE click
-- Аналогично LEFT, `backend.double_click(x, y)`
-
-### Шаг 4.5 — MIDDLE click
-- Аналогично LEFT, `backend.middle_click(x, y)`
-
-### Шаг 4.6 — SELECTION (двухфазное выделение)
-- `panel/buttons/selection.py`:
-  - Фаза 1: курсор стоит `autoselect_delay_down` → `backend.mouse_down(x, y)`
-  - Фаза 2: курсор стоит `autoselect_delay_up` → `backend.mouse_up(x, y)`
-  - Использует отдельный `DwellEngine` с двумя задержками
-  - Отмена (наведение на панель) → `mouse_up` если ЛКМ была зажата
-
-### Шаг 4.7 — KEYBOARD
-- `panel/buttons/keyboard.py`:
-  - По dwell: запускает `settings.keyboard_app_path` через `subprocess.Popen`
-  - Не является активной функцией
-
-### Шаг 4.8 — Сброс по наведению на панель
-- В `CursorTracker`: при входе курсора в зону панели → вызов `ActiveFunctionManager.reset()`
-- Быстрое пересечение (без задержки) тоже триггерит сброс
+### Шаг 3.5 — Auto-Scroll (MIDDLE click режим)
+- При `fire(.middle, at:)` → войти в Auto-Scroll режим:
+  - Зафиксировать anchor point
+  - Запустить 60 FPS timer
+  - Смещение > 10px от anchor → генерировать `CGScrollWheelEvent`
+  - Нелинейная скорость по алгоритму LinearMouse
+- Выход: следующий `.fire` → `mouseUp` на якоре → выход из режима
 
 ---
 
-## Фаза 5 — Приложение настройки (Configure)
+## Фаза 4 — Settings Window
 
-> Цель: полноценное окно Configure AllyClicker с меню и диалогами.
+> Цель: пользователь может настроить все параметры через UI.
 
-### Шаг 5.1 — Главное окно Configure
-- `configure/window.py` — стандартное `tkinter.Tk` окно
-- Меню-бар: File | Options | Selections | Help
-- При закрытии — только скрывает окно (панель продолжает работать)
+### Шаг 4.1 — SettingsWindowController
+- `NSWindow` (обычное, не nonactivating)
+- Меню-бар: **File | Options | Selections | Help**
+- Открывается через `NSMenuItem` в dock menu или status bar icon
 
-### Шаг 5.2 — Меню File
-- Exit: завершить оба процесса (панель + configure)
-
-### Шаг 5.3 — Меню Options: чекбоксы
+### Шаг 4.2 — Options: чекбоксы
 - Default to Left Click
 - Automatic Cancel
 - Visible When Active
 - Single Row Form
 - Audio Dwelling Feedback
-- Каждый чекбокс сразу сохраняет изменение в `ConfigStore` и применяет к панели
 
-### Шаг 5.4 — Меню Options: Run at Boot Up
-- Добавление/удаление записи в реестре Windows (`HKCU\Software\Microsoft\Windows\CurrentVersion\Run`)
-
-### Шаг 5.5 — Диалог AutoMouse Delay
-- `configure/dialogs/auto_mouse_delay.py`
+### Шаг 4.3 — Диалог AutoMouse Delay
 - Одно поле: задержка в секундах, точность 0.1с
-- Виджет: поле + кнопки ◄ ► + Ok / Cancel
+- Stepper / поле ввода + Ok / Cancel
 
-### Шаг 5.6 — Диалог AutoSelect Delay
-- `configure/dialogs/auto_select_delay.py`
-- Два поля: Параметр 1 (mouse_down) и Параметр 2 (mouse_up)
-- Тот же виджет ◄ ►
+### Шаг 4.4 — Диалог AutoSelect Delay
+- Два поля: Параметр 1 (mouseDown) и Параметр 2 (mouseUp)
 
-### Шаг 5.7 — Диалог Sensitivity
-- `configure/dialogs/sensitivity.py`
-- *Описание будет уточнено из spec.md*
+### Шаг 4.5 — Sensitivity слайдер
+- Управляет `sensitivity` (px) — один параметр вместо двух низкоуровневых
+- Живое превью: изменение сразу применяется к DwellEngine
 
-### Шаг 5.8 — Диалог Transparency
-- `configure/dialogs/transparency.py`
-- Слайдер прозрачности панели (0–100%)
-- Применяется через `window.attributes("-alpha", value)`
+### Шаг 4.6 — Transparency слайдер
+- `window.alphaValue` панели (0.2 – 1.0)
 
-### Шаг 5.9 — Диалог Change Form Size
-- `configure/dialogs/form_size.py`
-- Настройка размера кнопок панели (ширина / высота)
-
-### Шаг 5.10 — Меню Selections: AutoMouse Functions
-- `configure/dialogs/automouse_functions.py`
-- *Описание будет уточнено из spec.md*
-
-### Шаг 5.11 — Меню Selections: Color Selections
-- `configure/dialogs/color_selections.py`
-- Выбор цветов для состояний кнопок (NORMAL, HOVER, ACTIVE, FIRED)
-
-### Шаг 5.12 — Меню Help: About
-- `configure/dialogs/about.py`
-- Версия, описание, ссылка на репозиторий
+### Шаг 4.7 — Прочие настройки
+- Color Selections: picker для yellow/red цветов индикаторов
+- KEYBOARD path: поле + Browse… (NSOpenPanel)
+- About: версия, кредиты PNC, ссылка на репозиторий
 
 ---
 
-## Фаза 6 — Интеграция и полировка
+## Фаза 5 — Полировка и дистрибуция
 
-> Цель: связать configure и panel, добавить оставшиеся фичи.
+### Шаг 5.1 — Login item
+- Запуск при входе через `SMAppService.mainApp.register()` (macOS 13+)
 
-### Шаг 6.1 — IPC между panel и configure
-- Механизм передачи изменённых настроек из configure в panel без перезапуска
-- Вариант: общий `ConfigStore` + периодический `polling` или `watchdog` на файл конфига
+### Шаг 5.2 — Status bar icon
+- `NSStatusItem` в меню-баре: кликнуть → показать/скрыть панель
+- Контекстное меню: Settings… / Quit
 
-### Шаг 6.2 — Visible When Active
-- Панель видна только когда активна какая-либо функция
-- В остальное время — скрыта или полупрозрачна
+### Шаг 5.3 — Audio feedback
+- Звук при dwell-complete: `AudioServicesPlaySystemSound` или кастомный WAV
 
-### Шаг 6.3 — Audio Dwelling Feedback
-- Звуковой сигнал при срабатывании dwell (системный beep через `winsound`)
+### Шаг 5.4 — Финальное тестирование
+- Все 7 кнопок, все комбинации Default to Left Click / Automatic Cancel
+- Поведение при зависшем приложении (CGEvent должен работать)
+- Auto-Scroll в Safari, Chrome, Notes
 
-### Шаг 6.4 — Настройка пути к KEYBOARD приложению
-- Поле в Configure для ввода пути к exe
-- Кнопка «Browse» для выбора файла через диалог
-
-### Шаг 6.5 — Финальное тестирование
-- Ручное тестирование всех кнопок
-- Проверка поведения при зависании целевых приложений
-- Проверка всех комбинаций Default to Left Click / Automatic Cancel
-
----
-
-## Фаза 7 — Сборка и дистрибуция
-
-> Цель: собрать два exe-файла для Windows.
-
-### Шаг 7.1 — PyInstaller: panel
-- Скрипт сборки `build_panel.py`
-- Результат: `dist/ally-clicker.exe`
-- Иконка приложения
-
-### Шаг 7.2 — PyInstaller: configure
-- Скрипт сборки `build_configure.py`
-- Результат: `dist/configure-ally-clicker.exe`
-
-### Шаг 7.3 — README
-- Установка, запуск, зависимости
+### Шаг 5.5 — Сборка и дистрибуция
+- Архив через Xcode → нотаризация (notarytool)
+- DMG или .zip для распространения
 
 ---
 
 ## Чеклист
 
-### Фаза 1 — Фундамент проекта
-- [ ] 1.1 Инициализация проекта (pyproject.toml, структура папок, .gitignore)
-- [ ] 1.2 Модель настроек (датакласс Settings)
-- [ ] 1.3 Хранение конфига (ConfigStore, JSON)
-- [ ] 1.4 Абстрактный InputBackend
-- [ ] 1.5 Windows InputBackend (SendInput через ctypes)
-- [ ] 1.6 Фабрика InputBackend (определение платформы)
+### Фаза 1 — Фундамент
+- [ ] 1.1 Xcode проект, скопированы Engine + Assets из references
+- [ ] 1.2 Accessibility permission check + alert
+- [ ] 1.3 InputController spike (один клик через CGEvent)
+- [ ] 1.4 SettingsStore (JSON read/write)
+- [ ] 1.5 Юнит-тесты DwellEngine
 
-### Фаза 2 — Движок ядра
-- [ ] 2.1 CursorTracker (фоновый поток, last_outside_pos)
-- [ ] 2.2 DwellEngine (таймер, отмена)
-- [ ] 2.3 ActiveFunctionManager (стейт-машина)
-- [ ] 2.4 Тесты ядра
+### Фаза 2 — NSPanel
+- [ ] 2.1 PanelWindow (nonactivating, floating, borderless)
+- [ ] 2.2 PanelButton (иконка + состояния + dwell-анимация)
+- [ ] 2.3 PanelViewController (7 кнопок, hit-testing)
+- [ ] 2.4 ON/OFF кнопка (сворачивание/разворачивание)
 
-### Фаза 3 — Основная панель (UI)
-- [ ] 3.1 Базовое окно (topmost, no focus, позиция)
-- [ ] 3.2 Базовый класс кнопки
-- [ ] 3.3 Кнопка ON/OFF (сворачивание/разворачивание)
-- [ ] 3.4 Иконки кнопок
-- [ ] 3.5 Все 7 кнопок (только визуал)
-- [ ] 3.6 Сборка панели
+### Фаза 3 — DwellEngine интеграция
+- [ ] 3.1 Polling cursor position (DispatchSourceTimer 5мс)
+- [ ] 3.2 Применение DwellEffect к UI и InputController
+- [ ] 3.3 Last position outside panel
+- [ ] 3.4 DRAG двухфазная механика
+- [ ] 3.5 Auto-Scroll (MIDDLE click режим)
 
-### Фаза 4 — Действия кнопок
-- [ ] 4.1 Подключение InputBackend к панели
-- [ ] 4.2 LEFT click
-- [ ] 4.3 RIGHT click
-- [ ] 4.4 DOUBLE click
-- [ ] 4.5 MIDDLE click
-- [ ] 4.6 SELECTION (двухфазное выделение)
-- [ ] 4.7 KEYBOARD (запуск приложения)
-- [ ] 4.8 Сброс по наведению на панель
+### Фаза 4 — Settings Window
+- [ ] 4.1 SettingsWindowController + меню-бар
+- [ ] 4.2 Чекбоксы Options
+- [ ] 4.3 Диалог AutoMouse Delay
+- [ ] 4.4 Диалог AutoSelect Delay
+- [ ] 4.5 Sensitivity слайдер
+- [ ] 4.6 Transparency слайдер
+- [ ] 4.7 Color Selections, KEYBOARD path, About
 
-### Фаза 5 — Приложение настройки (Configure)
-- [ ] 5.1 Главное окно + меню-бар
-- [ ] 5.2 Меню File (Exit)
-- [ ] 5.3 Чекбоксы Options
-- [ ] 5.4 Run at Boot Up (реестр Windows)
-- [ ] 5.5 Диалог AutoMouse Delay
-- [ ] 5.6 Диалог AutoSelect Delay
-- [ ] 5.7 Диалог Sensitivity
-- [ ] 5.8 Диалог Transparency
-- [ ] 5.9 Диалог Change Form Size
-- [ ] 5.10 AutoMouse Functions
-- [ ] 5.11 Color Selections
-- [ ] 5.12 About
-
-### Фаза 6 — Интеграция и полировка
-- [ ] 6.1 IPC между panel и configure
-- [ ] 6.2 Visible When Active
-- [ ] 6.3 Audio Feedback
-- [ ] 6.4 Настройка пути к KEYBOARD приложению
-- [ ] 6.5 Финальное тестирование
-
-### Фаза 7 — Сборка и дистрибуция
-- [ ] 7.1 PyInstaller: ally-clicker.exe
-- [ ] 7.2 PyInstaller: configure-ally-clicker.exe
-- [ ] 7.3 README
+### Фаза 5 — Полировка
+- [ ] 5.1 Login item (SMAppService)
+- [ ] 5.2 Status bar icon + контекстное меню
+- [ ] 5.3 Audio feedback
+- [ ] 5.4 Финальное тестирование
+- [ ] 5.5 Сборка + нотаризация

@@ -1,0 +1,66 @@
+{
+  "_about": "Behavioral settings model for a macOS dwell-click / virtual-mouse tool. Values reconstructed from Point-N-Click 3.0.3.2 (Windows), registry key HKCU:\\Software\\Point-N-Click. Timing values are in MILLISECONDS (the Windows config UI displays them divided by 1000, e.g. 320 -> 0.32 s). Keys are kept faithful to the original registry names (camelCased) so they can be traced back. See point-n-click-macos-port-brief.md for meanings, units, and open questions.",
+
+  "timing": {
+    "dwellTimeMs": 320,
+    "dwellTimeExitMs": 210,
+    "dwellTimeMouseMs": 195,
+    "useTimer": 30,
+    "useTimerReset": 10
+  },
+
+  "stillness": {
+    "sensitivity": 1,
+    "trackerIntervalMs": 5,
+    "baselineFlags": 3,
+    "averageVelocity": 0.39
+  },
+
+  "clicks": {
+    "left": true,
+    "left2": true,
+    "leftDrag": true,
+    "right": true,
+    "rightDouble": false,
+    "rightDrag": false,
+    "middle": true,
+    "middle2": false,
+    "middleDrag": false,
+    "rightLeft": false,
+    "defaultLeft": true,
+    "autoCancel": true
+  },
+
+  "repeatOptions": {
+    "repeatMove": false,
+    "repeatNoMove": false,
+    "fastRepeat": false,
+    "ramb": false
+  },
+
+  "appearance": {
+    "audio": true,
+    "visual": false,
+    "transparency": 255,
+    "redColor": 255,
+    "yellowColor": 65535,
+    "singleRow": true,
+    "activeHide": true,
+    "autoHide": false,
+    "autoDock": false,
+    "rambTransparency": 255
+  },
+
+  "panel": {
+    "minWidth": 35,
+    "minHeight": 106,
+    "maxWidth": 150,
+    "maxHeight": 829,
+    "formWidth": 70,
+    "formHeight": 350,
+    "formTop": 204,
+    "formLeft": 1404
+  },
+
+  "sourceVersion": "3.0.3.2"
+}

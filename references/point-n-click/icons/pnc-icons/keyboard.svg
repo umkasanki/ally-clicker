@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56" width="56" height="56" fill="none" role="img" aria-label="Keyboard">
+  <rect x="11" y="19" width="34" height="18" rx="4.5" stroke="currentColor" stroke-width="2"/>
+  <circle cx="19" cy="24.5" r="2.5" fill="currentColor"/>
+  <circle cx="28" cy="24.5" r="2.5" fill="currentColor"/>
+  <circle cx="37" cy="24.5" r="2.5" fill="currentColor"/>
+  <circle cx="19" cy="31.5" r="2.5" fill="currentColor"/>
+  <circle cx="28" cy="31.5" r="2.5" fill="currentColor"/>
+  <circle cx="37" cy="31.5" r="2.5" fill="currentColor"/>
+</svg>
