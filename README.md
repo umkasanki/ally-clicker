@@ -73,4 +73,5 @@ Work in progress. See [docs/plan.md](docs/plan.md) for the implementation roadma
 ## Credits
 
 Inspired by **Point-N-Click** by Polital Enterprises — a Windows dwell-click tool.  
+Action button icon style inspired by [DwellClick](https://github.com/pilotmoon/DwellClick) by Pilotmoon.  
 Auto-scroll algorithm based on [LinearMouse](https://github.com/linearmouse/linearmouse) (MIT).
