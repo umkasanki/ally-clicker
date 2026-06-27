@@ -12,8 +12,9 @@ struct InputController {
         case .right:       rightClick(at: point)
         case .middle:      middleClick(at: point)
         case .doubleClick: doubleClick(at: point)
-        case .leftDrag:    break  // two-phase drag handled separately
-        default:           break
+        case .leftDrag:      break  // TODO: Phase 3.4 — two-phase drag (mouseDown + move + mouseUp)
+        case .rightDouble:   break  // TODO: Phase 4+ — right double click
+        case .rightThenLeft: break  // TODO: Phase 4+ — right then left sequence
         }
     }
 

@@ -115,9 +115,10 @@ final class DwellEngineTests: XCTestCase {
         XCTAssertEqual(engine.armed, .left, "Should revert to left after firing")
     }
 
-    func testNoRevertWhenDefaultLeftOff() {
+    func testAutoCancelClearsArmedWhenDefaultLeftOff() {
         var settings = Settings()
         settings.clicks.defaultLeft = false
+        settings.clicks.autoCancel = true
         engine = DwellEngine(settings: settings)
 
         armAction(.right)
@@ -129,7 +130,25 @@ final class DwellEngineTests: XCTestCase {
             _ = engine.tick(cursor: point, zone: .desktop, dt: tickDt)
         }
 
-        XCTAssertNil(engine.armed, "Should clear to nil when defaultLeft is off")
+        XCTAssertNil(engine.armed, "autoCancel=true, defaultLeft=false → clear after fire")
+    }
+
+    func testRepeatModeKeepsArmedAfterFire() {
+        var settings = Settings()
+        settings.clicks.defaultLeft = false
+        settings.clicks.autoCancel = false  // repeat forever
+        engine = DwellEngine(settings: settings)
+
+        armAction(.right)
+
+        let threshold = engine.settings.timing.dwellTimeMouseSeconds
+        let ticks = Int(threshold / tickDt) + 5
+        let point = CGPoint(x: 100, y: 100)
+        for _ in 0..<ticks {
+            _ = engine.tick(cursor: point, zone: .desktop, dt: tickDt)
+        }
+
+        XCTAssertEqual(engine.armed, .right, "autoCancel=false → stay armed with same action")
     }
 
     func testDwellProgressReachesOne() {

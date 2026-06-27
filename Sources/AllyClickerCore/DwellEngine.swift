@@ -25,6 +25,7 @@ public struct DwellEngine {
         case middle
         case leftDrag
         case doubleClick
+        // TODO: Phase 4+ — implement in InputController before exposing on the panel
         case rightDouble
         case rightThenLeft
     }
@@ -79,6 +80,8 @@ public struct DwellEngine {
             dwellElapsed += dt
         } else {
             resetDwell(at: cursor)
+            // Emit clearProgress so the UI resets the countdown bar immediately on movement.
+            effects.append(.clearProgress)
         }
 
         // Act based on cursor zone.
@@ -112,9 +115,19 @@ public struct DwellEngine {
             if dwellElapsed >= settings.timing.dwellTimeMouseSeconds {
                 effects.append(.fire(action, at: cursor))
                 resetDwell(at: cursor)
-                // POST-CLICK REVERT: after firing, revert to left (defaultLeft path).
-                // The swipe path clears to nil — these are two distinct paths.
-                let next: Action? = settings.clicks.defaultLeft ? .left : nil
+                // POST-CLICK REVERT (three paths — see spec §5):
+                //   defaultLeft = true                       → revert to .left
+                //   defaultLeft = false, autoCancel = true   → clear to nil (one-shot)
+                //   defaultLeft = false, autoCancel = false  → keep action (repeat forever)
+                // The swipe path always clears to nil — that is a separate path.
+                let next: Action?
+                if settings.clicks.defaultLeft {
+                    next = .left
+                } else if settings.clicks.autoCancel {
+                    next = nil
+                } else {
+                    next = action  // repeat: stay armed with the same action
+                }
                 if armed != next {
                     armed = next
                     effects.append(.setArmed(next))
