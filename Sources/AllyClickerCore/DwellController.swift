@@ -8,7 +8,7 @@ import Foundation
 // Each tick it samples the cursor, classifies the zone, advances the engine, and
 // routes the resulting effects:
 //   • action effects (fire / drag mouseDown / mouseUp) → the MouseInjecting port
-//   • UI effects (setArmed / dwellProgress / clearProgress / requestExit) → onUIEffect
+//   • UI effects (setArmed / dwellProgress / clearProgress) → onUIEffect
 //
 // Note: the engine only emits `.fire` in the .desktop zone, so the fire point is
 // always outside the panel by construction — no "last position outside panel"
@@ -58,7 +58,7 @@ public final class DwellController {
             injector.mouseDown(at: point)
         case .dragMouseUp(let point):
             injector.mouseUp(at: point)
-        case .setArmed, .dwellProgress, .clearProgress, .requestExit:
+        case .setArmed, .dwellProgress, .clearProgress:
             onUIEffect?(effect)
         }
     }

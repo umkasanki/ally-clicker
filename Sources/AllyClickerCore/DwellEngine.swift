@@ -33,7 +33,6 @@ public struct DwellEngine {
     public enum Zone: Equatable {
         case desktop
         case panel(button: Action?)   // nil = panel chrome, not a button
-        case exitButton
     }
 
     /// What the app should do this tick.
@@ -44,7 +43,6 @@ public struct DwellEngine {
         case fire(Action, at: Point)
         case dragMouseDown(at: Point)   // DRAG phase 1 committed: press and hold
         case dragMouseUp(at: Point)     // DRAG phase 2 committed (or cancelled): release
-        case requestExit
     }
 
     // MARK: - State
@@ -102,13 +100,6 @@ public struct DwellEngine {
 
         // Act based on cursor zone.
         switch zone {
-        case .exitButton:
-            let progress = dwellElapsed / settings.timing.dwellTimeExitSeconds
-            if progress >= 1 {
-                effects.append(.requestExit)
-                resetDwell(at: cursor)
-            }
-
         case .panel(button: let button?):
             let fraction = min(dwellElapsed / settings.timing.dwellTimeSeconds, 1)
             effects.append(.dwellProgress(button: button, fraction: fraction))
@@ -200,7 +191,7 @@ public struct DwellEngine {
 
     private func isPanel(_ zone: Zone) -> Bool {
         switch zone {
-        case .panel, .exitButton: return true
+        case .panel: return true
         case .desktop: return false
         }
     }

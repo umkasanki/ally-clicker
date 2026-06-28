@@ -127,7 +127,8 @@ AllyClicker/
   - `.dwellProgress(button, fraction)` → `button.setProgress(fraction)`
   - `.clearProgress` → сбросить все прогресс-бары
   - `.fire(action, at)` → `InputController.execute(action, at: point)`
-  - `.requestExit` → скрыть панель (ON/OFF)
+  - `.dragMouseDown/.dragMouseUp(at)` → инъекция нажатия/отпускания (DRAG)
+  - Выход из приложения — через иконку в строке меню (Quit), не через панель
 
 ### Шаг 3.3 — Last position outside panel
 - `CursorTracker` хранит последнюю позицию **вне панели**

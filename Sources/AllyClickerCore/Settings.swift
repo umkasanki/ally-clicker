@@ -25,8 +25,6 @@ extension Settings {
     public struct Timing: Codable, Equatable {
         /// How long to dwell on a panel button before it is selected (ms).
         public var dwellTimeMs: Int = 320
-        /// Dwell time for the Exit button — shorter than regular buttons (ms).
-        public var dwellTimeExitMs: Int = 210
         /// How long the cursor must stay still before an auto-click fires (ms).
         public var dwellTimeMouseMs: Int = 195
 
@@ -36,7 +34,6 @@ extension Settings {
         public var autoSelectUpMs: Int = 210
 
         public var dwellTimeSeconds: TimeInterval { Double(dwellTimeMs) / 1000 }
-        public var dwellTimeExitSeconds: TimeInterval { Double(dwellTimeExitMs) / 1000 }
         public var dwellTimeMouseSeconds: TimeInterval { Double(dwellTimeMouseMs) / 1000 }
         public var autoSelectDownSeconds: TimeInterval { Double(autoSelectDownMs) / 1000 }
         public var autoSelectUpSeconds: TimeInterval { Double(autoSelectUpMs) / 1000 }
