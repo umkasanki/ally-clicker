@@ -29,9 +29,16 @@ extension Settings {
         /// How long the cursor must stay still before an auto-click fires (ms).
         public var dwellTimeMouseMs: Int = 195
 
+        /// DRAG phase 1: how long to dwell at the start point before mouseDown (ms).
+        public var autoSelectDownMs: Int = 320
+        /// DRAG phase 2: how long to dwell at the end point before mouseUp (ms).
+        public var autoSelectUpMs: Int = 210
+
         public var dwellTimeSeconds: TimeInterval { Double(dwellTimeMs) / 1000 }
         public var dwellTimeExitSeconds: TimeInterval { Double(dwellTimeExitMs) / 1000 }
         public var dwellTimeMouseSeconds: TimeInterval { Double(dwellTimeMouseMs) / 1000 }
+        public var autoSelectDownSeconds: TimeInterval { Double(autoSelectDownMs) / 1000 }
+        public var autoSelectUpSeconds: TimeInterval { Double(autoSelectUpMs) / 1000 }
 
         public init() {}
     }
@@ -46,6 +53,10 @@ extension Settings {
         public var sensitivity: Int = 1
         /// Cursor sampling interval (ms). 5ms = 200 Hz — matches PNC.
         public var trackerIntervalMs: Int = 5
+        /// Minimum cursor movement (px) after a drag's mouseDown before the
+        /// mouseUp phase can begin. Prevents a zero-length "drag" when the user
+        /// hasn't moved off the start point yet.
+        public var dragMoveThresholdPx: Int = 10
 
         public init() {}
     }

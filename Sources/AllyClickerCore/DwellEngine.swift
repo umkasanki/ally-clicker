@@ -42,6 +42,8 @@ public struct DwellEngine {
         case dwellProgress(button: Action, fraction: Double)
         case clearProgress
         case fire(Action, at: Point)
+        case dragMouseDown(at: Point)   // DRAG phase 1 committed: press and hold
+        case dragMouseUp(at: Point)     // DRAG phase 2 committed (or cancelled): release
         case requestExit
     }
 
@@ -50,9 +52,16 @@ public struct DwellEngine {
     public var settings: Settings
 
     public private(set) var armed: Action? = nil
+    /// True between a drag's mouseDown and mouseUp. Exposed so the app can show
+    /// a "dragging" indicator and so callers can reason about a held button.
+    public private(set) var dragActive: Bool = false
     private var dwellAnchor: Point? = nil
     private var dwellElapsed: TimeInterval = 0
     private var lastZone: Zone = .desktop
+    // Drag phase-2 gating: where mouseDown happened, and whether the cursor has
+    // since moved far enough to allow the mouseUp phase.
+    private var dragDownPoint: Point? = nil
+    private var dragHasMoved: Bool = false
 
     public init(settings: Settings) { self.settings = settings }
 
@@ -65,6 +74,14 @@ public struct DwellEngine {
         // SWIPE-RESET: entering the panel from desktop clears the armed action instantly.
         // Brushing the panel cancels with zero precision and zero waiting — the key UX insight.
         if isPanel(zone) && !isPanel(lastZone) {
+            // SAFETY: if a drag is in progress, release the held button first.
+            // A stuck mouse-down would be catastrophic for a hands-free user.
+            if dragActive {
+                dragActive = false
+                dragDownPoint = nil
+                dragHasMoved = false
+                effects.append(.dragMouseUp(at: cursor))
+            }
             if armed != nil {
                 armed = nil
                 effects.append(.setArmed(nil))
@@ -105,36 +122,73 @@ public struct DwellEngine {
             effects.append(.clearProgress)
 
         case .desktop:
-            // Auto-click fires only when something is armed.
+            // Auto-action fires only when something is armed.
             // After a swipe (armed == nil) the cursor can rest forever — nothing fires.
             guard let action = armed else {
                 effects.append(.clearProgress)
                 break
             }
-            if dwellElapsed >= settings.timing.dwellTimeMouseSeconds {
+            if action == .leftDrag {
+                handleDrag(cursor: cursor, into: &effects)
+            } else if dwellElapsed >= settings.timing.dwellTimeMouseSeconds {
                 effects.append(.fire(action, at: cursor))
                 resetDwell(at: cursor)
-                // POST-CLICK REVERT (three paths — see spec §5):
-                //   defaultLeft = true                       → revert to .left
-                //   defaultLeft = false, autoCancel = true   → clear to nil (one-shot)
-                //   defaultLeft = false, autoCancel = false  → keep action (repeat forever)
-                // The swipe path always clears to nil — that is a separate path.
-                let next: Action?
-                if settings.clicks.defaultLeft {
-                    next = .left
-                } else if settings.clicks.autoCancel {
-                    next = nil
-                } else {
-                    next = action  // repeat: stay armed with the same action
-                }
-                if armed != next {
-                    armed = next
-                    effects.append(.setArmed(next))
-                }
+                applyPostActionRevert(after: action, into: &effects)
             }
         }
 
         return effects
+    }
+
+    // MARK: - Drag (two-phase: dwell → mouseDown → move → dwell → mouseUp)
+
+    private mutating func handleDrag(cursor: Point, into effects: inout [Effect]) {
+        if !dragActive {
+            // Phase 1: dwell at the start point, then press and hold.
+            if dwellElapsed >= settings.timing.autoSelectDownSeconds {
+                effects.append(.dragMouseDown(at: cursor))
+                dragActive = true
+                dragDownPoint = cursor
+                dragHasMoved = false
+                resetDwell(at: cursor)
+            }
+        } else {
+            // Phase 2: require the cursor to move away from the start point first,
+            // otherwise a still cursor would release immediately (zero-length drag).
+            if let down = dragDownPoint, !dragHasMoved,
+               cursor.distance(to: down) > Double(settings.stillness.dragMoveThresholdPx) {
+                dragHasMoved = true
+            }
+            // Once moved, dwell at the end point, then release.
+            if dragHasMoved, dwellElapsed >= settings.timing.autoSelectUpSeconds {
+                effects.append(.dragMouseUp(at: cursor))
+                dragActive = false
+                dragDownPoint = nil
+                dragHasMoved = false
+                resetDwell(at: cursor)
+                applyPostActionRevert(after: .leftDrag, into: &effects)
+            }
+        }
+    }
+
+    /// POST-ACTION REVERT (three paths — see spec §5):
+    ///   defaultLeft = true                       → revert to .left
+    ///   defaultLeft = false, autoCancel = true   → clear to nil (one-shot)
+    ///   defaultLeft = false, autoCancel = false  → keep action (repeat forever)
+    /// The swipe path always clears to nil — that is a separate path.
+    private mutating func applyPostActionRevert(after action: Action, into effects: inout [Effect]) {
+        let next: Action?
+        if settings.clicks.defaultLeft {
+            next = .left
+        } else if settings.clicks.autoCancel {
+            next = nil
+        } else {
+            next = action
+        }
+        if armed != next {
+            armed = next
+            effects.append(.setArmed(next))
+        }
     }
 
     // MARK: - Helpers

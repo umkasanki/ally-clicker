@@ -151,6 +151,76 @@ final class DwellEngineTests: XCTestCase {
         XCTAssertEqual(engine.armed, .right, "autoCancel=false → stay armed with same action")
     }
 
+    // MARK: - Drag (two-phase)
+
+    private func hasEffect(_ effects: [DwellEngine.Effect], _ match: (DwellEngine.Effect) -> Bool) -> Bool {
+        effects.contains(where: match)
+    }
+
+    private func isDragDown(_ e: DwellEngine.Effect) -> Bool { if case .dragMouseDown = e { return true }; return false }
+    private func isDragUp(_ e: DwellEngine.Effect) -> Bool { if case .dragMouseUp = e { return true }; return false }
+
+    func testDragFullCycle() {
+        armAction(.leftDrag)
+        XCTAssertEqual(engine.armed, .leftDrag)
+
+        let start = Point(x: 100, y: 100)
+        // Phase 1: dwell at start → mouseDown
+        let downTicks = Int(engine.settings.timing.autoSelectDownSeconds / tickDt) + 5
+        var sawDown = false
+        for _ in 0..<downTicks {
+            let e = engine.tick(cursor: start, zone: .desktop, dt: tickDt)
+            if hasEffect(e, isDragDown) { sawDown = true }
+        }
+        XCTAssertTrue(sawDown, "Phase 1 should emit dragMouseDown")
+        XCTAssertTrue(engine.dragActive)
+
+        // Move far enough to a new point (resets dwell), then dwell → mouseUp
+        let end = Point(x: 300, y: 300)
+        let upTicks = Int(engine.settings.timing.autoSelectUpSeconds / tickDt) + 10
+        var sawUp = false
+        for _ in 0..<upTicks {
+            let e = engine.tick(cursor: end, zone: .desktop, dt: tickDt)
+            if hasEffect(e, isDragUp) { sawUp = true; break }
+        }
+        XCTAssertTrue(sawUp, "Phase 2 should emit dragMouseUp after moving")
+        XCTAssertFalse(engine.dragActive)
+    }
+
+    func testDragDoesNotReleaseWithoutMoving() {
+        armAction(.leftDrag)
+        let start = Point(x: 100, y: 100)
+
+        // Dwell long enough for both phases — but never move.
+        let ticks = Int((engine.settings.timing.autoSelectDownSeconds
+                       + engine.settings.timing.autoSelectUpSeconds) / tickDt) + 50
+        var sawUp = false
+        for _ in 0..<ticks {
+            let e = engine.tick(cursor: start, zone: .desktop, dt: tickDt)
+            if hasEffect(e, isDragUp) { sawUp = true }
+        }
+        XCTAssertTrue(engine.dragActive, "Without moving, drag stays held (no zero-length release)")
+        XCTAssertFalse(sawUp)
+    }
+
+    func testSwipeReleasesActiveDrag() {
+        armAction(.leftDrag)
+        let start = Point(x: 100, y: 100)
+
+        // Get into the held state.
+        let downTicks = Int(engine.settings.timing.autoSelectDownSeconds / tickDt) + 5
+        for _ in 0..<downTicks {
+            _ = engine.tick(cursor: start, zone: .desktop, dt: tickDt)
+        }
+        XCTAssertTrue(engine.dragActive)
+
+        // Brush the panel — must release the held button immediately.
+        let e = engine.tick(cursor: .zero, zone: .panel(button: nil), dt: tickDt)
+        XCTAssertTrue(hasEffect(e, isDragUp), "Entering panel during drag must release the button")
+        XCTAssertFalse(engine.dragActive)
+        XCTAssertNil(engine.armed)
+    }
+
     func testDwellProgressReachesOne() {
         var maxFraction = 0.0
         let threshold = engine.settings.timing.dwellTimeSeconds
