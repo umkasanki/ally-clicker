@@ -12,6 +12,7 @@ public struct Settings: Codable, Equatable {
     public var timing = Timing()
     public var stillness = Stillness()
     public var clicks = Clicks()
+    public var autoScroll = AutoScroll()
     public var appearance = Appearance()
     public var panel = Panel()
 
@@ -77,6 +78,26 @@ extension Settings {
         public var defaultLeft: Bool = true
         /// Cancel the armed action after one execution (vs. repeat forever).
         public var autoCancel: Bool = true
+
+        public init() {}
+    }
+}
+
+// MARK: - Auto-scroll
+
+extension Settings {
+    /// Tunable parameters for the middle-click auto-scroll mode.
+    /// Algorithm ported from LinearMouse (MIT). Constants are tunable; the
+    /// real-world feel must be validated on a Mac.
+    public struct AutoScroll: Codable, Equatable {
+        /// Movement within this radius (px) of the anchor produces no scroll.
+        public var deadZonePx: Double = 10
+        /// Constant scroll speed added once outside the dead zone (px/tick).
+        public var base: Double = 0
+        /// Multiplier on sqrt(distance beyond dead zone) — controls ramp-up.
+        public var boost: Double = 3
+        /// Maximum scroll delta per tick (px), to cap runaway speed.
+        public var maxSpeedPerTick: Double = 160
 
         public init() {}
     }
