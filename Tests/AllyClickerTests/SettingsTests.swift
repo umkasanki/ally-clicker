@@ -56,15 +56,59 @@ final class SettingsTests: XCTestCase {
     }
 
     func testMissingNestedFieldDoesNotResetSibling() throws {
-        // clicks present but missing newer "doubleClick" key → keep others, default it.
+        // clicks present but missing newer "autoCancel" key → keep others, default it.
         let json = """
-        { "clicks": { "left": false, "right": false } }
+        { "clicks": { "defaultLeft": false } }
         """.data(using: .utf8)!
         let decoded = try Settings.load(from: json)
 
-        XCTAssertFalse(decoded.clicks.left)
-        XCTAssertFalse(decoded.clicks.right)
-        XCTAssertTrue(decoded.clicks.doubleClick, "Absent field defaults, siblings preserved")
-        XCTAssertTrue(decoded.clicks.defaultLeft)
+        XCTAssertFalse(decoded.clicks.defaultLeft)
+        XCTAssertTrue(decoded.clicks.autoCancel, "Absent field defaults, siblings preserved")
+    }
+
+    // MARK: - Configurable panel layout
+
+    func testDefaultPanelLayoutMatchesScreenshot() {
+        XCTAssertEqual(Settings().panel.items, [
+            .command(.togglePanel),
+            .action(.left), .action(.right), .action(.leftDrag),
+            .action(.doubleClick), .action(.middle),
+            .command(.launchKeyboard),
+        ])
+    }
+
+    func testPanelItemsRoundTripPreservingOrder() throws {
+        var s = Settings()
+        // Reorder + drop some + keep commands.
+        s.panel.items = [
+            .command(.togglePanel),
+            .action(.middle),
+            .action(.left),
+            .command(.launchKeyboard),
+        ]
+        let decoded = try Settings.load(from: try s.jsonData())
+        XCTAssertEqual(decoded.panel.items, s.panel.items, "Order and membership preserved")
+    }
+
+    func testPanelItemEncodesAsStableString() throws {
+        let data = try JSONEncoder().encode(PanelItem.action(.leftDrag))
+        XCTAssertEqual(String(data: data, encoding: .utf8), "\"leftDrag\"")
+    }
+
+    // MARK: - Keyboard target (three modes)
+
+    func testKeyboardDefaultsToAccessibilityKeyboard() {
+        XCTAssertEqual(Settings().commands.keyboard, .accessibilityKeyboard)
+    }
+
+    func testKeyboardTargetRoundTripAllModes() throws {
+        for target in [Settings.KeyboardTarget.accessibilityKeyboard,
+                       .keyboardViewer,
+                       .customApp(path: "/Applications/MyKeyboard.app")] {
+            var s = Settings()
+            s.commands.keyboard = target
+            let decoded = try Settings.load(from: try s.jsonData())
+            XCTAssertEqual(decoded.commands.keyboard, target)
+        }
     }
 }

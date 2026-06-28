@@ -186,9 +186,22 @@ AllyClicker/
 ### Шаг 4.6 — Transparency слайдер
 - `window.alphaValue` панели (0.2 – 1.0)
 
-### Шаг 4.7 — Прочие настройки
-- Color Selections: picker для yellow/red цветов индикаторов
-- KEYBOARD path: поле + Browse… (NSOpenPanel)
+### Шаг 4.7 — Конфигурация панели (состав + порядок)
+- Редактор `Settings.panel.items`: список кнопок с возможностью
+  добавить / убрать / перетащить (изменить порядок)
+- Доступные элементы: клик-действия (left/right/drag/double/middle) + команды
+  (ON/OFF, KEYBOARD)
+
+### Шаг 4.8 — Выбор KEYBOARD-цели (3 режима)
+- Radio/popup: Accessibility Keyboard / Keyboard Viewer / Стороннее приложение
+- Для «стороннего» — поле пути + Browse… (NSOpenPanel)
+- Пишет в `Settings.commands.keyboard: KeyboardTarget`
+- Запуск целей на Mac:
+  - Accessibility Keyboard — включается через Accessibility API / системную команду
+  - Keyboard Viewer — `open -a "Keyboard Viewer"` / соответствующий механизм
+  - customApp — `NSWorkspace.open` по пути/bundle id
+
+### Шаг 4.9 — Прочие настройки
 - About: версия, кредиты PNC, ссылка на репозиторий
 
 ---

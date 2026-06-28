@@ -101,14 +101,9 @@ extension Settings {
 // MARK: - Click configuration
 
 extension Settings {
+    /// Click *behavior* only. Which buttons appear on the panel is configured by
+    /// `panel.items`, not here.
     public struct Clicks: Codable, Equatable {
-        /// Which actions are enabled in the panel.
-        public var left: Bool = true
-        public var leftDrag: Bool = true
-        public var right: Bool = true
-        public var middle: Bool = true
-        public var doubleClick: Bool = true
-
         /// After any action fires, revert armed action to left click.
         public var defaultLeft: Bool = true
         /// Cancel the armed action after one execution (vs. repeat forever).
@@ -119,11 +114,6 @@ extension Settings {
         public init(from decoder: Decoder) throws {
             let c = try decoder.container(keyedBy: CodingKeys.self)
             let d = Clicks()
-            left        = try c.decodeIfPresent(Bool.self, forKey: .left)        ?? d.left
-            leftDrag    = try c.decodeIfPresent(Bool.self, forKey: .leftDrag)    ?? d.leftDrag
-            right       = try c.decodeIfPresent(Bool.self, forKey: .right)       ?? d.right
-            middle      = try c.decodeIfPresent(Bool.self, forKey: .middle)      ?? d.middle
-            doubleClick = try c.decodeIfPresent(Bool.self, forKey: .doubleClick) ?? d.doubleClick
             defaultLeft = try c.decodeIfPresent(Bool.self, forKey: .defaultLeft) ?? d.defaultLeft
             autoCancel  = try c.decodeIfPresent(Bool.self, forKey: .autoCancel)  ?? d.autoCancel
         }
@@ -181,10 +171,26 @@ extension Settings {
 // MARK: - Panel geometry
 
 extension Settings {
-    /// Window geometry — narrow vertical strip docked to screen edge.
+    /// Panel layout & geometry. `items` is the ordered, user-configurable list of
+    /// buttons — its order IS the on-screen order; adding/removing an item adds or
+    /// removes the button.
     public struct Panel: Codable, Equatable {
         public var width: Int = 70
         public var positionY: Int = 204
+        /// Ordered buttons shown on the panel. Defaults to the confirmed PNC layout.
+        public var items: [PanelItem] = Panel.defaultItems
+
+        /// Confirmed default layout (top → bottom): ON/OFF, LEFT, RIGHT, DRAG,
+        /// DOUBLE, MIDDLE, KEYBOARD.
+        public static let defaultItems: [PanelItem] = [
+            .command(.togglePanel),
+            .action(.left),
+            .action(.right),
+            .action(.leftDrag),
+            .action(.doubleClick),
+            .action(.middle),
+            .command(.launchKeyboard),
+        ]
 
         public init() {}
 
@@ -193,6 +199,7 @@ extension Settings {
             let d = Panel()
             width     = try c.decodeIfPresent(Int.self, forKey: .width)     ?? d.width
             positionY = try c.decodeIfPresent(Int.self, forKey: .positionY) ?? d.positionY
+            items     = try c.decodeIfPresent([PanelItem].self, forKey: .items) ?? d.items
         }
     }
 }
@@ -200,17 +207,53 @@ extension Settings {
 // MARK: - Commands (one-shot panel buttons)
 
 extension Settings {
+    /// What the KEYBOARD button launches. The user picks one of three targets.
+    public enum KeyboardTarget: Equatable {
+        /// macOS built-in Accessibility Keyboard (Settings → Accessibility → Keyboard).
+        case accessibilityKeyboard
+        /// macOS Keyboard Viewer (the standard on-screen virtual keyboard).
+        case keyboardViewer
+        /// A third-party app, by file path or bundle identifier.
+        case customApp(path: String)
+    }
+
     public struct Commands: Codable, Equatable {
-        /// App launched by the KEYBOARD button. Empty = use the OS on-screen keyboard
-        /// (resolved by the macOS app layer). A path or bundle id otherwise.
-        public var keyboardAppPath: String = ""
+        /// Target launched by the KEYBOARD button. Defaults to the built-in
+        /// Accessibility Keyboard (the most likely fit for a hands-free user).
+        public var keyboard: KeyboardTarget = .accessibilityKeyboard
 
         public init() {}
 
         public init(from decoder: Decoder) throws {
             let c = try decoder.container(keyedBy: CodingKeys.self)
             let d = Commands()
-            keyboardAppPath = try c.decodeIfPresent(String.self, forKey: .keyboardAppPath) ?? d.keyboardAppPath
+            keyboard = try c.decodeIfPresent(KeyboardTarget.self, forKey: .keyboard) ?? d.keyboard
+        }
+    }
+}
+
+// KeyboardTarget persists as { "mode": "...", "path": "..." } — path only for custom.
+extension Settings.KeyboardTarget: Codable {
+    private enum CodingKeys: String, CodingKey { case mode, path }
+    private enum Mode: String, Codable { case accessibilityKeyboard, keyboardViewer, customApp }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        switch try c.decode(Mode.self, forKey: .mode) {
+        case .accessibilityKeyboard: self = .accessibilityKeyboard
+        case .keyboardViewer:        self = .keyboardViewer
+        case .customApp:             self = .customApp(path: try c.decodeIfPresent(String.self, forKey: .path) ?? "")
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        switch self {
+        case .accessibilityKeyboard: try c.encode(Mode.accessibilityKeyboard, forKey: .mode)
+        case .keyboardViewer:        try c.encode(Mode.keyboardViewer, forKey: .mode)
+        case .customApp(let path):
+            try c.encode(Mode.customApp, forKey: .mode)
+            try c.encode(path, forKey: .path)
         }
     }
 }
