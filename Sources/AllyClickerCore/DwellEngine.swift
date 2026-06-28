@@ -38,6 +38,11 @@ public struct DwellEngine {
     /// What the app should do this tick.
     public enum Effect: Equatable {
         case setArmed(Action?)
+        /// Dwell countdown 0...1 on a panel button.
+        /// NOTE: emitted by the engine for completeness, but the panel UI
+        /// deliberately does NOT render a countdown indicator — by user preference
+        /// (the user is accustomed to working without one). Kept so the feature can
+        /// be enabled later without touching the engine. See spec §2.
         case dwellProgress(button: Action, fraction: Double)
         case clearProgress
         case fire(Action, at: Point)

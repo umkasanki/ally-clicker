@@ -21,7 +21,7 @@ AllyClicker/
 │   ├── Panel/
 │   │   ├── PanelWindow.swift          # NSPanel (nonactivating, always-on-top)
 │   │   ├── PanelViewController.swift  # Управление кнопками, зона панели
-│   │   └── PanelButton.swift          # NSView кнопки с dwell-прогрессом
+│   │   └── PanelButton.swift          # NSView кнопки (normal/armed, без dwell-прогресса)
 │   ├── Settings/
 │   │   ├── SettingsWindowController.swift
 │   │   └── SettingsStore.swift        # Чтение/запись JSON
@@ -93,9 +93,9 @@ AllyClicker/
 ### Шаг 2.2 — PanelButton
 - `Panel/PanelButton.swift` — `NSView` subclass:
   - Иконка (PDF из Assets)
-  - Состояния: normal / hover (yellow) / armed (red) / progress (yellow fill 0–1)
-  - `CALayer`-based анимация dwell countdown (заполнение цветом)
-  - Метод `setProgress(_ fraction: Double)` — обновляет fill
+  - Состояния: normal / armed (red). Состояние «armed» = красная кнопка
+  - ⚠️ Dwell countdown (кружок/заполнение) НЕ реализуем — по предпочтению
+    пользователя (см. spec §2). `.dwellProgress` из движка панель игнорирует
 
 ### Шаг 2.3 — PanelViewController
 - `Panel/PanelViewController.swift`:
@@ -124,8 +124,8 @@ AllyClicker/
 ### Шаг 3.2 — Применение DwellEffect
 - Разбор массива `[DwellEffect]` из `engine.tick`:
   - `.setArmed(action?)` → обновить red highlight на кнопке
-  - `.dwellProgress(button, fraction)` → `button.setProgress(fraction)`
-  - `.clearProgress` → сбросить все прогресс-бары
+  - `.dwellProgress(button, fraction)` → игнорируется (отсчёт не рисуем, spec §2)
+  - `.clearProgress` → игнорируется (нет прогресс-бара)
   - `.fire(action, at)` → `InputController.execute(action, at: point)`
   - `.dragMouseDown/.dragMouseUp(at)` → инъекция нажатия/отпускания (DRAG)
   - Выход из приложения — через иконку в строке меню (Quit), не через панель
@@ -227,7 +227,7 @@ AllyClicker/
 
 ### Фаза 2 — NSPanel
 - [ ] 2.1 PanelWindow (nonactivating, floating, borderless)
-- [ ] 2.2 PanelButton (иконка + состояния + dwell-анимация)
+- [ ] 2.2 PanelButton (иконка + состояния normal/armed; БЕЗ dwell-анимации, spec §2)
 - [ ] 2.3 PanelViewController (7 кнопок, hit-testing)
 - [ ] 2.4 ON/OFF кнопка (сворачивание/разворачивание)
 
