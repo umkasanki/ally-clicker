@@ -212,12 +212,17 @@ AllyClicker/
 
 ## Чеклист
 
-### Фаза 1 — Фундамент
-- [ ] 1.1 Xcode проект, скопированы Engine + Assets из references
-- [ ] 1.2 Accessibility permission check + alert
-- [ ] 1.3 InputController spike (один клик через CGEvent)
-- [ ] 1.4 SettingsStore (JSON read/write)
-- [ ] 1.5 Юнит-тесты DwellEngine
+### Фаза 1 — Фундамент (ядро готово, собирается и тестируется на WSL)
+- [x] 1.0 SPM-пакет AllyClickerCore (чистое ядро, без AppKit/CoreGraphics)
+- [x] 1.0 Геометрия Point + ports (MouseInjecting/CursorSampling/ZoneMapping)
+- [x] 1.0 DwellEngine: клики, two-phase drag, swipe-reset, autoCancel/defaultLeft
+- [x] 1.0 DwellController: координатор движок ↔ порты
+- [x] 1.0 AutoScrollEngine: алгоритм LinearMouse (pure)
+- [x] 1.4 SettingsStore (JSON read/write)
+- [x] 1.5 Юнит-тесты: 26 тестов, все зелёные на WSL (swift test)
+- [ ] 1.1 Xcode проект (создаётся на Mac, см. App/README.md)
+- [ ] 1.2 Accessibility permission check + alert (код готов в App/, нужен Mac для сборки)
+- [ ] 1.3 CGMouseInjector spike (код готов, нужен Mac для проверки)
 
 ### Фаза 2 — NSPanel
 - [ ] 2.1 PanelWindow (nonactivating, floating, borderless)

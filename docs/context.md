@@ -7,9 +7,16 @@
 
 ## Статус проекта
 
-**Текущая фаза:** Фаза 1 — Фундамент (ядро)
-**Текущий шаг:** Каркас репозитория готов, ядро покрыто тестами
-**Последнее действие:** Перестроена архитектура: чистое ядро `AllyClickerCore` (SPM, без CoreGraphics/AppKit, тестируется на WSL), app-слой вынесен в `App/`. 9 юнит-тестов проходят на WSL (Swift 6.3.2)
+**Текущая фаза:** Фаза 1 завершена (ядро). Дальше — Фаза 2 (macOS UI, нужен Mac)
+**Текущий шаг:** Ядро полностью реализовано и покрыто тестами на WSL
+**Последнее действие:** Реализованы DwellEngine (клики + two-phase drag), DwellController, AutoScrollEngine, SettingsStore. 26 юнит-тестов проходят на WSL (Swift 6.3.2)
+
+### Что НЕЛЬЗЯ делать на WSL (нужен Mac)
+- Создать `App/AllyClicker.xcodeproj` (инструкция в `App/README.md`)
+- Адаптеры: `CursorSampler` (NSEvent), `PanelZoneMapper` (hit-test панели)
+- UI: NSPanel + кнопки, статус-бар, окно настроек
+- Auto-scroll адаптер (CGScrollWheelEvent), drag-роутинг проверить вживую
+- Сборка, Accessibility-проверка в реальной среде
 
 ---
 
