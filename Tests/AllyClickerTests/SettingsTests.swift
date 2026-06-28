@@ -34,11 +34,37 @@ final class SettingsTests: XCTestCase {
         XCTAssertEqual(decoded.stillness.sensitivity, 4)
     }
 
-    func testDecodingIsResilientToMissingKeys() throws {
-        // A minimal JSON should still decode using struct defaults for absent fields.
-        // (Swift's synthesized Decodable requires present keys, so this documents
-        // that we rely on full round-trips; a partial JSON would throw.)
-        let full = try Settings().jsonData()
-        XCTAssertNoThrow(try Settings.load(from: full))
+    func testEmptyJSONDecodesToAllDefaults() throws {
+        let data = "{}".data(using: .utf8)!
+        let decoded = try Settings.load(from: data)
+        XCTAssertEqual(decoded, Settings())
+    }
+
+    func testPartialJSONKeepsKnownValuesAndDefaultsTheRest() throws {
+        // Only one nested field provided — simulates an old config missing newer keys.
+        let json = """
+        { "timing": { "dwellTimeMs": 600 } }
+        """.data(using: .utf8)!
+        let decoded = try Settings.load(from: json)
+
+        XCTAssertEqual(decoded.timing.dwellTimeMs, 600, "Provided value is kept")
+        // Everything not present falls back to defaults — not wiped.
+        XCTAssertEqual(decoded.timing.dwellTimeMouseMs, Settings().timing.dwellTimeMouseMs)
+        XCTAssertEqual(decoded.stillness, Settings().stillness)
+        XCTAssertEqual(decoded.clicks, Settings().clicks)
+        XCTAssertEqual(decoded.autoScroll, Settings().autoScroll)
+    }
+
+    func testMissingNestedFieldDoesNotResetSibling() throws {
+        // clicks present but missing newer "doubleClick" key → keep others, default it.
+        let json = """
+        { "clicks": { "left": false, "right": false } }
+        """.data(using: .utf8)!
+        let decoded = try Settings.load(from: json)
+
+        XCTAssertFalse(decoded.clicks.left)
+        XCTAssertFalse(decoded.clicks.right)
+        XCTAssertTrue(decoded.clicks.doubleClick, "Absent field defaults, siblings preserved")
+        XCTAssertTrue(decoded.clicks.defaultLeft)
     }
 }

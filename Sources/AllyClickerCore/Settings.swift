@@ -7,6 +7,11 @@ import Foundation
 //
 // Timing values stored as milliseconds (Int). Use `…Seconds` computed properties
 // when driving timers.
+//
+// DECODING IS RESILIENT TO MISSING KEYS: every struct implements init(from:) with
+// decodeIfPresent, falling back to its default value. This means a settings.json
+// written by an older build (missing fields added later) still loads, preserving
+// the user's tuned values instead of silently resetting everything to defaults.
 
 public struct Settings: Codable, Equatable {
     public var timing = Timing()
@@ -17,6 +22,17 @@ public struct Settings: Codable, Equatable {
     public var panel = Panel()
 
     public init() {}
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let d = Settings()
+        timing     = try c.decodeIfPresent(Timing.self,     forKey: .timing)     ?? d.timing
+        stillness  = try c.decodeIfPresent(Stillness.self,  forKey: .stillness)  ?? d.stillness
+        clicks     = try c.decodeIfPresent(Clicks.self,     forKey: .clicks)     ?? d.clicks
+        autoScroll = try c.decodeIfPresent(AutoScroll.self, forKey: .autoScroll) ?? d.autoScroll
+        appearance = try c.decodeIfPresent(Appearance.self, forKey: .appearance) ?? d.appearance
+        panel      = try c.decodeIfPresent(Panel.self,      forKey: .panel)      ?? d.panel
+    }
 }
 
 // MARK: - Timing
@@ -39,6 +55,15 @@ extension Settings {
         public var autoSelectUpSeconds: TimeInterval { Double(autoSelectUpMs) / 1000 }
 
         public init() {}
+
+        public init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            let d = Timing()
+            dwellTimeMs      = try c.decodeIfPresent(Int.self, forKey: .dwellTimeMs)      ?? d.dwellTimeMs
+            dwellTimeMouseMs = try c.decodeIfPresent(Int.self, forKey: .dwellTimeMouseMs) ?? d.dwellTimeMouseMs
+            autoSelectDownMs = try c.decodeIfPresent(Int.self, forKey: .autoSelectDownMs) ?? d.autoSelectDownMs
+            autoSelectUpMs   = try c.decodeIfPresent(Int.self, forKey: .autoSelectUpMs)   ?? d.autoSelectUpMs
+        }
     }
 }
 
@@ -60,6 +85,14 @@ extension Settings {
         public var moveRadiusPx: Int = 10
 
         public init() {}
+
+        public init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            let d = Stillness()
+            sensitivity       = try c.decodeIfPresent(Int.self, forKey: .sensitivity)       ?? d.sensitivity
+            trackerIntervalMs = try c.decodeIfPresent(Int.self, forKey: .trackerIntervalMs) ?? d.trackerIntervalMs
+            moveRadiusPx      = try c.decodeIfPresent(Int.self, forKey: .moveRadiusPx)      ?? d.moveRadiusPx
+        }
     }
 }
 
@@ -80,6 +113,18 @@ extension Settings {
         public var autoCancel: Bool = true
 
         public init() {}
+
+        public init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            let d = Clicks()
+            left        = try c.decodeIfPresent(Bool.self, forKey: .left)        ?? d.left
+            leftDrag    = try c.decodeIfPresent(Bool.self, forKey: .leftDrag)    ?? d.leftDrag
+            right       = try c.decodeIfPresent(Bool.self, forKey: .right)       ?? d.right
+            middle      = try c.decodeIfPresent(Bool.self, forKey: .middle)      ?? d.middle
+            doubleClick = try c.decodeIfPresent(Bool.self, forKey: .doubleClick) ?? d.doubleClick
+            defaultLeft = try c.decodeIfPresent(Bool.self, forKey: .defaultLeft) ?? d.defaultLeft
+            autoCancel  = try c.decodeIfPresent(Bool.self, forKey: .autoCancel)  ?? d.autoCancel
+        }
     }
 }
 
@@ -100,6 +145,15 @@ extension Settings {
         public var maxSpeedPerTick: Double = 160
 
         public init() {}
+
+        public init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            let d = AutoScroll()
+            deadZonePx      = try c.decodeIfPresent(Double.self, forKey: .deadZonePx)      ?? d.deadZonePx
+            base            = try c.decodeIfPresent(Double.self, forKey: .base)            ?? d.base
+            boost           = try c.decodeIfPresent(Double.self, forKey: .boost)           ?? d.boost
+            maxSpeedPerTick = try c.decodeIfPresent(Double.self, forKey: .maxSpeedPerTick) ?? d.maxSpeedPerTick
+        }
     }
 }
 
@@ -112,6 +166,13 @@ extension Settings {
         public var transparency: Int = 255
 
         public init() {}
+
+        public init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            let d = Appearance()
+            audio        = try c.decodeIfPresent(Bool.self, forKey: .audio)        ?? d.audio
+            transparency = try c.decodeIfPresent(Int.self,  forKey: .transparency) ?? d.transparency
+        }
     }
 }
 
@@ -124,6 +185,13 @@ extension Settings {
         public var positionY: Int = 204
 
         public init() {}
+
+        public init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            let d = Panel()
+            width     = try c.decodeIfPresent(Int.self, forKey: .width)     ?? d.width
+            positionY = try c.decodeIfPresent(Int.self, forKey: .positionY) ?? d.positionY
+        }
     }
 }
 
