@@ -235,10 +235,14 @@ AllyClicker/
 - [x] 1.0 SPM-пакет AllyClickerCore (чистое ядро, без AppKit/CoreGraphics)
 - [x] 1.0 Геометрия Point + ports (MouseInjecting/CursorSampling/ZoneMapping)
 - [x] 1.0 DwellEngine: клики, two-phase drag, swipe-reset, autoCancel/defaultLeft
-- [x] 1.0 DwellController: координатор движок ↔ порты
-- [x] 1.0 AutoScrollEngine: алгоритм LinearMouse (pure)
-- [x] 1.4 SettingsStore (JSON read/write)
-- [x] 1.5 Юнит-тесты: 26 тестов, все зелёные на WSL (swift test)
+- [x] 1.0 DwellEngine: re-fire gate (нет машингана), safety-release зажатой кнопки
+- [x] 1.0 DwellEngine: командные кнопки (ON/OFF, KEYBOARD) — one-shot, без флапа
+- [x] 1.0 DwellController: координатор движок ↔ порты (onUIEffect/onCommand, release при teardown)
+- [x] 1.0 AutoScrollEngine + AutoScrollController: алгоритм LinearMouse + режим (pure)
+- [x] 1.0 Конфигурируемая панель: PanelItem + Settings.panel.items (состав + порядок) с нормализацией
+- [x] 1.0 KeyboardTarget: 3 режима (accessibility/viewer/custom)
+- [x] 1.4 SettingsStore (JSON read/write) + устойчивый к отсутствующим ключам decode
+- [x] 1.5 Юнит-тесты: 58 тестов, все зелёные на WSL и в CI (GitHub Actions)
 - [ ] 1.1 Xcode проект (создаётся на Mac, см. App/README.md)
 - [ ] 1.2 Accessibility permission check + alert (код готов в App/, нужен Mac для сборки)
 - [ ] 1.3 CGMouseInjector spike (код готов, нужен Mac для проверки)
@@ -265,7 +269,9 @@ AllyClicker/
 - [ ] 4.4 Диалог AutoSelect Delay
 - [ ] 4.5 Sensitivity слайдер
 - [ ] 4.6 Transparency слайдер
-- [ ] 4.7 Color Selections, KEYBOARD path, About
+- [ ] 4.7 Редактор панели (состав + порядок, panel.items)
+- [ ] 4.8 Выбор KEYBOARD-цели (3 режима)
+- [ ] 4.9 About
 
 ### Фаза 5 — Полировка
 - [ ] 5.1 Login item (SMAppService)
