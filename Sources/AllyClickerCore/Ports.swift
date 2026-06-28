@@ -23,10 +23,14 @@ public protocol CursorSampling {
     var location: Point { get }
 }
 
-/// Maps a screen point to the zone the cursor is in (desktop / panel button).
+/// Maps a screen point to the zone the cursor is in (desktop / panel button / command).
 /// macOS adapter: hit-tests the panel's button frames.
-/// NOTE: the adapter is responsible for only reporting buttons whose action is
-/// enabled in Settings — the engine arms whatever button zone it receives.
+///
+/// CONTRACT: the set of buttons the adapter may report is defined by
+/// `Settings.panel.items` — the mapper must hit-test exactly those buttons (in that
+/// order) and must NEVER emit a `.panel(button:)` or `.panelCommand` for an item not
+/// in the list. The engine arms/fires whatever zone it receives, so a button removed
+/// from `panel.items` is only truly gone if the mapper stops reporting it.
 public protocol ZoneMapping {
     func zone(at point: Point) -> DwellEngine.Zone
 }

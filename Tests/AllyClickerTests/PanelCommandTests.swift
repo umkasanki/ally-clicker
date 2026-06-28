@@ -46,6 +46,24 @@ final class PanelCommandTests: XCTestCase {
         XCTAssertEqual(dwellOnToggle(), 1, "Re-visiting the command button fires again")
     }
 
+    func testCommandDoesNotFlapWhenZoneChangesUnderStillCursor() {
+        // Simulate ON/OFF: dwell fires once; then the panel collapses and the
+        // mapper briefly reports a different zone while the cursor stays still.
+        // The command must NOT fire again (no flap).
+        let at = Point(x: 50, y: 50)
+        let ticks = Int(engine.settings.timing.dwellTimeSeconds / dt) + 5
+        var fired: [DwellEngine.Command] = []
+        for _ in 0..<ticks { fired += commands(engine.tick(cursor: at, zone: .panelCommand(.togglePanel), dt: dt)) }
+        XCTAssertEqual(fired, [.togglePanel])
+
+        // Cursor stays put; zone flickers (collapse) then returns to the button.
+        fired = []
+        for _ in 0..<3 { fired += commands(engine.tick(cursor: at, zone: .panel(button: nil), dt: dt)) }
+        for _ in 0..<3 { fired += commands(engine.tick(cursor: at, zone: .desktop, dt: dt)) }
+        for _ in 0..<ticks { fired += commands(engine.tick(cursor: at, zone: .panelCommand(.togglePanel), dt: dt)) }
+        XCTAssertTrue(fired.isEmpty, "A still cursor must not re-fire the command (no panel flap)")
+    }
+
     func testEnteringCommandButtonClearsArmedAction() {
         // Arm something on a normal button first.
         let armTicks = Int(engine.settings.timing.dwellTimeSeconds / dt) + 5

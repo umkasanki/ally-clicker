@@ -31,7 +31,7 @@ public struct DwellEngine {
 
     /// One-shot panel commands — buttons that perform an immediate action on dwell
     /// instead of arming a click. These are the non-click buttons of the panel.
-    public enum Command: String, Codable, Equatable {
+    public enum Command: String, Codable, Equatable, CaseIterable {
         case togglePanel     // ON/OFF — collapse / expand the panel
         case launchKeyboard  // KEYBOARD — launch the configured app
     }
@@ -78,9 +78,11 @@ public struct DwellEngine {
     // anything fires again — a parked cursor must not machine-gun clicks.
     private var awaitingMoveAfterFire: Bool = false
     private var lastFirePoint: Point? = nil
-    // Command one-shot gating: which command (if any) already fired during the
-    // current visit to its button. Cleared when the cursor leaves that button.
+    // Command one-shot gating: which command (if any) already fired, and from where.
+    // Cleared only after the cursor physically moves away — NOT on a transient zone
+    // change, so collapsing the panel under a still cursor can't re-fire (flap).
     private var commandFired: Command? = nil
+    private var lastCommandFirePoint: Point? = nil
 
     public init(settings: Settings) { self.settings = settings }
 
@@ -110,12 +112,14 @@ public struct DwellEngine {
         }
         lastZone = zone
 
-        // Clear the command one-shot once the cursor is no longer on the same
-        // command button it last fired — so re-visiting the button can fire again.
-        if case .panelCommand(let cmd) = zone, cmd == commandFired {
-            // still parked on the command we already fired — keep it suppressed
-        } else {
+        // Clear the command one-shot only after the cursor physically moves away
+        // from where it fired. A command (e.g. ON/OFF) that collapses the panel
+        // leaves the cursor parked — a transient zone change must NOT reopen the
+        // gate, or the panel would flap. Re-firing requires a real move + re-dwell.
+        if let firePoint = lastCommandFirePoint,
+           cursor.distance(to: firePoint) > Double(settings.stillness.moveRadiusPx) {
             commandFired = nil
+            lastCommandFirePoint = nil
         }
 
         // STILLNESS: movement beyond tolerance restarts the dwell timer.
@@ -151,6 +155,7 @@ public struct DwellEngine {
                 if fraction >= 1 {
                     effects.append(.runCommand(command))
                     commandFired = command
+                    lastCommandFirePoint = cursor
                     resetDwell(at: cursor)
                 }
             }

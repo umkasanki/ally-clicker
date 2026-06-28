@@ -199,7 +199,29 @@ extension Settings {
             let d = Panel()
             width     = try c.decodeIfPresent(Int.self, forKey: .width)     ?? d.width
             positionY = try c.decodeIfPresent(Int.self, forKey: .positionY) ?? d.positionY
-            items     = try c.decodeIfPresent([PanelItem].self, forKey: .items) ?? d.items
+            // Decode items leniently: unknown ids (e.g. from a newer build) are
+            // dropped rather than throwing — a single bad token must NOT discard the
+            // whole Panel (which would also lose width/positionY). Then normalize.
+            if let ids = try c.decodeIfPresent([String].self, forKey: .items) {
+                items = Panel.normalize(ids.compactMap(PanelItem.init(id:)))
+            } else {
+                items = d.items
+            }
+        }
+
+        /// Guarantee a usable layout: drop duplicates (keeping first occurrence),
+        /// ensure ON/OFF is present (so the user can always recover the panel), and
+        /// fall back to the default layout if the result would be empty. This is an
+        /// accessibility safeguard — an empty or ON/OFF-less panel could lock the
+        /// hands-free user out.
+        public static func normalize(_ items: [PanelItem]) -> [PanelItem] {
+            var seen = Set<PanelItem>()
+            var result = items.filter { seen.insert($0).inserted }
+            if result.isEmpty { return defaultItems }
+            if !result.contains(.command(.togglePanel)) {
+                result.insert(.command(.togglePanel), at: 0)
+            }
+            return result
         }
     }
 }
@@ -239,7 +261,9 @@ extension Settings.KeyboardTarget: Codable {
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        switch try c.decode(Mode.self, forKey: .mode) {
+        // Missing/unknown mode falls back to the safe default rather than throwing
+        // (consistent with the resilient-decode doctrine).
+        switch (try? c.decodeIfPresent(Mode.self, forKey: .mode)) ?? .accessibilityKeyboard {
         case .accessibilityKeyboard: self = .accessibilityKeyboard
         case .keyboardViewer:        self = .keyboardViewer
         case .customApp:             self = .customApp(path: try c.decodeIfPresent(String.self, forKey: .path) ?? "")

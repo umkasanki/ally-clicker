@@ -95,6 +95,54 @@ final class SettingsTests: XCTestCase {
         XCTAssertEqual(String(data: data, encoding: .utf8), "\"leftDrag\"")
     }
 
+    func testUnknownPanelItemIdDroppedWithoutLosingGeometry() throws {
+        // A newer build wrote an unknown button id; an older build must keep the
+        // recognized items AND width/positionY instead of resetting the whole Panel.
+        let json = """
+        { "panel": { "width": 99, "positionY": 5,
+                     "items": ["left", "totallyNewButton", "right"] } }
+        """.data(using: .utf8)!
+        let decoded = try Settings.load(from: json)
+
+        XCTAssertEqual(decoded.panel.width, 99, "Geometry preserved despite a bad item")
+        XCTAssertEqual(decoded.panel.positionY, 5)
+        XCTAssertTrue(decoded.panel.items.contains(.action(.left)))
+        XCTAssertTrue(decoded.panel.items.contains(.action(.right)))
+        XCTAssertFalse(decoded.panel.items.contains { $0.id == "totallyNewButton" })
+    }
+
+    func testPanelNormalizeDedupesEnsuresOnOffAndFallsBack() {
+        // Duplicates removed (first occurrence kept).
+        let deduped = Settings.Panel.normalize([
+            .command(.togglePanel), .action(.left), .action(.left), .action(.right)
+        ])
+        XCTAssertEqual(deduped, [.command(.togglePanel), .action(.left), .action(.right)])
+
+        // Missing ON/OFF gets re-inserted at the front (recovery safeguard).
+        let withOnOff = Settings.Panel.normalize([.action(.left)])
+        XCTAssertEqual(withOnOff.first, .command(.togglePanel))
+
+        // Empty → default layout, never an unusable empty panel.
+        XCTAssertEqual(Settings.Panel.normalize([]), Settings.Panel.defaultItems)
+    }
+
+    func testActionAndCommandRawValuesAreDisjoint() {
+        let actions = Set(DwellEngine.Action.allCases.map(\.rawValue))
+        let commands = Set(DwellEngine.Command.allCases.map(\.rawValue))
+        XCTAssertTrue(actions.isDisjoint(with: commands),
+                      "PanelItem id resolution relies on Action/Command rawValues never colliding")
+    }
+
+    func testKeyboardTargetMissingModeFallsBackWithoutNukingSiblings() throws {
+        let json = """
+        { "timing": { "dwellTimeMs": 700 }, "commands": { "path": "x" } }
+        """.data(using: .utf8)!
+        let decoded = try Settings.load(from: json)
+
+        XCTAssertEqual(decoded.commands.keyboard, .accessibilityKeyboard, "Malformed keyboard → safe default")
+        XCTAssertEqual(decoded.timing.dwellTimeMs, 700, "Sibling settings preserved")
+    }
+
     // MARK: - Keyboard target (three modes)
 
     func testKeyboardDefaultsToAccessibilityKeyboard() {
