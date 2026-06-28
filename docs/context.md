@@ -104,12 +104,18 @@ ally-clicker/
 - Позиция: у правого края экрана, настраиваемая Y-позиция
 
 ### DwellEngine (state machine)
-Готовая реализация в `references/point-n-click/config/DwellEngineSpec.swift`:
-- **Pure**: принимает `CGPoint + TimeInterval`, возвращает `[DwellEffect]`
-- **armedAction**: текущая активная функция (nil = ничего)
+Реализация в `Sources/AllyClickerCore/DwellEngine.swift` (pure, тесты на WSL):
+- **Pure**: принимает `Point + TimeInterval`, возвращает `[Effect]`
+- **armed**: текущая активная функция (nil = ничего)
 - **Swipe-reset**: при входе курсора в зону панели → `armed = nil` мгновенно
-- **Post-click revert**: после выполнения → вернуться к `.left` (если `defaultLeft = true`)
-- **Yellow = dwell progress**, **Red = armed action**
+- **Post-action revert**: 3 пути (defaultLeft → .left / autoCancel → nil / repeat)
+- **Re-fire gate**: после клика нужно подвигать к новой цели (`moveRadiusPx`),
+  иначе стоящий курсор машинганил бы кликами
+- **Two-phase DRAG** с защитой: вход в панель при зажатой кнопке → mouseUp
+- **Command-кнопки** (`Zone.panelCommand`): ON/OFF и KEYBOARD — не клики, а one-shot
+  команды. Dwell → `Effect.runCommand(.togglePanel | .launchKeyboard)`, срабатывает
+  один раз за визит (повторно — после ухода с кнопки). Роутятся в `onCommand`
+- **Red = armed action**; dwell countdown НЕ рисуется (см. spec §2)
 
 ### Инъекция кликов
 - `CGEvent(mouseEventSource:mouseType:mouseCursorPosition:mouseButton:)`

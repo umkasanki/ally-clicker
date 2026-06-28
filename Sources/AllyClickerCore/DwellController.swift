@@ -8,6 +8,7 @@ import Foundation
 // Each tick it samples the cursor, classifies the zone, advances the engine, and
 // routes the resulting effects:
 //   • action effects (fire / drag mouseDown / mouseUp) → the MouseInjecting port
+//   • command effects (ON/OFF, KEYBOARD) → onCommand
 //   • UI effects (setArmed / dwellProgress / clearProgress) → onUIEffect
 //
 // Note: the engine only emits `.fire` in the .desktop zone, so the fire point is
@@ -24,8 +25,12 @@ public final class DwellController {
     private let mapper: ZoneMapping
     private let injector: MouseInjecting
 
-    /// Called for UI-facing effects the app must render (highlight, countdown, exit).
+    /// Called for UI-facing effects the app must render (armed highlight, countdown).
     public var onUIEffect: ((DwellEngine.Effect) -> Void)?
+
+    /// Called when a one-shot panel command fires (ON/OFF → togglePanel,
+    /// KEYBOARD → launchKeyboard). The app performs the actual side effect.
+    public var onCommand: ((DwellEngine.Command) -> Void)?
 
     public init(settings: Settings,
                 sampler: CursorSampling,
@@ -75,6 +80,8 @@ public final class DwellController {
             injector.mouseDown(at: point)
         case .dragMouseUp(let point):
             injector.mouseUp(at: point)
+        case .runCommand(let command):
+            onCommand?(command)
         case .setArmed, .dwellProgress, .clearProgress:
             onUIEffect?(effect)
         }

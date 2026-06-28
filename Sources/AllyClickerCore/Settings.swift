@@ -20,6 +20,7 @@ public struct Settings: Codable, Equatable {
     public var autoScroll = AutoScroll()
     public var appearance = Appearance()
     public var panel = Panel()
+    public var commands = Commands()
 
     public init() {}
 
@@ -32,6 +33,7 @@ public struct Settings: Codable, Equatable {
         autoScroll = try c.decodeIfPresent(AutoScroll.self, forKey: .autoScroll) ?? d.autoScroll
         appearance = try c.decodeIfPresent(Appearance.self, forKey: .appearance) ?? d.appearance
         panel      = try c.decodeIfPresent(Panel.self,      forKey: .panel)      ?? d.panel
+        commands   = try c.decodeIfPresent(Commands.self,   forKey: .commands)   ?? d.commands
     }
 }
 
@@ -191,6 +193,24 @@ extension Settings {
             let d = Panel()
             width     = try c.decodeIfPresent(Int.self, forKey: .width)     ?? d.width
             positionY = try c.decodeIfPresent(Int.self, forKey: .positionY) ?? d.positionY
+        }
+    }
+}
+
+// MARK: - Commands (one-shot panel buttons)
+
+extension Settings {
+    public struct Commands: Codable, Equatable {
+        /// App launched by the KEYBOARD button. Empty = use the OS on-screen keyboard
+        /// (resolved by the macOS app layer). A path or bundle id otherwise.
+        public var keyboardAppPath: String = ""
+
+        public init() {}
+
+        public init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            let d = Commands()
+            keyboardAppPath = try c.decodeIfPresent(String.self, forKey: .keyboardAppPath) ?? d.keyboardAppPath
         }
     }
 }

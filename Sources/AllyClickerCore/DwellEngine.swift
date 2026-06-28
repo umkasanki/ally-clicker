@@ -29,10 +29,18 @@ public struct DwellEngine {
         case rightThenLeft
     }
 
+    /// One-shot panel commands — buttons that perform an immediate action on dwell
+    /// instead of arming a click. These are the non-click buttons of the panel.
+    public enum Command: String, Codable, Equatable {
+        case togglePanel     // ON/OFF — collapse / expand the panel
+        case launchKeyboard  // KEYBOARD — launch the configured app
+    }
+
     /// Where the cursor is right now.
     public enum Zone: Equatable {
         case desktop
-        case panel(button: Action?)   // nil = panel chrome, not a button
+        case panel(button: Action?)      // nil = panel chrome; otherwise an arming click button
+        case panelCommand(Command)       // a one-shot command button (ON/OFF, KEYBOARD)
     }
 
     /// What the app should do this tick.
@@ -48,6 +56,7 @@ public struct DwellEngine {
         case fire(Action, at: Point)
         case dragMouseDown(at: Point)   // DRAG phase 1 committed: press and hold
         case dragMouseUp(at: Point)     // DRAG phase 2 committed (or cancelled): release
+        case runCommand(Command)        // a one-shot panel command fired (ON/OFF, KEYBOARD)
     }
 
     // MARK: - State
@@ -69,6 +78,9 @@ public struct DwellEngine {
     // anything fires again — a parked cursor must not machine-gun clicks.
     private var awaitingMoveAfterFire: Bool = false
     private var lastFirePoint: Point? = nil
+    // Command one-shot gating: which command (if any) already fired during the
+    // current visit to its button. Cleared when the cursor leaves that button.
+    private var commandFired: Command? = nil
 
     public init(settings: Settings) { self.settings = settings }
 
@@ -98,6 +110,14 @@ public struct DwellEngine {
         }
         lastZone = zone
 
+        // Clear the command one-shot once the cursor is no longer on the same
+        // command button it last fired — so re-visiting the button can fire again.
+        if case .panelCommand(let cmd) = zone, cmd == commandFired {
+            // still parked on the command we already fired — keep it suppressed
+        } else {
+            commandFired = nil
+        }
+
         // STILLNESS: movement beyond tolerance restarts the dwell timer.
         let tolerance = Double(settings.stillness.sensitivity)
         if let anchor = dwellAnchor, cursor.distance(to: anchor) <= tolerance {
@@ -122,6 +142,18 @@ public struct DwellEngine {
 
         case .panel(button: nil):
             effects.append(.clearProgress)
+
+        case .panelCommand(let command):
+            // Dwell to fire a one-shot command (no arming). Fires once per visit;
+            // re-firing requires leaving the button and coming back (commandFired gate).
+            if commandFired == nil {
+                let fraction = min(dwellElapsed / settings.timing.dwellTimeSeconds, 1)
+                if fraction >= 1 {
+                    effects.append(.runCommand(command))
+                    commandFired = command
+                    resetDwell(at: cursor)
+                }
+            }
 
         case .desktop:
             // SAFETY NET: a held drag must never persist once the armed action is
@@ -244,7 +276,7 @@ public struct DwellEngine {
 
     private func isPanel(_ zone: Zone) -> Bool {
         switch zone {
-        case .panel: return true
+        case .panel, .panelCommand: return true
         case .desktop: return false
         }
     }

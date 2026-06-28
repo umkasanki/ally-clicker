@@ -97,6 +97,19 @@ final class DwellControllerTests: XCTestCase {
         XCTAssertTrue(injector.clicks.isEmpty)
     }
 
+    func testCommandRoutesToOnCommand() {
+        var received: [DwellEngine.Command] = []
+        controller.onCommand = { received.append($0) }
+
+        mapper.zone = .panelCommand(.launchKeyboard)
+        cursor.location = .zero
+        let ticks = Int(Settings().timing.dwellTimeSeconds / dt) + 5
+        for _ in 0..<ticks { controller.advance(dt: dt) }
+
+        XCTAssertEqual(received, [.launchKeyboard])
+        XCTAssertTrue(injector.clicks.isEmpty, "Commands must not inject clicks")
+    }
+
     func testReleaseHeldButtonInjectsMouseUp() {
         // Enter a held drag.
         arm(.leftDrag)
