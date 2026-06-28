@@ -13,6 +13,10 @@ import Foundation
 // Note: the engine only emits `.fire` in the .desktop zone, so the fire point is
 // always outside the panel by construction — no "last position outside panel"
 // bookkeeping is needed.
+//
+// THREADING: not thread-safe. Drive `advance(dt:)` from a single thread (the app's
+// cursor-sampling timer, normally the main thread). `onUIEffect` is invoked
+// synchronously inside `advance`, so it runs on that same thread.
 
 public final class DwellController {
     private var engine: DwellEngine
@@ -39,6 +43,19 @@ public final class DwellController {
     /// Apply updated settings live (e.g. user changed a delay or sensitivity).
     public func updateSettings(_ settings: Settings) {
         engine.settings = settings
+    }
+
+    /// Release any button held by an in-progress drag. The app MUST call this on
+    /// termination / resign-active so a synthetic button is never left stuck down.
+    /// Also invoked automatically on deinit.
+    public func releaseHeldButton() {
+        if engine.forceReleaseDrag() {
+            injector.mouseUp(at: sampler.location)
+        }
+    }
+
+    deinit {
+        releaseHeldButton()
     }
 
     /// Advance one tick. The app calls this from a timer every trackerIntervalMs.

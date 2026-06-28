@@ -96,4 +96,25 @@ final class DwellControllerTests: XCTestCase {
         for _ in 0..<200 { controller.advance(dt: 0.05) }
         XCTAssertTrue(injector.clicks.isEmpty)
     }
+
+    func testReleaseHeldButtonInjectsMouseUp() {
+        // Enter a held drag.
+        arm(.leftDrag)
+        mapper.zone = .desktop
+        cursor.location = Point(x: 100, y: 100)
+        let downTicks = Int(Settings().timing.autoSelectDownSeconds / dt) + 5
+        for _ in 0..<downTicks { controller.advance(dt: dt) }
+        XCTAssertEqual(injector.downs.count, 1)
+        XCTAssertTrue(injector.ups.isEmpty)
+
+        // Teardown must release the held button.
+        cursor.location = Point(x: 123, y: 456)
+        controller.releaseHeldButton()
+        XCTAssertEqual(injector.ups.count, 1)
+        XCTAssertEqual(injector.ups.first, Point(x: 123, y: 456))
+
+        // Idempotent — nothing held now.
+        controller.releaseHeldButton()
+        XCTAssertEqual(injector.ups.count, 1)
+    }
 }

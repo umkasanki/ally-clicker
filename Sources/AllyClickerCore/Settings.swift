@@ -51,10 +51,13 @@ extension Settings {
         public var sensitivity: Int = 1
         /// Cursor sampling interval (ms). 5ms = 200 Hz — matches PNC.
         public var trackerIntervalMs: Int = 5
-        /// Minimum cursor movement (px) after a drag's mouseDown before the
-        /// mouseUp phase can begin. Prevents a zero-length "drag" when the user
-        /// hasn't moved off the start point yet.
-        public var dragMoveThresholdPx: Int = 10
+        /// Minimum cursor movement (px) that counts as "moved to a new target".
+        /// Used in two places:
+        ///  • after a fire, the cursor must move this far before anything fires
+        ///    again (so a parked cursor does not machine-gun clicks);
+        ///  • after a drag's mouseDown, the cursor must move this far before the
+        ///    mouseUp phase can begin (prevents a zero-length drag).
+        public var moveRadiusPx: Int = 10
 
         public init() {}
     }

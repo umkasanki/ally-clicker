@@ -151,6 +151,61 @@ final class DwellEngineTests: XCTestCase {
         XCTAssertEqual(engine.armed, .right, "autoCancel=false → stay armed with same action")
     }
 
+    // MARK: - Re-fire gate (no machine-gunning)
+
+    private func countFires(_ effects: [DwellEngine.Effect]) -> Int {
+        effects.filter { if case .fire = $0 { return true }; return false }.count
+    }
+
+    func testParkedCursorFiresOnlyOnce() {
+        armAction(.left)
+        mapperDesktopFiresOnce()
+    }
+
+    private func mapperDesktopFiresOnce() {
+        // Park on the desktop far longer than several dwell thresholds.
+        let point = Point(x: 500, y: 500)
+        var fires = 0
+        for _ in 0..<400 {
+            fires += countFires(engine.tick(cursor: point, zone: .desktop, dt: tickDt))
+        }
+        XCTAssertEqual(fires, 1, "A stationary cursor must fire exactly once, not machine-gun")
+    }
+
+    func testRefiresAfterMovingToNewTarget() {
+        armAction(.left)  // defaultLeft keeps .left armed after each fire
+
+        let a = Point(x: 300, y: 300)
+        let b = Point(x: 600, y: 600)  // beyond moveRadius
+        var firesA = 0, firesB = 0
+        let ticks = Int(engine.settings.timing.dwellTimeMouseSeconds / tickDt) + 30
+
+        for _ in 0..<ticks { firesA += countFires(engine.tick(cursor: a, zone: .desktop, dt: tickDt)) }
+        for _ in 0..<ticks { firesB += countFires(engine.tick(cursor: b, zone: .desktop, dt: tickDt)) }
+
+        XCTAssertEqual(firesA, 1)
+        XCTAssertEqual(firesB, 1, "Moving to a new target re-enables firing")
+    }
+
+    func testNoSpuriousLeftClickAfterDrag() {
+        // After a drag completes and reverts to .left, a still cursor at the drop
+        // point must NOT auto-fire a left click (it hasn't moved to a new target).
+        armAction(.leftDrag)
+        let start = Point(x: 100, y: 100)
+        let downTicks = Int(engine.settings.timing.autoSelectDownSeconds / tickDt) + 5
+        for _ in 0..<downTicks { _ = engine.tick(cursor: start, zone: .desktop, dt: tickDt) }
+
+        let end = Point(x: 400, y: 400)
+        let upTicks = Int(engine.settings.timing.autoSelectUpSeconds / tickDt) + 10
+        for _ in 0..<upTicks { _ = engine.tick(cursor: end, zone: .desktop, dt: tickDt) }
+        XCTAssertEqual(engine.armed, .left, "Reverts to left after drag")
+
+        // Keep resting at the drop point — must not fire.
+        var fires = 0
+        for _ in 0..<200 { fires += countFires(engine.tick(cursor: end, zone: .desktop, dt: tickDt)) }
+        XCTAssertEqual(fires, 0, "No spurious click at the drop point")
+    }
+
     // MARK: - Drag (two-phase)
 
     private func hasEffect(_ effects: [DwellEngine.Effect], _ match: (DwellEngine.Effect) -> Bool) -> Bool {
@@ -219,6 +274,31 @@ final class DwellEngineTests: XCTestCase {
         XCTAssertTrue(hasEffect(e, isDragUp), "Entering panel during drag must release the button")
         XCTAssertFalse(engine.dragActive)
         XCTAssertNil(engine.armed)
+    }
+
+    func testSwipeOntoButtonAlsoReleasesActiveDrag() {
+        armAction(.leftDrag)
+        let start = Point(x: 100, y: 100)
+        let downTicks = Int(engine.settings.timing.autoSelectDownSeconds / tickDt) + 5
+        for _ in 0..<downTicks { _ = engine.tick(cursor: start, zone: .desktop, dt: tickDt) }
+        XCTAssertTrue(engine.dragActive)
+
+        // Enter directly onto a panel BUTTON (not chrome) — must still release.
+        let e = engine.tick(cursor: .zero, zone: .panel(button: .right), dt: tickDt)
+        XCTAssertTrue(hasEffect(e, isDragUp), "Entering a panel button during drag must release too")
+        XCTAssertFalse(engine.dragActive)
+    }
+
+    func testForceReleaseDrag() {
+        armAction(.leftDrag)
+        let start = Point(x: 100, y: 100)
+        let downTicks = Int(engine.settings.timing.autoSelectDownSeconds / tickDt) + 5
+        for _ in 0..<downTicks { _ = engine.tick(cursor: start, zone: .desktop, dt: tickDt) }
+        XCTAssertTrue(engine.dragActive)
+
+        XCTAssertTrue(engine.forceReleaseDrag(), "Returns true when a drag was active")
+        XCTAssertFalse(engine.dragActive)
+        XCTAssertFalse(engine.forceReleaseDrag(), "Returns false when nothing was held")
     }
 
     func testDwellProgressReachesOne() {

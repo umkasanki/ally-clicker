@@ -142,10 +142,15 @@ AllyClicker/
 - Отмена при входе в панель: если `mouseDown` был → `mouseUp` немедленно
 
 ### Шаг 3.5 — Auto-Scroll (MIDDLE click режим)
-- При `fire(.middle, at:)` → войти в Auto-Scroll режим:
-  - Зафиксировать anchor point
-  - Запустить 60 FPS timer
-  - Смещение > 10px от anchor → генерировать `CGScrollWheelEvent`
+> ⚠️ ПОКА НЕ ИНТЕГРИРОВАНО. Чистые части готовы (`AutoScrollEngine`,
+> `AutoScrollController` + тесты), но `DwellController` сейчас роутит `.fire(.middle)`
+> как обычный средний клик. Интеграция — задача Mac-фазы: нужно различать контекст
+> (над ссылкой/вкладкой → обычный middle click; над прокручиваемым → auto-scroll),
+> что требует macOS API. Здесь связать DwellController ↔ AutoScrollController:
+- При `fire(.middle, at:)` (над прокручиваемым) → войти в Auto-Scroll режим:
+  - `AutoScrollController.activate(at:)` — зафиксировать anchor
+  - Запустить 60 FPS timer → `tick(cursor:)` → `CGScrollWheelEvent`
+  - Любой следующий клик → `deactivate()`
   - Нелинейная скорость по алгоритму LinearMouse
 - Выход: следующий `.fire` → `mouseUp` на якоре → выход из режима
 

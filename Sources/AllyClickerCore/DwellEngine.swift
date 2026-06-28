@@ -65,6 +65,10 @@ public struct DwellEngine {
     // since moved far enough to allow the mouseUp phase.
     private var dragDownPoint: Point? = nil
     private var dragHasMoved: Bool = false
+    // Re-fire gating: after a fire, the cursor must move to a new target before
+    // anything fires again — a parked cursor must not machine-gun clicks.
+    private var awaitingMoveAfterFire: Bool = false
+    private var lastFirePoint: Point? = nil
 
     public init(settings: Settings) { self.settings = settings }
 
@@ -89,6 +93,7 @@ public struct DwellEngine {
                 armed = nil
                 effects.append(.setArmed(nil))
             }
+            awaitingMoveAfterFire = false
             resetDwell(at: cursor)
         }
         lastZone = zone
@@ -111,6 +116,7 @@ public struct DwellEngine {
             if fraction >= 1 {
                 armed = button
                 effects.append(.setArmed(button))
+                awaitingMoveAfterFire = false
                 resetDwell(at: cursor)
             }
 
@@ -118,16 +124,40 @@ public struct DwellEngine {
             effects.append(.clearProgress)
 
         case .desktop:
+            // SAFETY NET: a held drag must never persist once the armed action is
+            // no longer a drag. Closes the entire class of "armed changed under a
+            // held button" bugs — a stuck button is catastrophic for a hands-free user.
+            if dragActive && armed != .leftDrag {
+                dragActive = false
+                dragDownPoint = nil
+                dragHasMoved = false
+                effects.append(.dragMouseUp(at: cursor))
+            }
+
             // Auto-action fires only when something is armed.
             // After a swipe (armed == nil) the cursor can rest forever — nothing fires.
             guard let action = armed else {
                 effects.append(.clearProgress)
                 break
             }
+
+            // RE-FIRE GATE: after a fire, require the cursor to move to a NEW target
+            // before anything fires again. Matches PNC's "fires on each cursor STOP" —
+            // a parked cursor must not machine-gun clicks. Applies to every mode.
+            if awaitingMoveAfterFire {
+                if let fired = lastFirePoint,
+                   cursor.distance(to: fired) > Double(settings.stillness.moveRadiusPx) {
+                    awaitingMoveAfterFire = false
+                } else {
+                    break  // still parked at the last fire point — wait for a real move
+                }
+            }
+
             if action == .leftDrag {
                 handleDrag(cursor: cursor, into: &effects)
             } else if dwellElapsed >= settings.timing.dwellTimeMouseSeconds {
                 effects.append(.fire(action, at: cursor))
+                markFired(at: cursor)
                 resetDwell(at: cursor)
                 applyPostActionRevert(after: action, into: &effects)
             }
@@ -152,7 +182,7 @@ public struct DwellEngine {
             // Phase 2: require the cursor to move away from the start point first,
             // otherwise a still cursor would release immediately (zero-length drag).
             if let down = dragDownPoint, !dragHasMoved,
-               cursor.distance(to: down) > Double(settings.stillness.dragMoveThresholdPx) {
+               cursor.distance(to: down) > Double(settings.stillness.moveRadiusPx) {
                 dragHasMoved = true
             }
             // Once moved, dwell at the end point, then release.
@@ -161,6 +191,7 @@ public struct DwellEngine {
                 dragActive = false
                 dragDownPoint = nil
                 dragHasMoved = false
+                markFired(at: cursor)
                 resetDwell(at: cursor)
                 applyPostActionRevert(after: .leftDrag, into: &effects)
             }
@@ -185,6 +216,23 @@ public struct DwellEngine {
             armed = next
             effects.append(.setArmed(next))
         }
+    }
+
+    private mutating func markFired(at point: Point) {
+        awaitingMoveAfterFire = true
+        lastFirePoint = point
+    }
+
+    /// Force-release a held drag, clearing all drag state. Returns true if a drag
+    /// was actually active (so the caller can inject the matching mouseUp). Used on
+    /// teardown / app termination so a held button is never stranded.
+    @discardableResult
+    public mutating func forceReleaseDrag() -> Bool {
+        guard dragActive else { return false }
+        dragActive = false
+        dragDownPoint = nil
+        dragHasMoved = false
+        return true
     }
 
     // MARK: - Helpers
