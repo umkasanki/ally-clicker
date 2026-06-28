@@ -1,5 +1,4 @@
 import Foundation
-import CoreGraphics
 
 // MARK: - DwellEngine
 //
@@ -42,7 +41,7 @@ public struct DwellEngine {
         case setArmed(Action?)
         case dwellProgress(button: Action, fraction: Double)
         case clearProgress
-        case fire(Action, at: CGPoint)
+        case fire(Action, at: Point)
         case requestExit
     }
 
@@ -51,7 +50,7 @@ public struct DwellEngine {
     public var settings: Settings
 
     public private(set) var armed: Action? = nil
-    private var dwellAnchor: CGPoint? = nil
+    private var dwellAnchor: Point? = nil
     private var dwellElapsed: TimeInterval = 0
     private var lastZone: Zone = .desktop
 
@@ -60,7 +59,7 @@ public struct DwellEngine {
     // MARK: - Tick
 
     /// Advance the engine by `dt` seconds. Call every `settings.stillness.trackerIntervalMs`.
-    public mutating func tick(cursor: CGPoint, zone: Zone, dt: TimeInterval) -> [Effect] {
+    public mutating func tick(cursor: Point, zone: Zone, dt: TimeInterval) -> [Effect] {
         var effects: [Effect] = []
 
         // SWIPE-RESET: entering the panel from desktop clears the armed action instantly.
@@ -75,8 +74,8 @@ public struct DwellEngine {
         lastZone = zone
 
         // STILLNESS: movement beyond tolerance restarts the dwell timer.
-        let tolerance = CGFloat(settings.stillness.sensitivity)
-        if let anchor = dwellAnchor, distance(cursor, anchor) <= tolerance {
+        let tolerance = Double(settings.stillness.sensitivity)
+        if let anchor = dwellAnchor, cursor.distance(to: anchor) <= tolerance {
             dwellElapsed += dt
         } else {
             resetDwell(at: cursor)
@@ -140,7 +139,7 @@ public struct DwellEngine {
 
     // MARK: - Helpers
 
-    private mutating func resetDwell(at point: CGPoint) {
+    private mutating func resetDwell(at point: Point) {
         dwellAnchor = point
         dwellElapsed = 0
     }
@@ -150,10 +149,5 @@ public struct DwellEngine {
         case .panel, .exitButton: return true
         case .desktop: return false
         }
-    }
-
-    private func distance(_ a: CGPoint, _ b: CGPoint) -> CGFloat {
-        let dx = a.x - b.x, dy = a.y - b.y
-        return (dx * dx + dy * dy).squareRoot()
     }
 }

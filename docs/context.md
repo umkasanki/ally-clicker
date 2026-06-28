@@ -7,9 +7,9 @@
 
 ## Статус проекта
 
-**Текущая фаза:** Фаза 0 — Документация и архитектура
-**Текущий шаг:** 0.3 — Обновление спека и плана под macOS/Swift
-**Последнее действие:** Прочитаны reference-файлы из `references/point-n-click/`, обновлена документация
+**Текущая фаза:** Фаза 1 — Фундамент (ядро)
+**Текущий шаг:** Каркас репозитория готов, ядро покрыто тестами
+**Последнее действие:** Перестроена архитектура: чистое ядро `AllyClickerCore` (SPM, без CoreGraphics/AppKit, тестируется на WSL), app-слой вынесен в `App/`. 9 юнит-тестов проходят на WSL (Swift 6.3.2)
 
 ---
 
@@ -44,51 +44,47 @@
 
 ## Ключевые решения и договорённости
 
-- **Язык:** Swift
-- **UI фреймворк:** AppKit (NSPanel для панели, SwiftUI можно для Settings window)
-- **Событийный ввод:** CGEventTap (чтение позиции) + CGEvent.post (инъекция кликов)
+- **Язык:** Swift (6.3.2 в WSL для ядра, Xcode на Mac для app)
+- **Сборка:** гибрид — `AllyClickerCore` это SPM-пакет (корень репо), приложение это
+  `App/AllyClicker.xcodeproj` (создаётся на Mac, подключает пакет локальной зависимостью)
+- **Архитектура:** ports-and-adapters. Ядро зависит только от протоколов
+  (`MouseInjecting`, `CursorSampling`, `ZoneMapping` в `Ports.swift`), macOS даёт адаптеры
+- **Геометрия:** свой тип `Point` (не `CGPoint`) → ядро не зависит от CoreGraphics →
+  тестируется на Linux/WSL. App-слой конвертирует `CGPoint ↔ Point` на границе адаптеров
+- **UI фреймворк:** AppKit (NSPanel, NSStatusItem)
+- **Событийный ввод:** `NSEvent.mouseLocation` (чтение, polling 5мс) + `CGEvent.post` (инъекция)
 - **Accessibility permission:** обязательно — без него инъекция не работает
-- **Конфиг:** JSON через `PNCSettings.Codable`, хранится в `~/Library/Application Support/AllyClicker/`
-- **Архитектура:** DwellEngine pure (без macOS API) → тестируемый unit-тестами
+- **Конфиг:** JSON через `Settings.Codable`, в `~/Library/Application Support/AllyClicker/`
+- **Где что пишется:** ядро + тесты → WSL (сейчас); адаптеры + UI → Mac (позже)
 - **Режим редактирования:** редактировать напрямую (по умолчанию, уточнять в начале таска)
 
 ---
 
-## Структура проекта (целевая)
+## Структура проекта (фактическая)
 
 ```
 ally-clicker/
-├── AllyClicker.xcodeproj/
-├── AllyClicker/
-│   ├── App/
-│   │   └── AppDelegate.swift       # NSApplicationDelegate, точка входа
-│   ├── Engine/
-│   │   ├── DwellEngine.swift       # Pure state machine (из references)
-│   │   └── PNCSettings.swift       # Settings model (из references)
-│   ├── Input/
-│   │   └── InputController.swift   # CGEvent injection (click, drag, scroll)
-│   ├── Panel/
-│   │   ├── PanelWindow.swift       # NSPanel (nonactivating, always-on-top)
-│   │   ├── PanelViewController.swift
-│   │   └── PanelButton.swift       # Кнопка с dwell-анимацией
-│   ├── Settings/
-│   │   ├── SettingsWindow.swift    # NSWindow для Configure
-│   │   └── SettingsStore.swift     # Чтение/запись JSON
-│   ├── Resources/
-│   │   └── Assets.xcassets/        # Иконки (из PNCIcons.xcassets)
-│   └── Tests/
-│       ├── DwellEngineTests.swift
-│       └── PNCSettingsTests.swift
-├── docs/
-│   ├── spec.md
-│   ├── plan.md
-│   ├── context.md
-│   └── DwellClick/
-│       └── pr-ideas.md
-└── references/
-    └── point-n-click/
-        ├── config/
-        └── icons/
+├── Package.swift                    # SPM: только AllyClickerCore + тесты (WSL+Mac)
+├── Sources/AllyClickerCore/         # ЧИСТОЕ ядро — без AppKit/CoreGraphics
+│   ├── Geometry.swift               # Point (вместо CGPoint)
+│   ├── DwellEngine.swift            # стейт-машина (Action/Zone/Effect nested)
+│   ├── Settings.swift               # модель настроек (Codable)
+│   ├── SettingsStore.swift          # JSON персистенс
+│   └── Ports.swift                  # протоколы: MouseInjecting/CursorSampling/ZoneMapping
+├── Tests/AllyClickerTests/
+│   └── DwellEngineTests.swift       # 9 тестов (swift test на WSL)
+│
+├── App/                             # macOS app (Xcode проект создаётся на Mac)
+│   ├── README.md                    # инструкция как создать .xcodeproj
+│   └── AllyClicker/
+│       ├── main.swift
+│       ├── App/AppDelegate.swift    # lifecycle + Accessibility check
+│       └── Adapters/
+│           └── CGMouseInjector.swift  # MouseInjecting → CGEvent
+│           # (далее: CursorSampler, PanelZoneMapper, DwellController, Panel/, Settings/, StatusBar/)
+│
+├── docs/                            # spec.md, plan.md, context.md, DwellClick/
+└── references/point-n-click/        # анализ PNC, иконки, бриф
 ```
 
 ---

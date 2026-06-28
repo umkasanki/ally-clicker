@@ -1,5 +1,5 @@
 import XCTest
-import CoreGraphics
+
 @testable import AllyClickerCore
 
 final class DwellEngineTests: XCTestCase {
@@ -43,7 +43,7 @@ final class DwellEngineTests: XCTestCase {
         let threshold = engine.settings.timing.dwellTimeMouseSeconds
         let ticks = Int(threshold / tickDt) + 5
         var fired = false
-        let point = CGPoint(x: 100, y: 100)
+        let point = Point(x: 100, y: 100)
         for _ in 0..<ticks {
             let effects = engine.tick(cursor: point, zone: .desktop, dt: tickDt)
             if hasFire(effects) { fired = true; break }
@@ -54,7 +54,7 @@ final class DwellEngineTests: XCTestCase {
     func testNoFireWhenNotArmed() {
         // armed is nil by default — desktop dwell must never fire
         var fired = false
-        let point = CGPoint(x: 100, y: 100)
+        let point = Point(x: 100, y: 100)
         for _ in 0..<200 {
             let effects = engine.tick(cursor: point, zone: .desktop, dt: 0.05)
             if hasFire(effects) { fired = true }
@@ -66,8 +66,8 @@ final class DwellEngineTests: XCTestCase {
         armAction(.left)
 
         // Start dwell at point A
-        let a = CGPoint(x: 100, y: 100)
-        let b = CGPoint(x: 200, y: 200)  // far from A — resets timer
+        let a = Point(x: 100, y: 100)
+        let b = Point(x: 200, y: 200)  // far from A — resets timer
         _ = engine.tick(cursor: a, zone: .desktop, dt: tickDt)
 
         // Move to B — timer resets
@@ -107,7 +107,7 @@ final class DwellEngineTests: XCTestCase {
         // Fire on desktop
         let threshold = engine.settings.timing.dwellTimeMouseSeconds
         let ticks = Int(threshold / tickDt) + 5
-        let point = CGPoint(x: 100, y: 100)
+        let point = Point(x: 100, y: 100)
         for _ in 0..<ticks {
             _ = engine.tick(cursor: point, zone: .desktop, dt: tickDt)
         }
@@ -125,7 +125,7 @@ final class DwellEngineTests: XCTestCase {
 
         let threshold = engine.settings.timing.dwellTimeMouseSeconds
         let ticks = Int(threshold / tickDt) + 5
-        let point = CGPoint(x: 100, y: 100)
+        let point = Point(x: 100, y: 100)
         for _ in 0..<ticks {
             _ = engine.tick(cursor: point, zone: .desktop, dt: tickDt)
         }
@@ -143,7 +143,7 @@ final class DwellEngineTests: XCTestCase {
 
         let threshold = engine.settings.timing.dwellTimeMouseSeconds
         let ticks = Int(threshold / tickDt) + 5
-        let point = CGPoint(x: 100, y: 100)
+        let point = Point(x: 100, y: 100)
         for _ in 0..<ticks {
             _ = engine.tick(cursor: point, zone: .desktop, dt: tickDt)
         }
