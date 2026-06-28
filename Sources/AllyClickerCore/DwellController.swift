@@ -1,0 +1,65 @@
+import Foundation
+
+// MARK: - DwellController
+//
+// Pure orchestrator that wires the DwellEngine to the port protocols. It owns no
+// macOS APIs — only the abstractions — so it is fully unit-testable with mock ports.
+//
+// Each tick it samples the cursor, classifies the zone, advances the engine, and
+// routes the resulting effects:
+//   • action effects (fire / drag mouseDown / mouseUp) → the MouseInjecting port
+//   • UI effects (setArmed / dwellProgress / clearProgress / requestExit) → onUIEffect
+//
+// Note: the engine only emits `.fire` in the .desktop zone, so the fire point is
+// always outside the panel by construction — no "last position outside panel"
+// bookkeeping is needed.
+
+public final class DwellController {
+    private var engine: DwellEngine
+    private let sampler: CursorSampling
+    private let mapper: ZoneMapping
+    private let injector: MouseInjecting
+
+    /// Called for UI-facing effects the app must render (highlight, countdown, exit).
+    public var onUIEffect: ((DwellEngine.Effect) -> Void)?
+
+    public init(settings: Settings,
+                sampler: CursorSampling,
+                mapper: ZoneMapping,
+                injector: MouseInjecting) {
+        self.engine = DwellEngine(settings: settings)
+        self.sampler = sampler
+        self.mapper = mapper
+        self.injector = injector
+    }
+
+    /// Currently armed action (for the app to query, e.g. on launch).
+    public var armed: DwellEngine.Action? { engine.armed }
+
+    /// Apply updated settings live (e.g. user changed a delay or sensitivity).
+    public func updateSettings(_ settings: Settings) {
+        engine.settings = settings
+    }
+
+    /// Advance one tick. The app calls this from a timer every trackerIntervalMs.
+    public func advance(dt: TimeInterval) {
+        let cursor = sampler.location
+        let zone = mapper.zone(at: cursor)
+        for effect in engine.tick(cursor: cursor, zone: zone, dt: dt) {
+            dispatch(effect)
+        }
+    }
+
+    private func dispatch(_ effect: DwellEngine.Effect) {
+        switch effect {
+        case .fire(let action, let point):
+            injector.click(action, at: point)
+        case .dragMouseDown(let point):
+            injector.mouseDown(at: point)
+        case .dragMouseUp(let point):
+            injector.mouseUp(at: point)
+        case .setArmed, .dwellProgress, .clearProgress, .requestExit:
+            onUIEffect?(effect)
+        }
+    }
+}
