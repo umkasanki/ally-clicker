@@ -231,11 +231,13 @@ AllyClicker/
 - [ ] 2.4 ON/OFF кнопка (сворачивание/разворачивание)
 
 ### Фаза 3 — DwellEngine интеграция
-- [ ] 3.1 Polling cursor position (DispatchSourceTimer 5мс)
-- [ ] 3.2 Применение DwellEffect к UI и InputController
-- [ ] 3.3 Last position outside panel
-- [ ] 3.4 DRAG двухфазная механика
-- [ ] 3.5 Auto-Scroll (MIDDLE click режим)
+> Логика ядра готова (Фаза 1). Здесь остаётся только macOS-обвязка.
+- [x] 3.4 DRAG двухфазная механика — реализована в DwellEngine (ядро)
+- [x] 3.5 Auto-Scroll расчёт дельты — AutoScrollEngine (ядро); остаётся CGScrollWheelEvent адаптер
+- [x] 3.3 Last position outside panel — НЕ нужно: движок стреляет только в зоне .desktop
+- [ ] 3.1 Polling cursor position (DispatchSourceTimer 5мс) → вызывает DwellController.advance(dt:)
+- [ ] 3.2 onUIEffect → отрисовка состояний кнопок панели
+- [ ] 3.5a CGScrollWheelEvent адаптер для Auto-Scroll (MIDDLE click режим)
 
 ### Фаза 4 — Settings Window
 - [ ] 4.1 SettingsWindowController + меню-бар
