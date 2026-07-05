@@ -10,7 +10,10 @@ final class PanelWindow: NSPanel {
                    backing: .buffered,
                    defer: false)
         isFloatingPanel = true
-        level = .floating                 // above normal windows
+        // .statusBar keeps the panel above normal windows AND immune to
+        // "click wallpaper to reveal desktop" / Show Desktop sweeps (paired with
+        // .stationary below). The control surface must never move or hide.
+        level = .statusBar
         hidesOnDeactivate = false
         isMovableByWindowBackground = false
         // Force native dark appearance — semantic colors (windowBackgroundColor,
