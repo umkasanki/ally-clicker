@@ -32,7 +32,8 @@ final class PanelViewController: ZoneMapping {
     private let container = FlippedView()
     private let pill = ArmedPillView()
     private var buttons: [PanelButton] = []
-    private var armedAction: DwellEngine.Action? = nil
+    // Where the pill currently sits: an armed click action OR a just-fired command.
+    private var pillTarget: PanelItem? = nil
     private let pillInset: CGFloat = 6
 
     private let buttonSize: CGFloat
@@ -93,31 +94,34 @@ final class PanelViewController: ZoneMapping {
     // MARK: - Visual state
 
     func setArmed(_ action: DwellEngine.Action?) {
-        let wasArmed = armedAction
-        armedAction = action
+        movePill(to: action.map { PanelItem.action($0) })
+    }
+
+    /// Slide the pill under a command button when it fires (visual feedback).
+    func showCommand(_ command: DwellEngine.Command) {
+        movePill(to: .command(command))
+    }
+
+    private func movePill(to target: PanelItem?) {
+        pillTarget = target
 
         for button in buttons {
-            if case .action(let a) = button.item {
-                button.isArmed = (a == action)
-            } else {
-                button.isArmed = false
-            }
+            button.isArmed = (button.item == target)
             button.needsDisplay = true
         }
 
-        guard let target = armedButton(), !target.isHidden else {
+        guard let targetButton = pillButton(), !targetButton.isHidden else {
             pill.isHidden = true
             return
         }
-        let targetFrame = target.frame.insetBy(dx: pillInset, dy: pillInset)
+        let targetFrame = targetButton.frame.insetBy(dx: pillInset, dy: pillInset)
 
-        if wasArmed == nil || pill.isHidden {
+        if pill.isHidden {
             // Appearing from nothing: place instantly (no slide from a stale spot).
             pill.frame = targetFrame
             pill.isHidden = false
         } else {
-            // Slide from the previous button to the new one.
-            pill.isHidden = false
+            // Slide from wherever the pill is to the new button.
             NSAnimationContext.runAnimationGroup { ctx in
                 ctx.duration = 0.18
                 ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
@@ -127,9 +131,9 @@ final class PanelViewController: ZoneMapping {
         }
     }
 
-    private func armedButton() -> PanelButton? {
-        guard let action = armedAction else { return nil }
-        return buttons.first { if case .action(let a) = $0.item { return a == action }; return false }
+    private func pillButton() -> PanelButton? {
+        guard let target = pillTarget else { return nil }
+        return buttons.first { $0.item == target }
     }
 
     // MARK: - Collapse / expand (ON/OFF)
@@ -163,8 +167,8 @@ final class PanelViewController: ZoneMapping {
         frame.origin.y = topEdge - height
         window.setFrame(frame, display: true)
 
-        // Keep the pill glued to the armed button through relayouts (no animation).
-        if let target = armedButton(), !target.isHidden {
+        // Keep the pill glued to its button through relayouts (no animation).
+        if let target = pillButton(), !target.isHidden {
             pill.frame = target.frame.insetBy(dx: pillInset, dy: pillInset)
             pill.isHidden = false
         } else {

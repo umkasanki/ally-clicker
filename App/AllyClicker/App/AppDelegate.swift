@@ -49,6 +49,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         controller.onCommand = { [weak self] command in
             guard let self else { return }
+            self.panel.showCommand(command)   // slide the pill under the command button
             switch command {
             case .togglePanel:    self.panel.toggleCollapsed()
             case .launchKeyboard: KeyboardLauncher.launch(self.settings.commands.keyboard)
