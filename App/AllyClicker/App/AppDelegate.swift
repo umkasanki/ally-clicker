@@ -13,10 +13,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settings = settingsStore.load()
         let granted = hasAccessibilityPermission()
         NSLog("AllyClicker: launch, accessibility granted = \(granted)")
-
-        guard granted else {
-            showAccessibilityAlert()
-            return  // без разрешения инъекция не работает — ждём перезапуска после выдачи
+        if !granted {
+            // DEBUG: don't gate the UI — show the panel anyway so we can verify
+            // rendering/coordinates. Clicks simply won't inject until access is granted.
+            NSLog("AllyClicker: WARNING no accessibility — panel shown for UI test, clicks disabled")
         }
 
         startDwelling()
