@@ -17,3 +17,6 @@ DerivedData/
 build/
 *.o
 *.swiftmodule
+
+# JetBrains IDE
+.idea/
