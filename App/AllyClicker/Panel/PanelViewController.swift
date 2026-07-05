@@ -56,8 +56,10 @@ final class PanelViewController: ZoneMapping {
         let originX = screenFrame.midX - width / 2
         let originY = screenFrame.midY - totalHeight / 2
 
-        NSLog("AllyClicker: screenFrame=\(NSStringFromRect(screenFrame)) items=\(items.count) origin=(\(originX),\(originY)) size=(\(width)x\(totalHeight))")
-        window = PanelWindow(contentRect: NSRect(x: originX, y: originY, width: width, height: totalHeight))
+        let initialFrame = Self.clampToScreen(
+            NSRect(x: originX, y: originY, width: width, height: totalHeight))
+        NSLog("AllyClicker: screenFrame=\(NSStringFromRect(screenFrame)) items=\(items.count) frame=\(NSStringFromRect(initialFrame))")
+        window = PanelWindow(contentRect: initialFrame)
         container.frame = NSRect(x: 0, y: 0, width: width, height: totalHeight)
         container.wantsLayer = true
         container.layer?.cornerRadius = 12
@@ -138,6 +140,19 @@ final class PanelViewController: ZoneMapping {
         return buttons.first { $0.item == target }
     }
 
+    /// The panel must ALWAYS be fully on screen — a control surface that slides
+    /// off-screen would be unreachable for a hands-free user. Clamp any frame
+    /// into the visible area of the screen it (mostly) belongs to.
+    static func clampToScreen(_ frame: NSRect) -> NSRect {
+        let screen = NSScreen.screens.first { $0.frame.intersects(frame) }
+            ?? NSScreen.main
+        guard let visible = screen?.visibleFrame else { return frame }
+        var f = frame
+        f.origin.x = min(max(f.origin.x, visible.minX), visible.maxX - f.width)
+        f.origin.y = min(max(f.origin.y, visible.minY), visible.maxY - f.height)
+        return f
+    }
+
     // MARK: - Collapse / expand (ON/OFF)
 
     func toggleCollapsed() {
@@ -189,6 +204,7 @@ final class PanelViewController: ZoneMapping {
         let topEdge = frame.maxY
         frame.size = NSSize(width: width, height: height)
         frame.origin.y = topEdge - height
+        frame = Self.clampToScreen(frame)
 
         let finish = { [weak self] in
             guard let self else { return }
