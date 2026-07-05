@@ -295,3 +295,26 @@ AllyClicker/
 - [ ] `RightLeft` (right-затем-left) — реализовать в InputController + добавить как PanelItem
 - [ ] RAMB (Remote Access Mouse Button) — плавающий якорь поверх fullscreen (Фаза 5+)
 - [ ] Break-timer (`UseTimer`/`UseTimerReset`) — напоминания об отдыхе (опционально)
+
+### Бэклог ревью app-слоя (Mac-сессия) — приоритеты по убыванию
+- [ ] **C1. Стабильная подпись** — ad-hoc слетает при пересборке → Accessibility
+  надо включать заново каждый раз. Скрипты готовы (`App/setup-signing.sh` —
+  запустить ОДИН раз на Mac; `build-app.sh` уже подхватит сертификат). Отложено.
+  Альтернатива: Xcode-проект с Apple Development подписью
+- [ ] **C2. Перемещение панели головой** — сейчас drag за ON/OFF работает только
+  физической мышью. Нужен осознанный «режим перемещения» (dwell-armed), т.к.
+  движок стреляет drag только в зоне .desktop, а над кнопкой — .panelCommand
+- [ ] **I2. Dwell под нагрузкой растягивается** — фиксированный dt=5мс vs wall-clock;
+  перейти на реальное время с капом (~50мс), чтобы паузы не давали мгновенный fire
+- [ ] **I3. KEYBOARD не запускается** — прямой запуск KeyboardViewer.app не работает
+  с ~Catalina; проверить и починить (input-source / Accessibility Keyboard toggle)
+- [ ] **I4. Нереализованные действия молча ничего не делают** (`rightDouble`,
+  `rightThenLeft`) — убрать из normalize пока не реализованы, или fallback
+- [ ] Минорное: залипание drag при потере mouseUp (проверять `pressedMouseButtons`);
+  сохранять позицию панели между запусками; `mouseExited` не сбивать чужой курсор;
+  наблюдатель `didChangeScreenParametersNotification` для re-clamp; хрупкий glob в build
+
+### ⚠️ Debug-хвосты (вернуть перед реальным использованием)
+- [ ] Панель к правому краю (сейчас центр экрана — `DEBUG: center on screen`)
+- [ ] Мягкий гейт Accessibility (сейчас панель показывается всегда без проверки)
+- [ ] **Проверить инъекцию кликов вживую** (Y-flip координат) — не проверено!
