@@ -61,6 +61,11 @@ final class PanelButton: NSView {
         super.draw(dirtyRect)
     }
 
+    // Show the pointing-hand cursor over every panel button.
+    override func resetCursorRects() {
+        addCursorRect(bounds, cursor: .pointingHand)
+    }
+
     // MARK: - Drag-to-move (ON/OFF is the panel's move handle)
     //
     // Dragging the power button moves the whole panel, clamped on-screen.
