@@ -1,5 +1,5 @@
 #!/bin/bash
-# Assemble a runnable AllyClicker.app WITHOUT Xcode — using Command Line Tools only.
+# Assemble a runnable AllyClicker.app WITHOUT Xcode -- using Command Line Tools only.
 # For quick on-device testing before the Xcode project exists. Run on macOS.
 #
 #   ./App/build-app.sh && open build/AllyClicker.app
@@ -7,16 +7,16 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."   # repo root
 
-echo "→ Building core (swift build)…"
+echo "[1/4] Building core (swift build)..."
 swift build
 
 APP="build/AllyClicker.app"
 MACOS="$APP/Contents/MacOS"
-echo "→ Assembling $APP…"
+echo "[2/4] Assembling $APP..."
 rm -rf "$APP"
 mkdir -p "$MACOS"
 
-echo "→ Compiling app layer against AppKit…"
+echo "[3/4] Compiling app layer against AppKit..."
 swiftc -framework AppKit \
     -I .build/debug/Modules \
     $(find App -name "*.swift") \
@@ -25,9 +25,9 @@ swiftc -framework AppKit \
 
 cp App/Info.plist "$APP/Contents/Info.plist"
 
-echo "→ Ad-hoc code signing (helps Accessibility persistence)…"
+echo "[4/4] Ad-hoc code signing (helps Accessibility persistence)..."
 codesign --force --sign - "$APP" || echo "  (codesign skipped)"
 
-echo "✓ Built $APP"
+echo "Built $APP"
 echo "  Launch:  open $APP"
 echo "  Then grant Accessibility in System Settings and relaunch."
