@@ -39,6 +39,13 @@ final class PanelViewController: ZoneMapping {
     private let buttonSize: CGFloat
     private let width: CGFloat
     private(set) var isCollapsed = false
+    // Serializes collapse/expand: re-toggling mid-animation could otherwise leave
+    // buttons hidden while logically expanded (completion handlers racing).
+    private var isTogglingCollapse = false
+
+    /// Supplies the engine's actually-armed action so the pill can re-sync after
+    /// expand (the pill parked on ON/OFF must not contradict the real armed state).
+    var armedProvider: (() -> DwellEngine.Action?)? = nil
 
     init(settings: Settings) {
         width = CGFloat(settings.panel.width)
@@ -185,7 +192,12 @@ final class PanelViewController: ZoneMapping {
     // MARK: - Collapse / expand (ON/OFF)
 
     func toggleCollapsed() {
+        // No-op while a previous toggle is animating — safe (dwell re-fires need
+        // a move-away anyway) and prevents the hidden-while-expanded race.
+        guard !isTogglingCollapse else { return }
+        isTogglingCollapse = true
         isCollapsed.toggle()
+
         let affected = buttons.filter {
             if case .command(.togglePanel) = $0.item { return false }
             return true
@@ -197,18 +209,27 @@ final class PanelViewController: ZoneMapping {
                 ctx.duration = 0.12
                 affected.forEach { $0.animator().alphaValue = 0 }
             }, completionHandler: { [weak self] in
+                guard let self else { return }
                 affected.forEach { $0.isHidden = true }
-                self?.applyLayout(animated: true)
-                self?.scheduleCollapsedPillFade()
+                self.applyLayout(animated: true) { [weak self] in
+                    self?.scheduleCollapsedPillFade()
+                    self?.isTogglingCollapse = false
+                }
             })
         } else {
             // Grow the window, then fade the buttons back in.
             affected.forEach { $0.isHidden = false; $0.alphaValue = 0 }
-            applyLayout(animated: true) {
-                NSAnimationContext.runAnimationGroup { ctx in
+            applyLayout(animated: true) { [weak self] in
+                NSAnimationContext.runAnimationGroup({ ctx in
                     ctx.duration = 0.15
                     affected.forEach { $0.animator().alphaValue = 1 }
-                }
+                }, completionHandler: { [weak self] in
+                    guard let self else { return }
+                    // Re-sync the pill with the engine's real armed action — it
+                    // must not sit on ON/OFF while (say) .left is actually armed.
+                    self.setArmed(self.armedProvider?() ?? nil)
+                    self.isTogglingCollapse = false
+                })
             }
         }
     }

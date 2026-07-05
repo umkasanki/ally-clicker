@@ -57,6 +57,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
+        panel.armedProvider = { [weak controller] in controller?.armed }
         panel.setArmed(controller.armed)
         panel.show()
         NSLog("AllyClicker: panel shown, window frame = \(NSStringFromRect(panel.window.frame))")
