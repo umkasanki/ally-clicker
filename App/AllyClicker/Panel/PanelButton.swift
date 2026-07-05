@@ -61,9 +61,24 @@ final class PanelButton: NSView {
         super.draw(dirtyRect)
     }
 
-    // Show the pointing-hand cursor over every panel button.
-    override func resetCursorRects() {
-        addCursorRect(bounds, cursor: .pointingHand)
+    // Show the pointing-hand cursor over every panel button. Cursor rects only
+    // work in key windows, and this panel never becomes key (nonactivating) —
+    // so use an always-active tracking area instead.
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        trackingAreas.forEach(removeTrackingArea)
+        addTrackingArea(NSTrackingArea(
+            rect: bounds,
+            options: [.mouseEnteredAndExited, .activeAlways],
+            owner: self, userInfo: nil))
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        NSCursor.pointingHand.set()
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        NSCursor.arrow.set()
     }
 
     // MARK: - Drag-to-move (ON/OFF is the panel's move handle)
