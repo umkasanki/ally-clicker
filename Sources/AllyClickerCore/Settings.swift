@@ -192,14 +192,14 @@ extension Settings {
         /// Ordered buttons shown on the panel. Defaults to the confirmed PNC layout.
         public var items: [PanelItem] = Panel.defaultItems
 
-        /// Confirmed default layout (top → bottom): ON/OFF, LEFT, RIGHT, DRAG,
-        /// DOUBLE, MIDDLE, KEYBOARD.
+        /// Confirmed default layout (top → bottom): ON/OFF, LEFT, RIGHT, DOUBLE,
+        /// DRAG, MIDDLE, KEYBOARD.
         public static let defaultItems: [PanelItem] = [
             .command(.togglePanel),
             .action(.left),
             .action(.right),
-            .action(.leftDrag),
             .action(.doubleClick),
+            .action(.leftDrag),
             .action(.middle),
             .command(.launchKeyboard),
         ]

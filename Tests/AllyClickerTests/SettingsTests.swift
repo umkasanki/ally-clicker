@@ -68,11 +68,11 @@ final class SettingsTests: XCTestCase {
 
     // MARK: - Configurable panel layout
 
-    func testDefaultPanelLayoutMatchesScreenshot() {
+    func testDefaultPanelLayout() {
         XCTAssertEqual(Settings().panel.items, [
             .command(.togglePanel),
-            .action(.left), .action(.right), .action(.leftDrag),
-            .action(.doubleClick), .action(.middle),
+            .action(.left), .action(.right), .action(.doubleClick),
+            .action(.leftDrag), .action(.middle),
             .command(.launchKeyboard),
         ])
     }
