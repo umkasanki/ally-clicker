@@ -53,21 +53,10 @@ final class PanelButton: NSView {
         }
     }
 
+    // The button itself is transparent — the container draws the panel background
+    // and owns the sliding red pill (see PanelViewController). The button only
+    // hosts the icon and switches its tint.
     override func draw(_ dirtyRect: NSRect) {
-        // Panel background always fills the whole hit area (hit-testing unchanged).
-        NSColor.windowBackgroundColor.setFill()
-        bounds.fill()
-
-        // Armed = rounded red pill inset from the panel edges, under the icon.
-        if isArmed {
-            let inset: CGFloat = 6
-            let pillRect = bounds.insetBy(dx: inset, dy: inset)
-            let radius: CGFloat = 9   // slightly less than the panel's 12pt
-            NSColor.systemRed.setFill()
-            NSBezierPath(roundedRect: pillRect, xRadius: radius, yRadius: radius).fill()
-        }
-
-        // Icon tint: white when armed for contrast, else primary label color.
         iconView.contentTintColor = isArmed ? .white : .labelColor
         super.draw(dirtyRect)
     }

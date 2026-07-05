@@ -6,14 +6,34 @@ import AllyClickerCore
 // handles collapse/expand, and implements the ZoneMapping port via hit-testing.
 
 // Flipped container so button layout runs top → bottom (matching items order).
+// Draws the panel background itself (buttons are transparent) so the sliding
+// armed-pill can live between the background and the icons.
 private final class FlippedView: NSView {
     override var isFlipped: Bool { true }
+    override func draw(_ dirtyRect: NSRect) {
+        NSColor.windowBackgroundColor.setFill()
+        bounds.fill()
+    }
+}
+
+// The sliding red highlight behind the armed button's icon.
+private final class ArmedPillView: NSView {
+    override init(frame: NSRect) {
+        super.init(frame: frame)
+        wantsLayer = true
+        layer?.cornerRadius = 9   // slightly less than the panel's 12pt
+        layer?.backgroundColor = NSColor.systemRed.cgColor
+    }
+    required init?(coder: NSCoder) { fatalError("init(coder:) not used") }
 }
 
 final class PanelViewController: ZoneMapping {
     let window: PanelWindow
     private let container = FlippedView()
+    private let pill = ArmedPillView()
     private var buttons: [PanelButton] = []
+    private var armedAction: DwellEngine.Action? = nil
+    private let pillInset: CGFloat = 6
 
     private let buttonSize: CGFloat
     private let width: CGFloat
@@ -42,7 +62,9 @@ final class PanelViewController: ZoneMapping {
         container.layer?.cornerRadius = 12
         container.layer?.masksToBounds = true
         window.contentView = container
-        buttons.forEach { container.addSubview($0) }
+        pill.isHidden = true
+        container.addSubview(pill)                       // below the buttons
+        buttons.forEach { container.addSubview($0) }     // transparent, icons on top
         layout()
     }
 
@@ -71,13 +93,43 @@ final class PanelViewController: ZoneMapping {
     // MARK: - Visual state
 
     func setArmed(_ action: DwellEngine.Action?) {
+        let wasArmed = armedAction
+        armedAction = action
+
         for button in buttons {
             if case .action(let a) = button.item {
                 button.isArmed = (a == action)
             } else {
                 button.isArmed = false
             }
+            button.needsDisplay = true
         }
+
+        guard let target = armedButton(), !target.isHidden else {
+            pill.isHidden = true
+            return
+        }
+        let targetFrame = target.frame.insetBy(dx: pillInset, dy: pillInset)
+
+        if wasArmed == nil || pill.isHidden {
+            // Appearing from nothing: place instantly (no slide from a stale spot).
+            pill.frame = targetFrame
+            pill.isHidden = false
+        } else {
+            // Slide from the previous button to the new one.
+            pill.isHidden = false
+            NSAnimationContext.runAnimationGroup { ctx in
+                ctx.duration = 0.18
+                ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
+                ctx.allowsImplicitAnimation = true
+                pill.animator().frame = targetFrame
+            }
+        }
+    }
+
+    private func armedButton() -> PanelButton? {
+        guard let action = armedAction else { return nil }
+        return buttons.first { if case .action(let a) = $0.item { return a == action }; return false }
     }
 
     // MARK: - Collapse / expand (ON/OFF)
@@ -110,5 +162,13 @@ final class PanelViewController: ZoneMapping {
         frame.size = NSSize(width: width, height: height)
         frame.origin.y = topEdge - height
         window.setFrame(frame, display: true)
+
+        // Keep the pill glued to the armed button through relayouts (no animation).
+        if let target = armedButton(), !target.isHidden {
+            pill.frame = target.frame.insetBy(dx: pillInset, dy: pillInset)
+            pill.isHidden = false
+        } else {
+            pill.isHidden = true
+        }
     }
 }
