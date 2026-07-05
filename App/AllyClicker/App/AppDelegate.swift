@@ -11,8 +11,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         settings = settingsStore.load()
+        let granted = hasAccessibilityPermission()
+        NSLog("AllyClicker: launch, accessibility granted = \(granted)")
 
-        guard hasAccessibilityPermission() else {
+        guard granted else {
             showAccessibilityAlert()
             return  // без разрешения инъекция не работает — ждём перезапуска после выдачи
         }
@@ -55,9 +57,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         panel.setArmed(controller.armed)
         panel.show()
+        NSLog("AllyClicker: panel shown, window frame = \(NSStringFromRect(panel.window.frame))")
 
         runner = DwellRunner(controller: controller, intervalMs: settings.stillness.trackerIntervalMs)
         runner.start()
+        NSLog("AllyClicker: dwell runner started")
     }
 
     // MARK: - Accessibility permission
