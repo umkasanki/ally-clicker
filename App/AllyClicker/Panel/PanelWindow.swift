@@ -13,7 +13,10 @@ final class PanelWindow: NSPanel {
         level = .floating                 // above normal windows
         hidesOnDeactivate = false
         isMovableByWindowBackground = false
-        backgroundColor = .systemBlue   // DEBUG: make the panel unmistakable
+        // Force native dark appearance — semantic colors (windowBackgroundColor,
+        // labelColor…) then resolve to their dark variants automatically.
+        appearance = NSAppearance(named: .darkAqua)
+        backgroundColor = .windowBackgroundColor
         hasShadow = true
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         // Never become key/main — it must not take focus.
