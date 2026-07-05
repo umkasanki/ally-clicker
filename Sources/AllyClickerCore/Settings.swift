@@ -21,19 +21,31 @@ public struct Settings: Codable, Equatable {
     public var appearance = Appearance()
     public var panel = Panel()
     public var commands = Commands()
+    public var calibration = Calibration()
 
     public init() {}
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let d = Settings()
-        timing     = try c.decodeIfPresent(Timing.self,     forKey: .timing)     ?? d.timing
-        stillness  = try c.decodeIfPresent(Stillness.self,  forKey: .stillness)  ?? d.stillness
-        clicks     = try c.decodeIfPresent(Clicks.self,     forKey: .clicks)     ?? d.clicks
-        autoScroll = try c.decodeIfPresent(AutoScroll.self, forKey: .autoScroll) ?? d.autoScroll
-        appearance = try c.decodeIfPresent(Appearance.self, forKey: .appearance) ?? d.appearance
-        panel      = try c.decodeIfPresent(Panel.self,      forKey: .panel)      ?? d.panel
-        commands   = try c.decodeIfPresent(Commands.self,   forKey: .commands)   ?? d.commands
+        timing      = try c.decodeIfPresent(Timing.self,      forKey: .timing)      ?? d.timing
+        stillness   = try c.decodeIfPresent(Stillness.self,   forKey: .stillness)   ?? d.stillness
+        clicks      = try c.decodeIfPresent(Clicks.self,      forKey: .clicks)      ?? d.clicks
+        autoScroll  = try c.decodeIfPresent(AutoScroll.self,  forKey: .autoScroll)  ?? d.autoScroll
+        appearance  = try c.decodeIfPresent(Appearance.self,  forKey: .appearance)  ?? d.appearance
+        panel       = try c.decodeIfPresent(Panel.self,       forKey: .panel)       ?? d.panel
+        commands    = try c.decodeIfPresent(Commands.self,    forKey: .commands)    ?? d.commands
+        calibration = try c.decodeIfPresent(Calibration.self, forKey: .calibration) ?? d.calibration
+    }
+
+    /// Effective desktop auto-click dwell time (seconds).
+    /// If calibration is enabled and valid, use the PNC-style adaptive formula;
+    /// otherwise fall back to the manual `timing.dwellTimeMouseMs`.
+    public var effectiveDwellMouseSeconds: TimeInterval {
+        if let ms = calibration.computedDwellMs(sensitivity: stillness.sensitivity) {
+            return Double(ms) / 1000
+        }
+        return timing.dwellTimeMouseSeconds
     }
 }
 
@@ -278,6 +290,50 @@ extension Settings.KeyboardTarget: Codable {
         case .customApp(let path):
             try c.encode(Mode.customApp, forKey: .mode)
             try c.encode(path, forKey: .path)
+        }
+    }
+}
+
+// MARK: - Adaptive dwell calibration
+//
+// Confirmed by the PNC author: PNC does not set the desktop dwell time directly —
+// it computes it from a per-user baseline speed measurement:
+//
+//     DwellTimeMouse = Int(DwellMultiplier * Sensitivity_Twips / AverageVelocity)
+//
+// Slower movers get a longer dwell, faster movers a shorter one — that
+// auto-adaptation is what makes PNC comfortable for hours. We keep this as pure
+// arithmetic in the core; the baseline speed test (measuring averageVelocity) and
+// the calibration UI live in the macOS app. Units are re-derived for macOS
+// (twips → points); `multiplier` must be re-tuned on a Mac so a user's measured
+// velocity lands near their comfortable dwell. Disabled by default → manual fallback.
+
+extension Settings {
+    public struct Calibration: Codable, Equatable {
+        /// When false, the manual `timing.dwellTimeMouseMs` is used (default).
+        public var enabled: Bool = false
+        /// Per-user cursor speed from the baseline test (points/sec). 0 = not measured.
+        public var averageVelocity: Double = 0
+        /// Responsiveness scalar. Placeholder; must be tuned during macOS calibration
+        /// so real measured velocities produce comfortable dwell times.
+        public var multiplier: Double = 76
+
+        public init() {}
+
+        public init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            let d = Calibration()
+            enabled         = try c.decodeIfPresent(Bool.self,   forKey: .enabled)         ?? d.enabled
+            averageVelocity = try c.decodeIfPresent(Double.self, forKey: .averageVelocity) ?? d.averageVelocity
+            multiplier      = try c.decodeIfPresent(Double.self, forKey: .multiplier)      ?? d.multiplier
+        }
+
+        /// Computed dwell (ms) from the formula, or nil if calibration can't produce
+        /// a usable value (disabled, or velocity not yet measured). Clamped to ≥ 1ms.
+        public func computedDwellMs(sensitivity: Int) -> Int? {
+            guard enabled, averageVelocity > 0 else { return nil }
+            let ms = multiplier * Double(sensitivity) / averageVelocity
+            return max(1, Int(ms))
         }
     }
 }

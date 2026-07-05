@@ -279,3 +279,13 @@ AllyClicker/
 - [ ] 5.3 Audio feedback
 - [ ] 5.4 Финальное тестирование
 - [ ] 5.5 Сборка + нотаризация
+
+### Бэклог (подтверждено автором PNC, 2026-06-29 — см. spec «Дополнение по переписке»)
+- [x] Адаптивный dwell — формула в ядре (`Settings.Calibration.computedDwellMs`,
+  `effectiveDwellMouseSeconds`); ручное значение = fallback. 7 тестов
+- [ ] Калибровочный baseline-тест (Mac): замерить `averageVelocity`, подобрать
+  `multiplier` под точки/пиксели macOS; UI-экран в Configure + гейт на старте
+  (аналог `BaselineFlags`). Sensitivity-слайдер тогда влияет и на dwell, не только на радиус
+- [ ] `RightLeft` (right-затем-left) — реализовать в InputController + добавить как PanelItem
+- [ ] RAMB (Remote Access Mouse Button) — плавающий якорь поверх fullscreen (Фаза 5+)
+- [ ] Break-timer (`UseTimer`/`UseTimerReset`) — напоминания об отдыхе (опционально)

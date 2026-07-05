@@ -192,7 +192,7 @@ public struct DwellEngine {
 
             if action == .leftDrag {
                 handleDrag(cursor: cursor, into: &effects)
-            } else if dwellElapsed >= settings.timing.dwellTimeMouseSeconds {
+            } else if dwellElapsed >= settings.effectiveDwellMouseSeconds {
                 effects.append(.fire(action, at: cursor))
                 markFired(at: cursor)
                 resetDwell(at: cursor)

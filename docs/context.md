@@ -157,9 +157,11 @@ ally-clicker/
 Ключевое:
 - **Dwell над экраном в PNC вычисляется, а не задаётся:**
   `DwellTimeMouse = Int(DwellMultiplier * Sensitivity_Twips / AverageVelocity)`,
-  где `AverageVelocity` — из обязательного калибровочного теста. У нас сейчас
-  `dwellTimeMouseMs = 195` — это ручной **fallback**; добавлять ли калибровку —
-  открытое проектное решение (детали в spec).
+  где `AverageVelocity` — из обязательного калибровочного теста.
+  → **РЕШЕНО:** формула реализована в ядре (`Settings.Calibration.computedDwellMs`,
+  `Settings.effectiveDwellMouseSeconds`), ручной `dwellTimeMouseMs = 195` остаётся
+  fallback. Калибровка выключена по умолчанию (`enabled = false`). Осталось на Mac:
+  baseline-тест для замера `averageVelocity` и подбор `multiplier` под точки macOS.
 - `BaselineFlags` = флаг «калибровка пройдена»; `SensitivityV2` = допуск-радиус (= наш `dwell_radius`).
 - **AutoCancel OFF** в PNC: без swipe-отмены (нужен Cancel/другая кнопка). У нас swipe-reset
   оставляем всегда — осознанное улучшение, а не баг.
