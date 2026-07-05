@@ -7,16 +7,47 @@
 
 ## Статус проекта
 
-**Текущая фаза:** Фаза 1 завершена (ядро). Дальше — Фаза 2 (macOS UI, нужен Mac)
-**Текущий шаг:** Ядро полностью реализовано и покрыто тестами на WSL
-**Последнее действие:** Реализованы DwellEngine (клики + two-phase drag), DwellController, AutoScrollEngine, SettingsStore. 26 юнит-тестов проходят на WSL (Swift 6.3.2)
+**Текущая фаза:** Фазы 2–3 почти завершены — живая панель работает на реальном Mac
+**Текущий шаг:** Визуал панели утверждён пользователем; осталось вернуть debug-хвосты и проверить инъекцию кликов
+**Последнее действие (сессия на Mac):** Панель запущена вживую, весь UI-слой написан и отлажен на устройстве. Dwell-механика подтверждена пользователем (armed/swipe/collapse работают)
 
-### Что НЕЛЬЗЯ делать на WSL (нужен Mac)
-- Создать `App/AllyClicker.xcodeproj` (инструкция в `App/README.md`)
-- Адаптеры: `CursorSampler` (NSEvent), `PanelZoneMapper` (hit-test панели)
-- UI: NSPanel + кнопки, статус-бар, окно настроек
-- Auto-scroll адаптер (CGScrollWheelEvent), drag-роутинг проверить вживую
-- Сборка, Accessibility-проверка в реальной среде
+### Доступ к Mac
+- SSH: `ssh mishkin@100.126.136.17`, проект в `~/projects/ally-clicker`
+- macOS 26.3.1 (arm64), Xcode 26.6 установлен, лицензия принята
+- Все 65 тестов проходят на Mac (`swift test`) и на Linux-CI
+- Сборка без Xcode-проекта: `./App/build-app.sh` → `build/AllyClicker.app`
+  (swift build + swiftc против AppKit + ad-hoc codesign)
+- Цикл итерации: правка на WSL → commit/push → `ssh … git pull && ./App/build-app.sh && pkill … && open …`
+- GUI запускать может только пользователь на самом Mac (SSH `open` работает,
+  но скриншоты/GUI-интеракции — нет)
+
+### ⚠️ Debug-хвосты, которые нужно вернуть
+1. **Панель в ЦЕНТРЕ экрана** (PanelViewController: `DEBUG: center on screen`) —
+   вернуть докинг к правому краю (`settings.panel.positionY`)
+2. **Гейт Accessibility отключён** (AppDelegate: панель показывается всегда) —
+   вернуть мягкий гейт: панель показывать, но предупреждать об отсутствии доступа
+3. **Ad-hoc подпись слетает при каждой пересборке** → тумблер Accessibility
+   надо включать заново после каждого build. Решение: Xcode-проект со стабильной
+   подписью (Apple Development сертификат) — задача следующей сессии
+
+### Что сделано в UI-слое (App/, всё работает вживую)
+- `PanelWindow`: nonactivating NSPanel, statusBar level, immune к desktop-reveal
+- `PanelViewController`: кнопки из `panel.items`, hit-test (ZoneMapping),
+  скользящая красная плашка (ease-in-out 0.25s), анимация collapse/expand,
+  зажим рамки в экран, fade плашки с ON/OFF через 1с после сворачивания
+- `PanelButton`: иконки проекта (векторные PDF, template), размеры 48/42/36,
+  drag-to-move за ON/OFF (с подавлением dwell-toggle во время drag),
+  pointing-hand курсор (через private SetsCursorInBackground)
+- `CursorSampler`, `CGMouseInjector`, `KeyboardLauncher`, `DwellRunner` — адаптеры
+- `ScreenGeometry`: конвенция top-left координат, флип на границе AppKit
+
+### Что дальше (следующая сессия)
+1. Вернуть debug-хвосты (панель вправо, мягкий гейт Accessibility)
+2. **Проверить инъекцию кликов вживую** — главный не проверенный риск: Y-flip
+   координат (клик должен попасть в точку остановки курсора)
+3. Проверить DRAG и MIDDLE на реальных приложениях
+4. Xcode-проект со стабильной подписью (решает проблему слетающего разрешения)
+5. KeyboardLauncher: проверить запуск Accessibility Keyboard (TODO в коде)
 
 ---
 

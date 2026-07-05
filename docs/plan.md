@@ -243,23 +243,29 @@ AllyClicker/
 - [x] 1.0 KeyboardTarget: 3 режима (accessibility/viewer/custom)
 - [x] 1.4 SettingsStore (JSON read/write) + устойчивый к отсутствующим ключам decode
 - [x] 1.5 Юнит-тесты: 58 тестов, все зелёные на WSL и в CI (GitHub Actions)
-- [ ] 1.1 Xcode проект (создаётся на Mac, см. App/README.md)
-- [ ] 1.2 Accessibility permission check + alert (код готов в App/, нужен Mac для сборки)
-- [ ] 1.3 CGMouseInjector spike (код готов, нужен Mac для проверки)
+- [x] 1.2 Accessibility permission check + alert (работает; сейчас debug-режим без гейта)
+- [x] 1.3 CGMouseInjector собран против реального AppKit (инъекция вживую ещё не проверена)
+- [ ] 1.1 Xcode проект — теперь нужен в основном для стабильной подписи
+  (ad-hoc подпись слетает при пересборке → Accessibility каждый раз заново).
+  Временная замена: `App/build-app.sh` (сборка без Xcode) — работает
 
-### Фаза 2 — NSPanel
-- [ ] 2.1 PanelWindow (nonactivating, floating, borderless)
-- [ ] 2.2 PanelButton (иконка + состояния normal/armed; БЕЗ dwell-анимации, spec §2)
-- [ ] 2.3 PanelViewController (7 кнопок, hit-testing)
-- [ ] 2.4 ON/OFF кнопка (сворачивание/разворачивание)
+### Фаза 2 — NSPanel ✅ (работает вживую на Mac, визуал утверждён)
+- [x] 2.1 PanelWindow (nonactivating, statusBar level, immune к desktop-reveal, скругления 12pt)
+- [x] 2.2 PanelButton (иконки проекта PDF 48/42/36, normal/armed, pointing-hand курсор)
+- [x] 2.3 PanelViewController (кнопки из panel.items, hit-testing, зажим в экран)
+- [x] 2.4 ON/OFF: сворачивание/разворачивание с анимацией + drag-to-move панели
+- [x] 2.5 Скользящая красная плашка (ease-in-out), заезжает и под команды,
+  fade с ON/OFF через 1с после сворачивания
 
 ### Фаза 3 — DwellEngine интеграция
-> Логика ядра готова (Фаза 1). Здесь остаётся только macOS-обвязка.
-- [x] 3.4 DRAG двухфазная механика — реализована в DwellEngine (ядро)
-- [x] 3.5 Auto-Scroll расчёт дельты — AutoScrollEngine (ядро); остаётся CGScrollWheelEvent адаптер
+> Логика ядра готова (Фаза 1). macOS-обвязка подключена и работает вживую.
+- [x] 3.1 DwellRunner (DispatchSourceTimer 5мс) → DwellController.advance(dt:)
+- [x] 3.2 onUIEffect → плашка/подсветка; onCommand → toggle/keyboard
+- [x] 3.4 DRAG двухфазная механика — в ядре (вживую ещё не проверена)
+- [x] 3.5 Auto-Scroll расчёт дельты — AutoScrollEngine (ядро)
 - [x] 3.3 Last position outside panel — НЕ нужно: движок стреляет только в зоне .desktop
-- [ ] 3.1 Polling cursor position (DispatchSourceTimer 5мс) → вызывает DwellController.advance(dt:)
-- [ ] 3.2 onUIEffect → отрисовка состояний кнопок панели
+- [ ] 3.6 **Проверить инъекцию кликов вживую** (Y-flip координат — главный риск)
+- [ ] 3.7 Вернуть debug-хвосты: панель к правому краю, мягкий гейт Accessibility
 - [ ] 3.5a CGScrollWheelEvent адаптер для Auto-Scroll (MIDDLE click режим)
 
 ### Фаза 4 — Settings Window
