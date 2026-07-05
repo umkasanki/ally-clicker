@@ -38,6 +38,9 @@ final class PanelViewController: ZoneMapping {
         NSLog("AllyClicker: screenFrame=\(NSStringFromRect(screenFrame)) items=\(items.count) origin=(\(originX),\(originY)) size=(\(width)x\(totalHeight))")
         window = PanelWindow(contentRect: NSRect(x: originX, y: originY, width: width, height: totalHeight))
         container.frame = NSRect(x: 0, y: 0, width: width, height: totalHeight)
+        container.wantsLayer = true
+        container.layer?.cornerRadius = 12
+        container.layer?.masksToBounds = true
         window.contentView = container
         buttons.forEach { container.addSubview($0) }
         layout()

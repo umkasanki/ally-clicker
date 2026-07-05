@@ -16,7 +16,9 @@ final class PanelWindow: NSPanel {
         // Force native dark appearance — semantic colors (windowBackgroundColor,
         // labelColor…) then resolve to their dark variants automatically.
         appearance = NSAppearance(named: .darkAqua)
-        backgroundColor = .windowBackgroundColor
+        // Transparent window: the rounded container draws the visible background.
+        backgroundColor = .clear
+        isOpaque = false
         hasShadow = true
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         // Never become key/main — it must not take focus.
