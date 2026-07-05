@@ -54,10 +54,19 @@ final class PanelButton: NSView {
     }
 
     override func draw(_ dirtyRect: NSRect) {
-        // Background per state — semantic colors resolve via the window's darkAqua
-        // appearance, so this stays native-dark without hardcoded colors.
-        (isArmed ? NSColor.systemRed : NSColor.windowBackgroundColor).setFill()
+        // Panel background always fills the whole hit area (hit-testing unchanged).
+        NSColor.windowBackgroundColor.setFill()
         bounds.fill()
+
+        // Armed = rounded red pill inset from the panel edges, under the icon.
+        if isArmed {
+            let inset: CGFloat = 6
+            let pillRect = bounds.insetBy(dx: inset, dy: inset)
+            let radius: CGFloat = 9   // slightly less than the panel's 12pt
+            NSColor.systemRed.setFill()
+            NSBezierPath(roundedRect: pillRect, xRadius: radius, yRadius: radius).fill()
+        }
+
         // Icon tint: white when armed for contrast, else primary label color.
         iconView.contentTintColor = isArmed ? .white : .labelColor
         super.draw(dirtyRect)
