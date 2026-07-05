@@ -118,8 +118,15 @@ Transitions (verified):
    they want — 2 seconds or 2 hours later. (Verified: panel sits with no red
    highlight until the user deliberately dwells a button.)
 4. **After an actual click fires on a target:** armed action reverts to **left**
-   (`DefaultLeft = true`) — the common action is left ready. (Strongly
-   indicated by video but flagged in open questions to confirm.)
+   (`DefaultLeft = true`) — the common action is left ready. **(Confirmed by the
+   PNC author.)**
+
+**When `AutoCancel` is OFF (confirmed by the author):** a selected button stays
+armed until the user either selects another button or selects the **Cancel**
+button. I.e. there is no brush-to-cancel; cancelling requires aiming at and
+dwelling on an explicit Cancel target. This is exactly the tiring behavior the
+user wants to avoid — so the macOS version should default `autoCancel = true`
+and treat the brush-to-cancel path as the primary design.
 
 Why it reduces fatigue (design rationale — preserve this): by Fitts's law the
 cancel target is the *entire panel* (huge, edge-docked, no precision needed) and
@@ -158,17 +165,56 @@ defaults. Sub-keys `Shortcuts` was empty.
 | `DwellTime`     | 320   | Dwell before a panel button is selected → 0.32 s     |
 | `DwellTimeExit` | 210   | Dwell before the Exit button → 0.21 s (shorter)      |
 | `DwellTimeMouse`| 195   | Dwell before an auto-click fires → ~0.20 s           |
-| `UseTimer`      | 30    | "Use timer" — units unconfirmed (tenths/ticks?)      |
-| `UseTimerReset` | 10    | Reset counterpart — units unconfirmed                |
+| `UseTimer`      | 30    | **Break Timer interval** (confirmed) — periodic rest-break reminder |
+| `UseTimerReset` | 10    | **Break Timer interval** reset counterpart (confirmed)              |
 
 ### Stillness detection (OS-independent core)
 
 | Key              | Value | Meaning                                                        |
 |------------------|-------|----------------------------------------------------------------|
-| `SensitivityV2`  | 1     | Movement tolerance ("Units" in UI). 1 = tightest. Pixel radius (confirm). |
+| `SensitivityV2`  | 1     | **Movement tolerance (confirmed)** — a radius; while the cursor stays within it the dwell timer runs, a larger move resets it. 1 = tightest. |
 | `TrackerInterval`| 5     | Cursor sampling interval (ms)                                  |
-| `BaselineFlags`  | 3     | Calibration bit field — meaning unconfirmed, treat as opaque   |
-| `AverageVelocity`| 0.39  | Avg cursor velocity measured in the speed test                 |
+| `BaselineFlags`  | 3     | **Calibration-done flag (confirmed):** indicates whether the first-run baseline tests have passed. If false, PNC runs the tests on launch and **cannot be used until they pass**. (Treat as: gate the app behind calibration.) |
+| `AverageVelocity`| 0.39  | **Measured in the baseline test (confirmed).** Per-user movement speed; feeds the adaptive dwell formula below — it is *the* input that personalizes dwell timing. |
+
+### Adaptive dwell — the core formula (confirmed by the PNC author)
+
+This is the single most valuable thing recovered from the correspondence and the
+original reason for wanting the source: **the desktop dwell time is not set
+directly by the user — it is computed from a calibration measurement.** The
+author gave the exact relation:
+
+```
+DwellTimeMouse = Int(DwellMultiplier * Sensitivity_Twips / AverageVelocity)
+```
+
+Where:
+
+- `AverageVelocity` is measured during the mandatory first-run **baseline test**
+  (the speed/sensitivity calibration). It captures how fast *this* user actually
+  moves the cursor with their tracker.
+- `Sensitivity_Twips` is the sensitivity setting expressed in twips (a legacy
+  Windows VB unit: 1/1440 inch). On macOS there are no twips — replace with a
+  points- or pixels-based sensitivity term and re-tune `DwellMultiplier` so the
+  output range matches.
+- `DwellMultiplier` is a scalar that sets the overall responsiveness.
+- `Int(...)` truncates to an integer millisecond value.
+
+**Why this matters / implications for the macOS port:**
+
+1. **Calibration is core, not optional.** `DwellTimeMouse` (≈195 ms in the
+   user's registry) is a *derived* value. To reproduce PNC's feel we must build
+   the baseline speed test early and store the resulting `averageVelocity`; the
+   dwell engine then computes its own timing from it. Slower movers automatically
+   get a longer dwell, faster movers a shorter one — that auto-adaptation is what
+   makes PNC comfortable for hours.
+2. **Units must be re-derived for macOS.** Drop twips; pick a screen-space unit
+   and recalibrate `DwellMultiplier` empirically so that, for the user's own
+   `averageVelocity`, the formula lands near their known-good ~195 ms. Use the
+   registry values as the target to calibrate against.
+3. **Keep it in the pure engine.** The formula is OS-independent arithmetic — it
+   belongs in the testable dwell engine, with `averageVelocity`,
+   `dwellMultiplier`, and the sensitivity term as inputs.
 
 ### Click actions (enabled = injectable). User's enabled set in **bold**.
 
@@ -176,10 +222,31 @@ defaults. Sub-keys `Shortcuts` was empty.
 RightDrag, Middle2, MiddleDrag, RightLeft = off.
 `DefaultLeft` = true (left is the default action), `AutoCancel` = true.
 
+Confirmed meanings (from the author):
+
+- `Left` / `Middle` = **single** left / middle click.
+- `Left2` / `Middle2` = **double** left / middle click (not "secondary"). So the
+  user's enabled set is: single-left, double-left, left-drag, right, middle.
+- `RightLeft` = **right-then-left** combo: right-click (e.g. to open a context
+  menu) immediately followed by a left-click to select an item. (Off for this
+  user, but worth supporting.)
+
 ### Repeat
 
 `RepeatMove`, `RepeatNoMove`, `FastRepeat` = all false.
-`RAMB` = false (RAMB ≈ "Repeat A Mouse Button"; `RAMBTransparency` = 255).
+`RAMB` = false; `RAMBTransparency` = 255.
+
+**RAMB = Remote Access Mouse Button (confirmed — earlier "Repeat A Mouse Button"
+guess was wrong).** It lets PNC be used when a full-screen app refuses to let the
+PNC panel stay on top: the user defines a fixed spot on screen that they can
+hover over to arm a mouse function, instead of reaching the normal panel.
+`RAMBTransparency` controls that spot's opacity.
+
+→ **macOS analog:** a small floating anchor window placed above full-screen
+content. Note this is harder on macOS — windows above a Space's full-screen app
+need an elevated window level and the right `collectionBehavior`
+(e.g. `.canJoinAllSpaces` / `.fullScreenAuxiliary`), plus Accessibility. Treat
+RAMB as a later milestone, after the main panel works.
 
 ### Appearance / feedback
 
@@ -198,17 +265,30 @@ size limits `MinWidth/Height` = 35/106, `MaxWidth/Height` = 150/829.
 `CMDKEY` = -1, `CMDREPEAT` = -1, `CMDSHIFT` = 0 (command-key params),
 `PNCPath` = `C:\Program Files (x86)\Point-N-Click NET\`, `Version` = 3.0.3.2.
 
-## 7. Open questions to confirm later
+## 7. Open questions — RESOLVED by the PNC author (2026-06-29)
 
-- **Post-click revert:** after an action fires on a target, does the armed action
-  revert to left (`DefaultLeft`) or clear to nothing? Video strongly suggests
-  revert-to-left; confirm with one observation. (Note: the *swipe* reset is
-  confirmed to clear to nothing — these are two different paths, see §4.)
-- Units of `UseTimer` / `UseTimerReset` (seconds tenths? internal ticks?).
-- Exact meaning of `BaselineFlags` bits and how the speed test produces
-  `AverageVelocity`.
-- Precise behavior of `RAMB` and the `Left2` / `Middle2` "secondary" actions.
-- Whether `SensitivityV2` is a pixel radius, and its real-world range.
+All of the items previously listed here were confirmed in correspondence with
+Anne York. Kept for the record:
+
+- **Post-click revert:** confirmed — after an action fires, the armed action
+  reverts to **left** (`DefaultLeft`). The *swipe* reset (clear to nothing) is a
+  separate path. See §4.
+- **`UseTimer` / `UseTimerReset`:** confirmed — Break Timer intervals (rest-break
+  reminder), see §6.
+- **`BaselineFlags` / `AverageVelocity`:** confirmed — `BaselineFlags` is the
+  "calibration passed" gate; `AverageVelocity` is measured in the mandatory
+  baseline test and feeds the dwell formula
+  `DwellTimeMouse = Int(DwellMultiplier * Sensitivity_Twips / AverageVelocity)`.
+  See §6 "Adaptive dwell".
+- **`RAMB`:** confirmed — Remote Access Mouse Button (floating anchor for
+  full-screen apps), **not** "repeat". See §6 Repeat.
+- **`Left2` / `Middle2`:** confirmed — double left / middle click. See §6 Click
+  actions.
+- **`SensitivityV2`:** confirmed — a movement-tolerance radius. See §6 Stillness.
+
+Remaining genuinely-open items are macOS-side design decisions, not PNC unknowns:
+whether to implement the baseline calibration test (vs. a manual dwell value),
+and how to re-derive the formula's units for macOS (twips → points/pixels).
 
 ## 8. Files in this project
 

@@ -145,3 +145,26 @@ ally-clicker/
 - Аналог: https://polital.com/pnc/
 - DwellClick (анализ): https://github.com/pilotmoon/DwellClick
 - LinearMouse (auto-scroll): https://github.com/linearmouse/linearmouse
+
+
+---
+
+## Обновление 2026-06-29 — выводы из переписки с автором PNC
+
+Получены и подтверждены ответы Anne York (автор PNC) на 8 вопросов. Полностью внесены в
+`docs/spec.md` → раздел «Дополнение по переписке с автором PNC (подтверждено 2026-06-29)».
+
+Ключевое:
+- **Dwell над экраном в PNC вычисляется, а не задаётся:**
+  `DwellTimeMouse = Int(DwellMultiplier * Sensitivity_Twips / AverageVelocity)`,
+  где `AverageVelocity` — из обязательного калибровочного теста. У нас сейчас
+  `dwellTimeMouseMs = 195` — это ручной **fallback**; добавлять ли калибровку —
+  открытое проектное решение (детали в spec).
+- `BaselineFlags` = флаг «калибровка пройдена»; `SensitivityV2` = допуск-радиус (= наш `dwell_radius`).
+- **AutoCancel OFF** в PNC: без swipe-отмены (нужен Cancel/другая кнопка). У нас swipe-reset
+  оставляем всегда — осознанное улучшение, а не баг.
+- `RAMB` = Remote Access Mouse Button (якорь поверх fullscreen) — кандидат в Фазу 5.
+- `Left2`/`Middle2` = двойной клик; `RightLeft` = right-затем-left; `UseTimer*` = break-таймер.
+
+⚠️ Reference-бриф `references/point-n-click/config/point-n-click-macos-port-brief.md` создан
+до ответов и частично устарел — актуальные выводы см. в `docs/spec.md`.
