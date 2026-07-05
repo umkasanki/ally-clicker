@@ -43,9 +43,9 @@ final class PanelButton: NSView {
                                 width: size, height: size)
     }
 
-    /// ON/OFF is the panel's primary control — render its glyph larger.
+    /// Command buttons (ON/OFF, KEYBOARD) are primary controls — render larger.
     private var iconSize: CGFloat {
-        if case .command(.togglePanel) = item { return 42 }
+        if case .command = item { return 42 }
         return 30
     }
 
