@@ -122,9 +122,11 @@ final class PanelViewController: ZoneMapping {
             pill.isHidden = false
         } else {
             // Slide from wherever the pill is to the new button.
+            // Custom ease-in-out with a slight overshoot feel: gentle start,
+            // confident middle, soft settle — reads as physical motion.
             NSAnimationContext.runAnimationGroup { ctx in
-                ctx.duration = 0.18
-                ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
+                ctx.duration = 0.25
+                ctx.timingFunction = CAMediaTimingFunction(controlPoints: 0.4, 0.0, 0.2, 1.0)
                 ctx.allowsImplicitAnimation = true
                 pill.animator().frame = targetFrame
             }
