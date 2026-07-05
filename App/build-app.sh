@@ -25,6 +25,10 @@ swiftc -framework AppKit \
 
 cp App/Info.plist "$APP/Contents/Info.plist"
 
+# Bundle resources (icons etc.)
+mkdir -p "$APP/Contents/Resources"
+cp -R App/AllyClicker/Resources/ "$APP/Contents/Resources/"
+
 echo "[4/4] Ad-hoc code signing (helps Accessibility persistence)..."
 codesign --force --sign - "$APP" || echo "  (codesign skipped)"
 

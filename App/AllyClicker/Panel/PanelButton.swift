@@ -26,9 +26,9 @@ final class PanelButton: NSView {
 
     private func setupIcon() {
         iconView.imageScaling = .scaleProportionallyUpOrDown
-        let image = NSImage(systemSymbolName: item.sfSymbolName,
-                            accessibilityDescription: item.id)
-        NSLog("AllyClicker: button \(item.id) symbol \(item.sfSymbolName) image=\(image == nil ? "NIL" : "ok")")
+        let image = item.projectIcon ?? NSImage(systemSymbolName: item.sfSymbolName,
+                                                accessibilityDescription: item.id)
+        NSLog("AllyClicker: button \(item.id) icon=\(item.projectIcon != nil ? "custom" : "sf-fallback")")
         iconView.image = image
         iconView.contentTintColor = .labelColor
         addSubview(iconView)
@@ -54,9 +54,32 @@ final class PanelButton: NSView {
     }
 }
 
-// SF Symbol mapping — placeholder glyphs. The prepared custom icons
-// (references/point-n-click/icons) get wired via the asset catalog in Xcode later.
 extension PanelItem {
+    /// Project icon (vector PDF from Resources/icons), template-tinted.
+    /// nil → fall back to an SF Symbol.
+    var projectIcon: NSImage? {
+        guard let name = projectIconName,
+              let url = Bundle.main.url(forResource: name, withExtension: "pdf",
+                                        subdirectory: "icons"),
+              let image = NSImage(contentsOf: url) else { return nil }
+        image.isTemplate = true  // monochrome glyph → tintable via contentTintColor
+        return image
+    }
+
+    private var projectIconName: String? {
+        switch self {
+        case .action(.left):        return "click-left"
+        case .action(.right):       return "click-right"
+        case .action(.leftDrag):    return "drag"
+        case .action(.doubleClick): return "click-double"
+        case .action(.middle):      return "click-middle"
+        case .command(.togglePanel):    return "power"
+        case .command(.launchKeyboard): return "keyboard"
+        default:                    return nil
+        }
+    }
+
+    /// SF Symbol fallback for items without a project icon.
     var sfSymbolName: String {
         switch self {
         case .action(.left):        return "cursorarrow.click"
