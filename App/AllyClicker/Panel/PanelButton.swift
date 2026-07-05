@@ -56,12 +56,10 @@ final class PanelButton: NSView {
     override func draw(_ dirtyRect: NSRect) {
         // Background per state — semantic colors resolve via the window's darkAqua
         // appearance, so this stays native-dark without hardcoded colors.
-        // Armed = the system's neutral selection tone: dark, slightly lighter
-        // than the panel background.
-        (isArmed ? NSColor.unemphasizedSelectedContentBackgroundColor
-                 : NSColor.windowBackgroundColor).setFill()
+        (isArmed ? NSColor.systemRed : NSColor.windowBackgroundColor).setFill()
         bounds.fill()
-        iconView.contentTintColor = .labelColor
+        // Icon tint: white when armed for contrast, else primary label color.
+        iconView.contentTintColor = isArmed ? .white : .labelColor
         super.draw(dirtyRect)
     }
 }
