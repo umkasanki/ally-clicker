@@ -142,16 +142,39 @@ final class PanelViewController: ZoneMapping {
 
     func toggleCollapsed() {
         isCollapsed.toggle()
-        for button in buttons {
-            if case .command(.togglePanel) = button.item { continue }
-            button.isHidden = isCollapsed
+        let affected = buttons.filter {
+            if case .command(.togglePanel) = $0.item { return false }
+            return true
         }
-        layout()
+
+        if isCollapsed {
+            // Fade the buttons out, then shrink the window.
+            NSAnimationContext.runAnimationGroup({ ctx in
+                ctx.duration = 0.12
+                affected.forEach { $0.animator().alphaValue = 0 }
+            }, completionHandler: { [weak self] in
+                affected.forEach { $0.isHidden = true }
+                self?.applyLayout(animated: true)
+            })
+        } else {
+            // Grow the window, then fade the buttons back in.
+            affected.forEach { $0.isHidden = false; $0.alphaValue = 0 }
+            applyLayout(animated: true) {
+                NSAnimationContext.runAnimationGroup { ctx in
+                    ctx.duration = 0.15
+                    affected.forEach { $0.animator().alphaValue = 1 }
+                }
+            }
+        }
     }
 
     // MARK: - Layout
 
     private func layout() {
+        applyLayout(animated: false)
+    }
+
+    private func applyLayout(animated: Bool, completion: (() -> Void)? = nil) {
         let visible = buttons.filter { !$0.isHidden }
         let height = CGFloat(visible.count) * buttonSize
 
@@ -160,21 +183,34 @@ final class PanelViewController: ZoneMapping {
             button.frame = NSRect(x: 0, y: y, width: width, height: buttonSize)
             y += buttonSize
         }
-        container.frame = NSRect(x: 0, y: 0, width: width, height: height)
 
         // Resize the window keeping its TOP edge fixed (panel stays docked at top).
         var frame = window.frame
         let topEdge = frame.maxY
         frame.size = NSSize(width: width, height: height)
         frame.origin.y = topEdge - height
-        window.setFrame(frame, display: true)
 
-        // Keep the pill glued to its button through relayouts (no animation).
-        if let target = pillButton(), !target.isHidden {
-            pill.frame = target.frame.insetBy(dx: pillInset, dy: pillInset)
-            pill.isHidden = false
+        let finish = { [weak self] in
+            guard let self else { return }
+            // Keep the pill glued to its button through relayouts (no animation).
+            if let target = self.pillButton(), !target.isHidden {
+                self.pill.frame = target.frame.insetBy(dx: self.pillInset, dy: self.pillInset)
+                self.pill.isHidden = false
+            } else {
+                self.pill.isHidden = true
+            }
+            completion?()
+        }
+
+        if animated {
+            NSAnimationContext.runAnimationGroup({ ctx in
+                ctx.duration = 0.25
+                ctx.timingFunction = CAMediaTimingFunction(controlPoints: 0.4, 0.0, 0.2, 1.0)
+                window.animator().setFrame(frame, display: true)
+            }, completionHandler: finish)
         } else {
-            pill.isHidden = true
+            window.setFrame(frame, display: true)
+            finish()
         }
     }
 }
