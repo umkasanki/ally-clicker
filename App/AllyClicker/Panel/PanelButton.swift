@@ -60,6 +60,42 @@ final class PanelButton: NSView {
         iconView.contentTintColor = isArmed ? .white : .labelColor
         super.draw(dirtyRect)
     }
+
+    // MARK: - Drag-to-move (ON/OFF is the panel's move handle)
+    //
+    // Dragging the power button moves the whole panel, clamped on-screen.
+    // Works with a physical mouse AND with the app's own DRAG function
+    // (arm DRAG → dwell on power → mouseDown → move → dwell → mouseUp).
+
+    private var isMoveHandle: Bool {
+        if case .command(.togglePanel) = item { return true }
+        return false
+    }
+
+    private var dragGrabOffset: NSPoint? = nil
+
+    override func mouseDown(with event: NSEvent) {
+        guard isMoveHandle, let window else { return super.mouseDown(with: event) }
+        let mouse = NSEvent.mouseLocation
+        dragGrabOffset = NSPoint(x: mouse.x - window.frame.origin.x,
+                                 y: mouse.y - window.frame.origin.y)
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        guard isMoveHandle, let window, let grab = dragGrabOffset else {
+            return super.mouseDragged(with: event)
+        }
+        let mouse = NSEvent.mouseLocation
+        var frame = window.frame
+        frame.origin = NSPoint(x: mouse.x - grab.x, y: mouse.y - grab.y)
+        frame = PanelViewController.clampToScreen(frame)
+        window.setFrameOrigin(frame.origin)
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        dragGrabOffset = nil
+        super.mouseUp(with: event)
+    }
 }
 
 extension PanelItem {
