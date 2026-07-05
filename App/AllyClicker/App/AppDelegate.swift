@@ -10,6 +10,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var runner: DwellRunner!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        BackgroundCursor.enable()   // allow cursor changes while never-active
         settings = settingsStore.load()
         let granted = hasAccessibilityPermission()
         NSLog("AllyClicker: launch, accessibility granted = \(granted)")
