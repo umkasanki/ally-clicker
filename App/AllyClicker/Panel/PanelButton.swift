@@ -25,24 +25,28 @@ final class PanelButton: NSView {
     required init?(coder: NSCoder) { fatalError("init(coder:) not used") }
 
     private func setupIcon() {
-        iconView.translatesAutoresizingMaskIntoConstraints = false
         iconView.imageScaling = .scaleProportionallyUpOrDown
-        iconView.symbolConfiguration = .init(pointSize: 22, weight: .regular)
-        iconView.image = NSImage(systemSymbolName: item.sfSymbolName,
-                                 accessibilityDescription: item.id)
+        let image = NSImage(systemSymbolName: item.sfSymbolName,
+                            accessibilityDescription: item.id)
+        NSLog("AllyClicker: button \(item.id) symbol \(item.sfSymbolName) image=\(image == nil ? "NIL" : "ok")")
+        iconView.image = image
+        iconView.contentTintColor = .labelColor
         addSubview(iconView)
-        NSLayoutConstraint.activate([
-            iconView.centerXAnchor.constraint(equalTo: centerXAnchor),
-            iconView.centerYAnchor.constraint(equalTo: centerYAnchor),
-            iconView.widthAnchor.constraint(equalToConstant: 30),
-            iconView.heightAnchor.constraint(equalToConstant: 30),
-        ])
+    }
+
+    // Frame-based layout (no Auto Layout inside the borderless panel).
+    override func layout() {
+        super.layout()
+        let size: CGFloat = 30
+        iconView.frame = NSRect(x: (bounds.width - size) / 2,
+                                y: (bounds.height - size) / 2,
+                                width: size, height: size)
     }
 
     override func draw(_ dirtyRect: NSRect) {
         // Background per state.
         (isArmed ? NSColor.systemRed : NSColor.controlBackgroundColor).setFill()
-        dirtyRect.fill()
+        bounds.fill()
         // Icon tint: white when armed for contrast, else primary label color.
         iconView.contentTintColor = isArmed ? .white : .labelColor
         super.draw(dirtyRect)
