@@ -43,10 +43,14 @@ final class PanelButton: NSView {
                                 width: size, height: size)
     }
 
-    /// Command buttons (ON/OFF, KEYBOARD) are primary controls — render larger.
+    /// Per-button glyph sizes: ON/OFF is the primary control (largest),
+    /// KEYBOARD slightly larger than the click glyphs.
     private var iconSize: CGFloat {
-        if case .command = item { return 42 }
-        return 30
+        switch item {
+        case .command(.togglePanel):    return 42
+        case .command(.launchKeyboard): return 36
+        default:                        return 30
+        }
     }
 
     override func draw(_ dirtyRect: NSRect) {
