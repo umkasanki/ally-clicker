@@ -47,9 +47,9 @@ final class PanelButton: NSView {
     /// KEYBOARD slightly larger than the click glyphs.
     private var iconSize: CGFloat {
         switch item {
-        case .command(.togglePanel):    return 42
-        case .command(.launchKeyboard): return 36
-        default:                        return 30
+        case .command(.togglePanel):    return 48
+        case .command(.launchKeyboard): return 42
+        default:                        return 36
         }
     }
 
