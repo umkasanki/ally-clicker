@@ -31,9 +31,9 @@ final class PanelViewController: ZoneMapping {
         let totalHeight = CGFloat(items.count) * buttonSize
         let screen = NSScreen.screens.first(where: { $0.frame.origin == .zero }) ?? NSScreen.main
         let screenFrame = screen?.frame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
-        let originX = screenFrame.maxX - width
-        // positionY is a top-left offset; convert to bottom-left window origin.
-        let originY = screenFrame.maxY - CGFloat(settings.panel.positionY) - totalHeight
+        // DEBUG: center on screen to rule out off-screen positioning.
+        let originX = screenFrame.midX - width / 2
+        let originY = screenFrame.midY - totalHeight / 2
 
         NSLog("AllyClicker: screenFrame=\(NSStringFromRect(screenFrame)) items=\(items.count) origin=(\(originX),\(originY)) size=(\(width)x\(totalHeight))")
         window = PanelWindow(contentRect: NSRect(x: originX, y: originY, width: width, height: totalHeight))

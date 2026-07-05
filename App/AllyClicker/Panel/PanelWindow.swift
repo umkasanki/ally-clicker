@@ -13,7 +13,7 @@ final class PanelWindow: NSPanel {
         level = .floating                 // above normal windows
         hidesOnDeactivate = false
         isMovableByWindowBackground = false
-        backgroundColor = .clear
+        backgroundColor = .systemBlue   // DEBUG: make the panel unmistakable
         hasShadow = true
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         // Never become key/main — it must not take focus.
