@@ -29,8 +29,18 @@ cp App/Info.plist "$APP/Contents/Info.plist"
 mkdir -p "$APP/Contents/Resources"
 cp -R App/AllyClicker/Resources/ "$APP/Contents/Resources/"
 
-echo "[4/4] Ad-hoc code signing (helps Accessibility persistence)..."
-codesign --force --sign - "$APP" || echo "  (codesign skipped)"
+echo "[4/4] Code signing..."
+# Prefer the stable self-signed identity (Accessibility grant persists across
+# rebuilds); fall back to ad-hoc if it isn't installed yet (see setup-signing.sh).
+IDENTITY="AllyClicker Self-Signed"
+if security find-identity -v -p codesigning 2>/dev/null | grep -q "$IDENTITY"; then
+    echo "  using stable identity: $IDENTITY"
+    codesign --force --sign "$IDENTITY" "$APP"
+else
+    echo "  stable identity not found -> ad-hoc (grant will reset each build)."
+    echo "  run ./App/setup-signing.sh once to make the grant persist."
+    codesign --force --sign - "$APP"
+fi
 
 echo "Built $APP"
 echo "  Launch:  open $APP"
