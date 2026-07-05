@@ -37,10 +37,16 @@ final class PanelButton: NSView {
     // Frame-based layout (no Auto Layout inside the borderless panel).
     override func layout() {
         super.layout()
-        let size: CGFloat = 30
+        let size: CGFloat = iconSize
         iconView.frame = NSRect(x: (bounds.width - size) / 2,
                                 y: (bounds.height - size) / 2,
                                 width: size, height: size)
+    }
+
+    /// ON/OFF is the panel's primary control — render its glyph larger.
+    private var iconSize: CGFloat {
+        if case .command(.togglePanel) = item { return 42 }
+        return 30
     }
 
     override func draw(_ dirtyRect: NSRect) {
