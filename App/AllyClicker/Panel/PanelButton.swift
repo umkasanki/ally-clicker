@@ -82,7 +82,7 @@ extension PanelItem {
         case .action(.right):       return "click-right"
         case .action(.leftDrag):    return "drag"
         case .action(.doubleClick): return "click-double"
-        case .action(.middle):      return "click-middle"
+        case .action(.middle):      return "wheel"
         case .command(.togglePanel):    return "power"
         case .command(.launchKeyboard): return "keyboard"
         default:                    return nil
