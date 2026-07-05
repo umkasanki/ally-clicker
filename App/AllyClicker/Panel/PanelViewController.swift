@@ -84,6 +84,9 @@ final class PanelViewController: ZoneMapping {
         let localPt = container.convert(winPt, from: nil)
         for button in buttons where !button.isHidden {
             if button.frame.contains(localPt) {
+                // While the button is physically held (panel being dragged),
+                // report it as chrome so the dwell toggle can't fire mid-drag.
+                if button.isBeingDragged { return .panel(button: nil) }
                 switch button.item {
                 case .action(let a):  return .panel(button: a)
                 case .command(let c): return .panelCommand(c)
