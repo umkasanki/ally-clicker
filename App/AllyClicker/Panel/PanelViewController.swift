@@ -108,6 +108,7 @@ final class PanelViewController: ZoneMapping {
     }
 
     private func movePill(to target: PanelItem?) {
+        pillFadeGeneration += 1   // any pill activity cancels a pending collapsed-fade
         pillTarget = target
 
         for button in buttons {
@@ -143,6 +144,31 @@ final class PanelViewController: ZoneMapping {
         return buttons.first { $0.item == target }
     }
 
+    // After collapsing, the red pill lingers on ON/OFF; fade it away after 1s so
+    // the collapsed button returns to its idle look. Cancelled if anything moves
+    // the pill (or the panel re-expands) in the meantime.
+    private var pillFadeGeneration = 0
+
+    private func scheduleCollapsedPillFade() {
+        pillFadeGeneration += 1
+        let generation = pillFadeGeneration
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            guard let self,
+                  self.pillFadeGeneration == generation,   // no newer pill activity
+                  self.isCollapsed,
+                  self.pillTarget == .command(.togglePanel) else { return }
+            NSAnimationContext.runAnimationGroup({ ctx in
+                ctx.duration = 0.3
+                self.pill.animator().alphaValue = 0
+            }, completionHandler: { [weak self] in
+                guard let self else { return }
+                self.pill.isHidden = true
+                self.pill.alphaValue = 1
+                self.movePill(to: nil)
+            })
+        }
+    }
+
     /// The panel must ALWAYS be fully on screen — a control surface that slides
     /// off-screen would be unreachable for a hands-free user. Clamp any frame
     /// into the visible area of the screen it (mostly) belongs to.
@@ -173,6 +199,7 @@ final class PanelViewController: ZoneMapping {
             }, completionHandler: { [weak self] in
                 affected.forEach { $0.isHidden = true }
                 self?.applyLayout(animated: true)
+                self?.scheduleCollapsedPillFade()
             })
         } else {
             // Grow the window, then fade the buttons back in.
