@@ -69,8 +69,14 @@ final class PanelButton: NSView {
         trackingAreas.forEach(removeTrackingArea)
         addTrackingArea(NSTrackingArea(
             rect: bounds,
-            options: [.mouseEnteredAndExited, .activeAlways],
+            options: [.mouseEnteredAndExited, .cursorUpdate, .activeAlways],
             owner: self, userInfo: nil))
+    }
+
+    // The system sends cursorUpdate for the window under the pointer and honors
+    // the cursor set here — even though this panel never becomes key/active.
+    override func cursorUpdate(with event: NSEvent) {
+        NSCursor.pointingHand.set()
     }
 
     override func mouseEntered(with event: NSEvent) {
