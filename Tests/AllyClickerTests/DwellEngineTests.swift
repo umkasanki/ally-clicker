@@ -151,6 +151,49 @@ final class DwellEngineTests: XCTestCase {
         XCTAssertEqual(engine.armed, .right, "autoCancel=false → stay armed with same action")
     }
 
+    // MARK: - Idle disarm
+
+    func testIdleDisarmClearsArmedAfterInactivity() {
+        var settings = Settings()
+        settings.clicks.idleDisarmSeconds = 1   // 1s of no movement
+        engine = DwellEngine(settings: settings)
+        armAction(.left)
+        XCTAssertEqual(engine.armed, .left)
+
+        // Hold still on the desktop past the idle limit.
+        let point = Point(x: 400, y: 400)
+        var cleared = false
+        for _ in 0..<Int(1.0 / tickDt) + 20 {
+            let e = engine.tick(cursor: point, zone: .desktop, dt: tickDt)
+            if e.contains(.setArmed(nil)) { cleared = true }
+        }
+        XCTAssertTrue(cleared)
+        XCTAssertNil(engine.armed, "Armed action cleared after idle timeout")
+    }
+
+    func testIdleDisarmDisabledByDefault() {
+        armAction(.left)  // default settings: idleDisarmSeconds == 0
+        let point = Point(x: 400, y: 400)
+        for _ in 0..<2000 { _ = engine.tick(cursor: point, zone: .desktop, dt: tickDt) }
+        XCTAssertEqual(engine.armed, .left, "Never disarms when disabled (0)")
+    }
+
+    func testMovementResetsIdleTimer() {
+        var settings = Settings()
+        settings.clicks.idleDisarmSeconds = 1
+        engine = DwellEngine(settings: settings)
+        armAction(.left)
+
+        // Keep moving beyond moveRadius every few ticks — idle never accumulates.
+        var far = false
+        for i in 0..<Int(2.0 / tickDt) {
+            far.toggle()
+            let p = Point(x: far ? 100 : 400, y: 400)  // jumps > moveRadius
+            _ = engine.tick(cursor: p, zone: .desktop, dt: tickDt)
+        }
+        XCTAssertNotNil(engine.armed, "Continuous movement prevents idle disarm")
+    }
+
     // MARK: - Re-fire gate (no machine-gunning)
 
     private func countFires(_ effects: [DwellEngine.Effect]) -> Int {

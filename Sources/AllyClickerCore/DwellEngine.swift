@@ -78,6 +78,10 @@ public struct DwellEngine {
     // anything fires again — a parked cursor must not machine-gun clicks.
     private var awaitingMoveAfterFire: Bool = false
     private var lastFirePoint: Point? = nil
+    // Idle-disarm tracking: reference point and how long the cursor has stayed
+    // near it (no real movement). After idleDisarmSeconds the armed action clears.
+    private var idleAnchor: Point? = nil
+    private var idleElapsed: TimeInterval = 0
     // Command one-shot gating: which command (if any) already fired, and from where.
     // Cleared only after the cursor physically moves away — NOT on a transient zone
     // change, so collapsing the panel under a still cursor can't re-fire (flap).
@@ -130,6 +134,24 @@ public struct DwellEngine {
             resetDwell(at: cursor)
             // Emit clearProgress so the UI resets the countdown bar immediately on movement.
             effects.append(.clearProgress)
+        }
+
+        // IDLE-DISARM: after a long stretch of no real cursor movement, clear the
+        // armed action so a later stray move can't fire. Movement beyond moveRadius
+        // resets the idle clock. 0 = disabled.
+        let idleLimit = settings.clicks.idleDisarmSeconds
+        if idleLimit > 0 {
+            if let a = idleAnchor, cursor.distance(to: a) <= Double(settings.stillness.moveRadiusPx) {
+                idleElapsed += dt
+            } else {
+                idleAnchor = cursor
+                idleElapsed = 0
+            }
+            if idleElapsed >= Double(idleLimit), armed != nil {
+                armed = nil
+                effects.append(.setArmed(nil))
+                idleElapsed = 0
+            }
         }
 
         // Act based on cursor zone.

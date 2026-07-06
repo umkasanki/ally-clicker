@@ -120,14 +120,19 @@ extension Settings {
         public var defaultLeft: Bool = true
         /// Cancel the armed action after one execution (vs. repeat forever).
         public var autoCancel: Bool = true
+        /// Auto-disarm after this many seconds of NO cursor movement.
+        /// 0 = never (default) — the armed action stays until swipe/re-arm.
+        /// Safety: if the user steps away, a later stray move won't fire.
+        public var idleDisarmSeconds: Int = 0
 
         public init() {}
 
         public init(from decoder: Decoder) throws {
             let c = try decoder.container(keyedBy: CodingKeys.self)
             let d = Clicks()
-            defaultLeft = try c.decodeIfPresent(Bool.self, forKey: .defaultLeft) ?? d.defaultLeft
-            autoCancel  = try c.decodeIfPresent(Bool.self, forKey: .autoCancel)  ?? d.autoCancel
+            defaultLeft       = try c.decodeIfPresent(Bool.self, forKey: .defaultLeft) ?? d.defaultLeft
+            autoCancel        = try c.decodeIfPresent(Bool.self, forKey: .autoCancel)  ?? d.autoCancel
+            idleDisarmSeconds = try c.decodeIfPresent(Int.self, forKey: .idleDisarmSeconds) ?? d.idleDisarmSeconds
         }
     }
 }
