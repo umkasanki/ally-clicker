@@ -260,6 +260,11 @@ public struct DwellEngine {
         lastFirePoint = point
     }
 
+    /// Clear the armed action (e.g. when the app takes over for panel-move mode).
+    public mutating func clearArmed() {
+        armed = nil
+    }
+
     /// Force-release a held drag, clearing all drag state. Returns true if a drag
     /// was actually active (so the caller can inject the matching mouseUp). Used on
     /// teardown / app termination so a held button is never stranded.

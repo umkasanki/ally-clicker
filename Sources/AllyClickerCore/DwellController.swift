@@ -53,6 +53,13 @@ public final class DwellController {
         engine.settings = settings
     }
 
+    /// Clear the armed action and notify the UI (used when the app takes over,
+    /// e.g. entering panel-move mode).
+    public func clearArmed() {
+        engine.clearArmed()
+        onUIEffect?(.setArmed(nil))
+    }
+
     /// Release any button held by an in-progress drag. The app MUST call this on
     /// termination / resign-active so a synthetic button is never left stuck down.
     /// Also invoked automatically on deinit.

@@ -14,9 +14,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var lastArmed: DwellEngine.Action? = nil
     private var dragArmedClearedAt: Date? = nil
 
-    private func dragWasRecentlyArmed() -> Bool {
-        guard let t = dragArmedClearedAt else { return false }
-        return Date().timeIntervalSince(t) < 3.0
+    /// Intent to move the panel: DRAG is armed right now (user moved within the
+    /// panel from the DRAG button to ON/OFF, armed never cleared), OR it was just
+    /// cleared by a swipe on the way in (overshoot to desktop and back).
+    private func dragIntended() -> Bool {
+        if lastArmed == .leftDrag { return true }
+        if let t = dragArmedClearedAt { return Date().timeIntervalSince(t) < 3.0 }
+        return false
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -68,9 +72,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard let self else { return }
             switch command {
             case .togglePanel:
-                // If DRAG was armed just before entering the panel, move the panel
-                // instead of toggling it (hands-free reposition).
-                if self.dragWasRecentlyArmed() {
+                // If DRAG is the current intent, move the panel instead of toggling.
+                if self.dragIntended() {
                     self.dragArmedClearedAt = nil
                     self.enterMoveMode()
                 } else {
@@ -106,7 +109,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func updateCursor(zone: DwellEngine.Zone) {
         if panel.isMoving { return }   // the move loop owns the cursor
-        if let c = CursorPolicy.cursor(zone: zone, dragIntent: dragWasRecentlyArmed()) {
+        if let c = CursorPolicy.cursor(zone: zone, dragIntent: dragIntended()) {
             c.set()
             appliedPanelCursor = true
         } else if appliedPanelCursor {
@@ -119,9 +122,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Pause dwelling and let the panel follow the cursor until dropped.
     private func enterMoveMode() {
-        runner.stop()          // no clicks while repositioning
-        panel.setArmed(nil)    // clear any pill
-        panel.beginMove()      // resumes via onMoveEnded
+        runner.stop()             // no clicks while repositioning
+        controller.clearArmed()  // clear engine armed (also clears pill via onUIEffect)
+        lastArmed = nil
+        dragArmedClearedAt = nil
+        panel.beginMove()         // resumes via onMoveEnded
     }
 
     // MARK: - Accessibility permission
