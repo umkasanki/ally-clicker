@@ -55,8 +55,12 @@
 
 ### Что дальше (следующая сессия)
 1. **MIDDLE + Auto-Scroll** — подключить адаптер `CGScrollWheelEvent`
-2. **KEYBOARD (I3)** — запуск клавиатуры (прямой запуск KeyboardViewer.app не
-   работает с ~Catalina) — чинить
+2. **KEYBOARD — ОТЛОЖЕНО, кнопка сейчас no-op** (на неё ничего не повешено).
+   Toggle встроенной Accessibility Keyboard = ключ `com.apple.universalaccess →
+   virtualKeyboardOnOff` (через `defaults` реагирует мгновенно; Assistive Control
+   = индикатор включённости фичи). Код в `KeyboardLauncher` готов, но toggle из
+   нашего процесса вживую не сработал — разобраться позже (cfprefsd/notification
+   из фонового приложения?)
 3. **I2** — dwell под нагрузкой (фиксированный dt vs wall-clock)
 4. Косметика: смена курсора при перемещении панели (не меняется, см. бэклог plan.md)
 

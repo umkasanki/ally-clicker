@@ -79,8 +79,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     self.panel.toggleCollapsed()
                 }
             case .launchKeyboard:
+                // Deferred: KEYBOARD action is on hold. Button stays on the panel
+                // but does nothing for now (KeyboardLauncher kept for later).
                 self.panel.showCommand(command)
-                KeyboardLauncher.launch(self.settings.commands.keyboard)
             }
         }
 
