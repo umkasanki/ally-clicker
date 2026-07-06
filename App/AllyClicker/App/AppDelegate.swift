@@ -68,8 +68,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         controller.willFire = { [weak self] action, point in
             guard let self, action == .middle else { return false }
-            self.enterAutoScroll(at: point)
-            return true   // handled — no middle click injected
+            // Over a link → plain middle click (open in new tab). Otherwise scroll.
+            if ElementInspector.isLink(at: point) {
+                self.injector.click(.middle, at: point)
+            } else {
+                self.enterAutoScroll(at: point)
+            }
+            return true   // handled either way — no default injection
         }
 
         controller.onUIEffect = { [weak self] effect in
