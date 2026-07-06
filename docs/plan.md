@@ -288,6 +288,11 @@ AllyClicker/
 - [ ] 5.4 Финальное тестирование
 - [ ] 5.5 Сборка + нотаризация
 
+### Реализованные фичи (сверх базового PNC)
+- [x] Auto-scroll intensity — множитель скорости скролла (`autoScroll.intensity`, дефолт 0.5)
+- [x] Idle-disarm — авто-снятие функции после простоя курсора (`clicks.idleDisarmSeconds`, дефолт 120с)
+- [x] Умный MIDDLE — над ссылкой средний клик, иначе auto-scroll (AX-детект)
+
 ### Бэклог (подтверждено автором PNC, 2026-06-29 — см. spec «Дополнение по переписке»)
 - [x] Адаптивный dwell — формула в ядре (`Settings.Calibration.computedDwellMs`,
   `effectiveDwellMouseSeconds`); ручное значение = fallback. 7 тестов
