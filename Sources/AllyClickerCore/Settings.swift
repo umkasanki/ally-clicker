@@ -148,8 +148,8 @@ extension Settings {
         /// Maximum scroll delta per tick (px), to cap runaway speed.
         public var maxSpeedPerTick: Double = 160
         /// User-facing speed multiplier applied to the final scroll delta.
-        /// 1.0 = default; <1 slower (for less precise users), >1 faster.
-        public var intensity: Double = 1.0
+        /// <1 slower (for less precise users), >1 faster. 0.5 is a comfortable default.
+        public var intensity: Double = 0.5
 
         public init() {}
 
