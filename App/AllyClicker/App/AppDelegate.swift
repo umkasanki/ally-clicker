@@ -12,12 +12,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         BackgroundCursor.enable()   // allow cursor changes while never-active
         settings = settingsStore.load()
-        let granted = hasAccessibilityPermission()
-        NSLog("AllyClicker: launch, accessibility granted = \(granted)")
-        if !granted {
-            // DEBUG: don't gate the UI — show the panel anyway so we can verify
-            // rendering/coordinates. Clicks simply won't inject until access is granted.
-            NSLog("AllyClicker: WARNING no accessibility — panel shown for UI test, clicks disabled")
+        // Always show the panel; if access is missing, guide the user to grant it
+        // (clicks won't inject until then) instead of hiding the whole UI.
+        if !hasAccessibilityPermission() {
+            showAccessibilityAlert()
         }
 
         startDwelling()

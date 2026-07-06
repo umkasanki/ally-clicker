@@ -28,7 +28,6 @@ final class PanelButton: NSView {
         iconView.imageScaling = .scaleProportionallyUpOrDown
         let image = item.projectIcon ?? NSImage(systemSymbolName: item.sfSymbolName,
                                                 accessibilityDescription: item.id)
-        NSLog("AllyClicker: button \(item.id) icon=\(item.projectIcon != nil ? "custom" : "sf-fallback")")
         iconView.image = image
         iconView.contentTintColor = .labelColor
         addSubview(iconView)

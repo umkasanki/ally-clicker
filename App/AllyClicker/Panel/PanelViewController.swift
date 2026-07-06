@@ -59,9 +59,9 @@ final class PanelViewController: ZoneMapping {
         let totalHeight = CGFloat(items.count) * buttonSize
         let screen = NSScreen.screens.first(where: { $0.frame.origin == .zero }) ?? NSScreen.main
         let screenFrame = screen?.frame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
-        // DEBUG: center on screen to rule out off-screen positioning.
-        let originX = screenFrame.midX - width / 2
-        let originY = screenFrame.midY - totalHeight / 2
+        // Dock to the right edge at the configured Y (top-left offset).
+        let originX = screenFrame.maxX - width
+        let originY = screenFrame.maxY - CGFloat(settings.panel.positionY) - totalHeight
 
         let initialFrame = Self.clampToScreen(
             NSRect(x: originX, y: originY, width: width, height: totalHeight))
