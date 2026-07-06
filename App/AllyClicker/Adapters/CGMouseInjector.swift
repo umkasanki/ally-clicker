@@ -29,8 +29,10 @@ struct CGMouseInjector: MouseInjecting {
     func scroll(dx: Double, dy: Double) {
         guard let event = CGEvent(scrollWheelEvent2Source: nil, units: .pixel,
                                   wheelCount: 2, wheel1: 0, wheel2: 0, wheel3: 0) else { return }
-        event.setDoubleValueField(.scrollWheelEventPointDeltaAxis1, value: dy)  // vertical
-        event.setDoubleValueField(.scrollWheelEventPointDeltaAxis2, value: dx)  // horizontal
+        // Negated: cursor below the anchor should scroll the content down (view
+        // reveals lower content) — matches PNC / natural expectation.
+        event.setDoubleValueField(.scrollWheelEventPointDeltaAxis1, value: -dy)  // vertical
+        event.setDoubleValueField(.scrollWheelEventPointDeltaAxis2, value: -dx)  // horizontal
         event.post(tap: .cgSessionEventTap)
     }
 
