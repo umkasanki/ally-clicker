@@ -245,7 +245,7 @@ final class PanelViewController: ZoneMapping {
         moveStillAnchor = mouse
         moveStillElapsed = 0
         Self.isPanelMoving = true
-        NSCursor.moveArrows.set()
+        NSCursor.moveArrows.push()   // stays until pop(), resists resets
 
         let t = DispatchSource.makeTimerSource(queue: .main)
         t.schedule(deadline: .now(), repeating: .milliseconds(16))
@@ -256,7 +256,6 @@ final class PanelViewController: ZoneMapping {
 
     private func moveStep() {
         let mouse = NSEvent.mouseLocation
-        NSCursor.moveArrows.set()   // keep it, buttons' cursorUpdate would override
 
         if let grab = moveGrabOffset {
             var f = window.frame
@@ -284,6 +283,7 @@ final class PanelViewController: ZoneMapping {
         moveGrabOffset = nil
         moveStillAnchor = nil
         Self.isPanelMoving = false
+        NSCursor.pop()
         NSCursor.arrow.set()
         reportPosition()   // persist the new spot
         onMoveEnded?()
