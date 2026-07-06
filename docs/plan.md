@@ -312,6 +312,14 @@ AllyClicker/
 - [ ] **I4. Нереализованные действия молча ничего не делают** (`rightDouble`,
   `rightThenLeft`) — убрать из normalize пока не реализованы, или fallback
 - [x] Сохранение позиции панели между запусками — ГОТОВО (positionX/Y в settings.json)
+- [x] Перемещение панели головой (C2) — ГОТОВО: DRAG + dwell на ON/OFF → move mode,
+  панель едет за курсором, остановка роняет. Логика через CursorPolicy/onZone.
+- [ ] **Косметика: курсор при перемещении/превью НЕ меняется** (всегда pointer).
+  Пробовали: set() из таймера, push/pop, cursorUpdate, централизованный CursorPolicy
+  по зоне+intent — не сработало (фоновое nonactivating-окно + SetsCursorInBackground,
+  видимо, не даёт сменить на closedHand/crosshair). Функционально move работает,
+  визуально курсор — на последние косметические штрихи. Возможные пути: NSTrackingArea
+  с cursorUpdate только на ON/OFF; кастомный курсор-картинка; или временный overlay.
 - [ ] Минорное: залипание drag при потере mouseUp (проверять `pressedMouseButtons`);
   `mouseExited` не сбивать чужой курсор; наблюдатель
   `didChangeScreenParametersNotification` для re-clamp; хрупкий glob в build
