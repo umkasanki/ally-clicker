@@ -261,12 +261,11 @@ AllyClicker/
 > Логика ядра готова (Фаза 1). macOS-обвязка подключена и работает вживую.
 - [x] 3.1 DwellRunner (DispatchSourceTimer 5мс) → DwellController.advance(dt:)
 - [x] 3.2 onUIEffect → плашка/подсветка; onCommand → toggle/keyboard
-- [x] 3.4 DRAG двухфазная механика — в ядре (вживую ещё не проверена)
+- [x] 3.4 DRAG двухфазная механика — проверена вживую (выделение/область работают)
 - [x] 3.5 Auto-Scroll расчёт дельты — AutoScrollEngine (ядро)
 - [x] 3.3 Last position outside panel — НЕ нужно: движок стреляет только в зоне .desktop
-- [ ] 3.6 **Проверить инъекцию кликов вживую** (Y-flip координат — главный риск)
-- [ ] 3.7 Вернуть debug-хвосты: панель к правому краю, мягкий гейт Accessibility
-- [ ] 3.5a CGScrollWheelEvent адаптер для Auto-Scroll (MIDDLE click режим)
+- [x] 3.6 Инъекция кликов + Y-flip — проверено вживую (LEFT/RIGHT/DOUBLE/DRAG)
+- [ ] 3.5a CGScrollWheelEvent адаптер для Auto-Scroll (MIDDLE click режим) — не начато
 
 ### Фаза 4 — Settings Window
 - [ ] 4.1 SettingsWindowController + меню-бар
@@ -324,8 +323,7 @@ AllyClicker/
   `mouseExited` не сбивать чужой курсор; наблюдатель
   `didChangeScreenParametersNotification` для re-clamp; хрупкий glob в build
 
-### ⚠️ Debug-хвосты (вернуть перед реальным использованием)
-- [ ] Панель к правому краю (сейчас центр экрана — `DEBUG: center on screen`)
-- [ ] Мягкий гейт Accessibility (сейчас панель показывается всегда без проверки)
-- [x] **Инъекция кликов + Y-flip — ПРОВЕРЕНО вживую.** LEFT клик срабатывает и
-  попадает точно под курсор; Point == CGPoint (оба top-left). Координаты верны.
+### Debug-хвосты — все возвращены к боевому виду ✅
+- [x] Панель докается к правому краю / сохранённой позиции (не центр)
+- [x] Accessibility: системный prompt (добавляет бинарь в список + диалог настроек)
+- [x] Инъекция кликов + Y-flip проверены вживую; отладочные NSLog убраны

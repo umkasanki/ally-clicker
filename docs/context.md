@@ -41,33 +41,24 @@
   KeyboardViewer.app не открывает её с ~Catalina) — чинить
 - I2: dwell под нагрузкой (фиксированный dt vs wall-clock)
 
-### ⚠️ Debug-хвосты, которые нужно вернуть
-1. **Панель в ЦЕНТРЕ экрана** (PanelViewController: `DEBUG: center on screen`) —
-   вернуть докинг к правому краю (`settings.panel.positionY`)
-2. **Гейт Accessibility отключён** (AppDelegate: панель показывается всегда) —
-   вернуть мягкий гейт: панель показывать, но предупреждать об отсутствии доступа
-3. **Ad-hoc подпись слетает при каждой пересборке** → тумблер Accessibility
-   надо включать заново после каждого build. Решение: Xcode-проект со стабильной
-   подписью (Apple Development сертификат) — задача следующей сессии
-
 ### Что сделано в UI-слое (App/, всё работает вживую)
 - `PanelWindow`: nonactivating NSPanel, statusBar level, immune к desktop-reveal
 - `PanelViewController`: кнопки из `panel.items`, hit-test (ZoneMapping),
   скользящая красная плашка (ease-in-out 0.25s), анимация collapse/expand,
-  зажим рамки в экран, fade плашки с ON/OFF через 1с после сворачивания
+  зажим рамки в экран, fade плашки с ON/OFF через 1с, режим перемещения панели
 - `PanelButton`: иконки проекта (векторные PDF, template), размеры 48/42/36,
-  drag-to-move за ON/OFF (с подавлением dwell-toggle во время drag),
-  pointing-hand курсор (через private SetsCursorInBackground)
+  drag-to-move за ON/OFF (с подавлением dwell-toggle во время drag)
+- `CursorPolicy`: единая политика курсора по зоне+intent (из onZone-тика)
 - `CursorSampler`, `CGMouseInjector`, `KeyboardLauncher`, `DwellRunner` — адаптеры
+- `BackgroundCursor`: private SetsCursorInBackground для курсора в фоне
 - `ScreenGeometry`: конвенция top-left координат, флип на границе AppKit
 
 ### Что дальше (следующая сессия)
-1. Вернуть debug-хвосты (панель вправо, мягкий гейт Accessibility)
-2. **Проверить инъекцию кликов вживую** — главный не проверенный риск: Y-flip
-   координат (клик должен попасть в точку остановки курсора)
-3. Проверить DRAG и MIDDLE на реальных приложениях
-4. Xcode-проект со стабильной подписью (решает проблему слетающего разрешения)
-5. KeyboardLauncher: проверить запуск Accessibility Keyboard (TODO в коде)
+1. **MIDDLE + Auto-Scroll** — подключить адаптер `CGScrollWheelEvent`
+2. **KEYBOARD (I3)** — запуск клавиатуры (прямой запуск KeyboardViewer.app не
+   работает с ~Catalina) — чинить
+3. **I2** — dwell под нагрузкой (фиксированный dt vs wall-clock)
+4. Косметика: смена курсора при перемещении панели (не меняется, см. бэклог plan.md)
 
 ---
 
