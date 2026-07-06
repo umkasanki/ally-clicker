@@ -31,8 +31,9 @@ public struct AutoScrollEngine {
         let distance = abs(offset)
         guard distance > config.deadZonePx else { return 0 }
         let adjusted = distance - config.deadZonePx
-        let speed = min(config.base + adjusted.squareRoot() * config.boost,
-                        config.maxSpeedPerTick)
+        let clamped = min(config.base + adjusted.squareRoot() * config.boost,
+                          config.maxSpeedPerTick)
+        let speed = clamped * config.intensity   // user speed multiplier
         return offset < 0 ? -speed : speed
     }
 }

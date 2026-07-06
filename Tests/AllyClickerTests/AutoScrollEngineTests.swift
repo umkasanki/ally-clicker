@@ -34,6 +34,22 @@ final class AutoScrollEngineTests: XCTestCase {
         XCTAssertLessThanOrEqual(d.dy, engine.config.maxSpeedPerTick)
     }
 
+    func testIntensityScalesSpeed() {
+        var cfg = Settings.AutoScroll(); cfg.intensity = 1.0
+        let base = AutoScrollEngine(config: cfg)
+            .delta(anchor: anchor, cursor: Point(x: 500, y: 700)).dy
+
+        cfg.intensity = 0.5
+        let half = AutoScrollEngine(config: cfg)
+            .delta(anchor: anchor, cursor: Point(x: 500, y: 700)).dy
+        XCTAssertEqual(half, base * 0.5, accuracy: 0.001)
+
+        cfg.intensity = 2.0
+        let double = AutoScrollEngine(config: cfg)
+            .delta(anchor: anchor, cursor: Point(x: 500, y: 700)).dy
+        XCTAssertEqual(double, base * 2.0, accuracy: 0.001)
+    }
+
     func testDiagonalScrollsBothAxes() {
         let d = engine.delta(anchor: anchor, cursor: Point(x: 700, y: 700))
         XCTAssertGreaterThan(d.dx, 0)

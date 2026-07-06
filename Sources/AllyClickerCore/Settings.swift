@@ -147,6 +147,9 @@ extension Settings {
         public var boost: Double = 3
         /// Maximum scroll delta per tick (px), to cap runaway speed.
         public var maxSpeedPerTick: Double = 160
+        /// User-facing speed multiplier applied to the final scroll delta.
+        /// 1.0 = default; <1 slower (for less precise users), >1 faster.
+        public var intensity: Double = 1.0
 
         public init() {}
 
@@ -157,6 +160,7 @@ extension Settings {
             base            = try c.decodeIfPresent(Double.self, forKey: .base)            ?? d.base
             boost           = try c.decodeIfPresent(Double.self, forKey: .boost)           ?? d.boost
             maxSpeedPerTick = try c.decodeIfPresent(Double.self, forKey: .maxSpeedPerTick) ?? d.maxSpeedPerTick
+            intensity       = try c.decodeIfPresent(Double.self, forKey: .intensity)       ?? d.intensity
         }
     }
 }
