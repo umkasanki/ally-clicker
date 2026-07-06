@@ -53,7 +53,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             injector: injector
         )
 
-        autoScroller = AutoScroller(config: settings.autoScroll, injector: injector)
+        autoScroller = AutoScroller(
+            config: settings.autoScroll,
+            stillRadius: Double(settings.stillness.sensitivity),
+            dwellSeconds: settings.effectiveDwellMouseSeconds,
+            injector: injector)
         autoScroller.shouldExit = { [weak self] cursor in
             // Brush the panel to stop scrolling (same muscle memory as swipe-reset).
             guard let self else { return true }
