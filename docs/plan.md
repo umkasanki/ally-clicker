@@ -311,13 +311,13 @@ AllyClicker/
   с ~Catalina; проверить и починить (input-source / Accessibility Keyboard toggle)
 - [ ] **I4. Нереализованные действия молча ничего не делают** (`rightDouble`,
   `rightThenLeft`) — убрать из normalize пока не реализованы, или fallback
+- [x] Сохранение позиции панели между запусками — ГОТОВО (positionX/Y в settings.json)
 - [ ] Минорное: залипание drag при потере mouseUp (проверять `pressedMouseButtons`);
-  сохранять позицию панели между запусками; `mouseExited` не сбивать чужой курсор;
-  наблюдатель `didChangeScreenParametersNotification` для re-clamp; хрупкий glob в build
+  `mouseExited` не сбивать чужой курсор; наблюдатель
+  `didChangeScreenParametersNotification` для re-clamp; хрупкий glob в build
 
 ### ⚠️ Debug-хвосты (вернуть перед реальным использованием)
 - [ ] Панель к правому краю (сейчас центр экрана — `DEBUG: center on screen`)
 - [ ] Мягкий гейт Accessibility (сейчас панель показывается всегда без проверки)
-- [ ] **Проверить инъекцию кликов вживую** (Y-flip координат) — НЕ проверено!
-  Следующий шаг: зарядить LEFT → замереть на десктопе → клик должен сработать
-  и попасть точно под курсор (не смещён по вертикали). См. context.md «Точка остановки»
+- [x] **Инъекция кликов + Y-flip — ПРОВЕРЕНО вживую.** LEFT клик срабатывает и
+  попадает точно под курсор; Point == CGPoint (оба top-left). Координаты верны.
