@@ -33,12 +33,14 @@ echo "[4/4] Code signing..."
 # Prefer the stable self-signed identity (Accessibility grant persists across
 # rebuilds); fall back to ad-hoc if it isn't installed yet (see setup-signing.sh).
 IDENTITY="AllyClicker Self-Signed"
+ALLY_KC="$HOME/Library/Keychains/allyclicker.keychain-db"
 # Note: a self-signed identity is untrusted (CSSMERR_TP_NOT_TRUSTED) so it never
 # shows under `-v` (valid only) — but codesign can still sign with it. Detect via
 # the unfiltered identity list.
-if security find-identity 2>/dev/null | grep -q "$IDENTITY"; then
+if [ -f "$ALLY_KC" ] && security find-identity 2>/dev/null | grep -q "$IDENTITY"; then
     echo "  using stable identity: $IDENTITY"
-    codesign --force --sign "$IDENTITY" "$APP"
+    security unlock-keychain -p allyclicker "$ALLY_KC" 2>/dev/null || true
+    codesign --force --sign "$IDENTITY" --keychain "$ALLY_KC" "$APP"
 else
     echo "  stable identity not found -> ad-hoc (grant will reset each build)."
     echo "  run ./App/setup-signing.sh once to make the grant persist."
