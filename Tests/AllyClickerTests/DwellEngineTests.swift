@@ -171,10 +171,17 @@ final class DwellEngineTests: XCTestCase {
         XCTAssertNil(engine.armed, "Armed action cleared after idle timeout")
     }
 
-    func testIdleDisarmDisabledByDefault() {
-        armAction(.left)  // default settings: idleDisarmSeconds == 0
+    func testIdleDisarmDefaultIsTwoMinutes() {
+        XCTAssertEqual(Settings().clicks.idleDisarmSeconds, 120)
+    }
+
+    func testIdleDisarmDisabledWhenZero() {
+        var settings = Settings()
+        settings.clicks.idleDisarmSeconds = 0
+        engine = DwellEngine(settings: settings)
+        armAction(.left)
         let point = Point(x: 400, y: 400)
-        for _ in 0..<2000 { _ = engine.tick(cursor: point, zone: .desktop, dt: tickDt) }
+        for _ in 0..<3000 { _ = engine.tick(cursor: point, zone: .desktop, dt: tickDt) }
         XCTAssertEqual(engine.armed, .left, "Never disarms when disabled (0)")
     }
 

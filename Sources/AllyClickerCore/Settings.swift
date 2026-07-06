@@ -121,9 +121,9 @@ extension Settings {
         /// Cancel the armed action after one execution (vs. repeat forever).
         public var autoCancel: Bool = true
         /// Auto-disarm after this many seconds of NO cursor movement.
-        /// 0 = never (default) — the armed action stays until swipe/re-arm.
-        /// Safety: if the user steps away, a later stray move won't fire.
-        public var idleDisarmSeconds: Int = 0
+        /// 0 = never. Default 120s (2 min): if the user steps away, a later stray
+        /// move won't auto-fire; they re-arm via the panel.
+        public var idleDisarmSeconds: Int = 120
 
         public init() {}
 
