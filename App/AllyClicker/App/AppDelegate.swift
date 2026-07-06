@@ -70,8 +70,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Accessibility permission
 
     private func hasAccessibilityPermission() -> Bool {
+        // prompt:true — on a fresh/unmatched grant, macOS adds THIS signed binary
+        // to the Accessibility list and shows the system dialog.
         let prompt = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
-        return AXIsProcessTrustedWithOptions([prompt: false] as CFDictionary)
+        return AXIsProcessTrustedWithOptions([prompt: true] as CFDictionary)
     }
 
     private func showAccessibilityAlert() {
