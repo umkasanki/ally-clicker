@@ -54,7 +54,10 @@
 - `ScreenGeometry`: конвенция top-left координат, флип на границе AppKit
 
 ### Что дальше (следующая сессия)
-1. **MIDDLE + Auto-Scroll** — подключить адаптер `CGScrollWheelEvent`
+1. ~~MIDDLE + Auto-Scroll~~ — ГОТОВО вживую: auto-scroll (якорь, динамическая
+   скорость, intensity-множитель, dwell→ЛКМ+выход, мазок по панели→выход) +
+   умный клик по ссылке (AX-детект AXLink → средний клик/новая вкладка).
+   Работает в Safari и Firefox. Chrome — нужен AXManualAccessibility (отложено).
 2. **KEYBOARD — ОТЛОЖЕНО, кнопка сейчас no-op** (на неё ничего не повешено).
    Toggle встроенной Accessibility Keyboard = ключ `com.apple.universalaccess →
    virtualKeyboardOnOff` (через `defaults` реагирует мгновенно; Assistive Control

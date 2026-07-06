@@ -265,7 +265,10 @@ AllyClicker/
 - [x] 3.5 Auto-Scroll расчёт дельты — AutoScrollEngine (ядро)
 - [x] 3.3 Last position outside panel — НЕ нужно: движок стреляет только в зоне .desktop
 - [x] 3.6 Инъекция кликов + Y-flip — проверено вживую (LEFT/RIGHT/DOUBLE/DRAG)
-- [ ] 3.5a CGScrollWheelEvent адаптер для Auto-Scroll (MIDDLE click режим) — не начато
+- [x] 3.5a Auto-Scroll (MIDDLE) — ГОТОВО вживую: CGScrollWheelEvent, якорь-точка,
+  динамическая скорость + intensity-множитель (дефолт 0.5), dwell→ЛКМ+выход,
+  мазок по панели→выход. Умный клик по ссылке (AX AXLink → средний клик/новая
+  вкладка) в Safari/Firefox. Chrome — нужен AXManualAccessibility (отложено).
 
 ### Фаза 4 — Settings Window
 - [ ] 4.1 SettingsWindowController + меню-бар
