@@ -24,6 +24,16 @@ struct CGMouseInjector: MouseInjecting {
     func mouseDown(at point: Point) { post(.leftMouseDown, at: cgPoint(point)) }
     func mouseUp(at point: Point)   { post(.leftMouseUp,   at: cgPoint(point)) }
 
+    /// Post a pixel-precise scroll. dy = vertical, dx = horizontal (screen sense;
+    /// sign may need flipping for natural scrolling — verified on-device).
+    func scroll(dx: Double, dy: Double) {
+        guard let event = CGEvent(scrollWheelEvent2Source: nil, units: .pixel,
+                                  wheelCount: 2, wheel1: 0, wheel2: 0, wheel3: 0) else { return }
+        event.setDoubleValueField(.scrollWheelEventPointDeltaAxis1, value: dy)  // vertical
+        event.setDoubleValueField(.scrollWheelEventPointDeltaAxis2, value: dx)  // horizontal
+        event.post(tap: .cgSessionEventTap)
+    }
+
     // MARK: - Click variants
 
     private func leftClick(at p: CGPoint) {

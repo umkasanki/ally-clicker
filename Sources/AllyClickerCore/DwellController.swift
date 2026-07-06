@@ -35,6 +35,10 @@ public final class DwellController {
     /// Called every tick with the current cursor zone (for cursor policy, etc.).
     public var onZone: ((DwellEngine.Zone) -> Void)?
 
+    /// Intercepts a fired action before injection. Return true if the app handled
+    /// it (e.g. MIDDLE → enter auto-scroll) so no click is injected.
+    public var willFire: ((DwellEngine.Action, Point) -> Bool)?
+
     public init(settings: Settings,
                 sampler: CursorSampling,
                 mapper: ZoneMapping,
@@ -86,6 +90,7 @@ public final class DwellController {
     private func dispatch(_ effect: DwellEngine.Effect) {
         switch effect {
         case .fire(let action, let point):
+            if willFire?(action, point) == true { break }  // app took over (e.g. auto-scroll)
             injector.click(action, at: point)
         case .dragMouseDown(let point):
             injector.mouseDown(at: point)

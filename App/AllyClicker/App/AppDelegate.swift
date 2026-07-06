@@ -8,6 +8,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var panel: PanelViewController!
     private var controller: DwellController!
     private var runner: DwellRunner!
+    private let injector = CGMouseInjector()
+    private var autoScroller: AutoScroller!
 
     // Tracks the armed action (and when a DRAG arm was cleared by a swipe), so
     // dwelling ON/OFF with DRAG intent enters panel-move mode instead of toggling.
@@ -48,8 +50,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             settings: settings,
             sampler: CursorSampler(),
             mapper: panel,
-            injector: CGMouseInjector()
+            injector: injector
         )
+
+        autoScroller = AutoScroller(config: settings.autoScroll, injector: injector)
+        autoScroller.shouldExit = { [weak self] cursor in
+            // Brush the panel to stop scrolling (same muscle memory as swipe-reset).
+            guard let self else { return true }
+            if case .desktop = self.panel.zone(at: cursor) { return false }
+            return true
+        }
+        autoScroller.onExit = { [weak self] in self?.runner.start() }
+
+        controller.willFire = { [weak self] action, point in
+            guard let self, action == .middle else { return false }
+            self.enterAutoScroll(at: point)
+            return true   // handled — no middle click injected
+        }
 
         controller.onUIEffect = { [weak self] effect in
             guard let self else { return }
@@ -115,6 +132,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSCursor.arrow.set()
             appliedPanelCursor = false
         }
+    }
+
+    /// Pause dwelling and enter auto-scroll from the given anchor point.
+    private func enterAutoScroll(at point: Point) {
+        runner.stop()             // no dwell clicks while scrolling
+        controller.clearArmed()   // MIDDLE consumed
+        lastArmed = nil
+        autoScroller.start(at: point)   // resumes runner via onExit
     }
 
     /// Pause dwelling and let the panel follow the cursor until dropped.
