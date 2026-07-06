@@ -234,12 +234,17 @@ final class PanelViewController: ZoneMapping {
     var onMoveEnded: (() -> Void)? = nil
     var isMoving: Bool { moveTimer != nil }
 
+    /// True while the panel is being moved — buttons check this to stop resetting
+    /// the cursor (their cursorUpdate would otherwise override the move cursor).
+    static private(set) var isPanelMoving = false
+
     func beginMove() {
         let mouse = NSEvent.mouseLocation
         moveGrabOffset = CGPoint(x: mouse.x - window.frame.origin.x,
                                  y: mouse.y - window.frame.origin.y)
         moveStillAnchor = mouse
         moveStillElapsed = 0
+        Self.isPanelMoving = true
         NSCursor.moveArrows.set()
 
         let t = DispatchSource.makeTimerSource(queue: .main)
@@ -278,6 +283,7 @@ final class PanelViewController: ZoneMapping {
         moveTimer = nil
         moveGrabOffset = nil
         moveStillAnchor = nil
+        Self.isPanelMoving = false
         NSCursor.arrow.set()
         reportPosition()   // persist the new spot
         onMoveEnded?()

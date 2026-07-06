@@ -75,14 +75,17 @@ final class PanelButton: NSView {
     // The system sends cursorUpdate for the window under the pointer and honors
     // the cursor set here — even though this panel never becomes key/active.
     override func cursorUpdate(with event: NSEvent) {
+        guard !PanelViewController.isPanelMoving else { return }
         NSCursor.pointingHand.set()
     }
 
     override func mouseEntered(with event: NSEvent) {
+        guard !PanelViewController.isPanelMoving else { return }
         NSCursor.pointingHand.set()
     }
 
     override func mouseExited(with event: NSEvent) {
+        guard !PanelViewController.isPanelMoving else { return }
         NSCursor.arrow.set()
     }
 
