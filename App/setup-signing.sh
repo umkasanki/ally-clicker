@@ -20,14 +20,18 @@ if [ ! -f "$P12" ]; then
     exit 1
 fi
 
+KEYCHAIN=~/Library/Keychains/login.keychain-db
+
+echo "Unlocking login keychain (enter your macOS login password)..."
+security unlock-keychain "$KEYCHAIN"
+
 echo "Importing identity into login keychain..."
-security import "$P12" -k ~/Library/Keychains/login.keychain-db \
-    -P allyclicker -T /usr/bin/codesign
+security import "$P12" -k "$KEYCHAIN" -P allyclicker -T /usr/bin/codesign
 
 echo "Allowing codesign to use the key without prompts..."
-security set-key-partition-list -S apple-tool:,apple: -s \
-    -k "" ~/Library/Keychains/login.keychain-db 2>/dev/null || \
-    echo "  (partition-list step may prompt once; approve 'Always Allow')"
+echo "  (enter your login password again if asked)"
+security set-key-partition-list -S apple-tool:,apple: -s -k "" "$KEYCHAIN" 2>/dev/null || \
+    echo "  (partition-list step skipped; codesign may prompt once — approve 'Always Allow')"
 
 echo
 echo "Done. Verify:"
