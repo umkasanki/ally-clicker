@@ -17,10 +17,9 @@ enum BackgroundCursor {
     /// Call once at startup to allow NSCursor changes while in the background.
     static func enable() {
         let connection = _CGSDefaultConnection()
-        let result = CGSSetConnectionProperty(
+        _ = CGSSetConnectionProperty(
             connection, connection,
             "SetsCursorInBackground" as CFString,
             kCFBooleanTrue)
-        NSLog("AllyClicker: SetsCursorInBackground -> \(result.rawValue)")
     }
 }

@@ -9,8 +9,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var controller: DwellController!
     private var runner: DwellRunner!
 
-    // Tracks whether DRAG was armed just before the cursor entered the panel
-    // (swipe-reset clears it), so dwelling ON/OFF can enter panel-move mode.
+    // Tracks the armed action (and when a DRAG arm was cleared by a swipe), so
+    // dwelling ON/OFF with DRAG intent enters panel-move mode instead of toggling.
     private var lastArmed: DwellEngine.Action? = nil
     private var dragArmedClearedAt: Date? = nil
 
@@ -26,12 +26,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         BackgroundCursor.enable()   // allow cursor changes while never-active
         settings = settingsStore.load()
-        // Always show the panel; if access is missing, guide the user to grant it
-        // (clicks won't inject until then) instead of hiding the whole UI.
-        if !hasAccessibilityPermission() {
-            showAccessibilityAlert()
-        }
-
+        // Request Accessibility if missing: the system adds AllyClicker to the list
+        // and shows its own "Open System Settings" dialog. The panel still appears;
+        // clicks just won't inject until access is granted.
+        requestAccessibilityIfNeeded()
         startDwelling()
     }
 
@@ -96,11 +94,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.onMoveEnded = { [weak self] in self?.runner.start() }
         panel.setArmed(controller.armed)
         panel.show()
-        NSLog("AllyClicker: panel shown, window frame = \(NSStringFromRect(panel.window.frame))")
 
         runner = DwellRunner(controller: controller, intervalMs: settings.stillness.trackerIntervalMs)
         runner.start()
-        NSLog("AllyClicker: dwell runner started")
     }
 
     // MARK: - Cursor
@@ -131,29 +127,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Accessibility permission
 
-    private func hasAccessibilityPermission() -> Bool {
-        // prompt:true — on a fresh/unmatched grant, macOS adds THIS signed binary
-        // to the Accessibility list and shows the system dialog.
+    /// prompt:true — if not yet trusted, macOS adds this signed binary to the
+    /// Accessibility list and shows its own "Open System Settings" dialog.
+    @discardableResult
+    private func requestAccessibilityIfNeeded() -> Bool {
         let prompt = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
         return AXIsProcessTrustedWithOptions([prompt: true] as CFDictionary)
-    }
-
-    private func showAccessibilityAlert() {
-        let alert = NSAlert()
-        alert.messageText = "Accessibility Access Required"
-        alert.informativeText = """
-            AllyClicker needs Accessibility access to move and click the mouse for you.
-
-            Open System Settings → Privacy & Security → Accessibility, enable \
-            AllyClicker, then relaunch the app.
-            """
-        alert.alertStyle = .warning
-        alert.addButton(withTitle: "Open System Settings")
-        alert.addButton(withTitle: "Quit")
-
-        if alert.runModal() == .alertFirstButtonReturn {
-            let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
-            NSWorkspace.shared.open(url)
-        }
     }
 }

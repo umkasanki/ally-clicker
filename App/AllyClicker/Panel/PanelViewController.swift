@@ -77,7 +77,6 @@ final class PanelViewController: ZoneMapping {
 
         let initialFrame = Self.clampToScreen(
             NSRect(x: originX, y: originY, width: width, height: totalHeight))
-        NSLog("AllyClicker: screenFrame=\(NSStringFromRect(screenFrame)) items=\(items.count) frame=\(NSStringFromRect(initialFrame))")
         window = PanelWindow(contentRect: initialFrame)
         container.frame = NSRect(x: 0, y: 0, width: width, height: totalHeight)
         container.wantsLayer = true
