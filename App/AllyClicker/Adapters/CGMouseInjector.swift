@@ -1,3 +1,4 @@
+import Foundation
 import CoreGraphics
 import AllyClickerCore
 
@@ -9,6 +10,7 @@ struct CGMouseInjector: MouseInjecting {
 
     func click(_ action: DwellEngine.Action, at point: Point) {
         let p = cgPoint(point)
+        NSLog("AllyClicker: FIRE \(action) at Point(\(point.x),\(point.y)) -> CGPoint(\(p.x),\(p.y))")
         switch action {
         case .left:        leftClick(at: p)
         case .right:       rightClick(at: p)
