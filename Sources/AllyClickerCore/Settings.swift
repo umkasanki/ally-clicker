@@ -188,7 +188,11 @@ extension Settings {
     /// removes the button.
     public struct Panel: Codable, Equatable {
         public var width: Int = 70
+        /// Top-left position of the panel (points from the top of the screen).
         public var positionY: Int = 204
+        /// Top-left X (points from the left). nil = dock to the right edge (default).
+        /// Set once the user drags the panel, so its place is remembered.
+        public var positionX: Int? = nil
         /// Ordered buttons shown on the panel. Defaults to the confirmed PNC layout.
         public var items: [PanelItem] = Panel.defaultItems
 
@@ -211,6 +215,7 @@ extension Settings {
             let d = Panel()
             width     = try c.decodeIfPresent(Int.self, forKey: .width)     ?? d.width
             positionY = try c.decodeIfPresent(Int.self, forKey: .positionY) ?? d.positionY
+            positionX = try c.decodeIfPresent(Int.self, forKey: .positionX)
             // Decode items leniently: unknown ids (e.g. from a newer build) are
             // dropped rather than throwing — a single bad token must NOT discard the
             // whole Panel (which would also lose width/positionY). Then normalize.

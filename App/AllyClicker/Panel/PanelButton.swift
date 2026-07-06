@@ -99,6 +99,9 @@ final class PanelButton: NSView {
 
     private var dragGrabOffset: NSPoint? = nil
 
+    /// Called when a move-handle drag finishes, so the panel position can persist.
+    var onMoved: (() -> Void)? = nil
+
     /// True while the button is physically held (drag in progress). The zone
     /// mapper uses this to suppress the dwell toggle during a drag — pausing
     /// mid-drag must not collapse the panel under the user's hand.
@@ -123,7 +126,9 @@ final class PanelButton: NSView {
     }
 
     override func mouseUp(with event: NSEvent) {
+        let wasDragging = dragGrabOffset != nil
         dragGrabOffset = nil
+        if wasDragging { onMoved?() }
         super.mouseUp(with: event)
     }
 }

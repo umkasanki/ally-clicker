@@ -77,6 +77,16 @@ final class SettingsTests: XCTestCase {
         ])
     }
 
+    func testPanelPositionRoundTrip() throws {
+        var s = Settings()
+        XCTAssertNil(s.panel.positionX, "Defaults to nil = dock right edge")
+        s.panel.positionX = 300
+        s.panel.positionY = 120
+        let decoded = try Settings.load(from: try s.jsonData())
+        XCTAssertEqual(decoded.panel.positionX, 300)
+        XCTAssertEqual(decoded.panel.positionY, 120)
+    }
+
     func testPanelItemsRoundTripPreservingOrder() throws {
         var s = Settings()
         // Reorder + drop some + keep commands.

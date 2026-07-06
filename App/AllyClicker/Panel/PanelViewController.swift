@@ -47,6 +47,10 @@ final class PanelViewController: ZoneMapping {
     /// expand (the pill parked on ON/OFF must not contradict the real armed state).
     var armedProvider: (() -> DwellEngine.Action?)? = nil
 
+    /// Called after the user drags the panel, with the new TOP-LEFT origin (points).
+    /// The app persists it so the panel reappears in place next launch.
+    var onPositionChanged: ((_ x: Int, _ y: Int) -> Void)? = nil
+
     init(settings: Settings) {
         width = CGFloat(settings.panel.width)
         buttonSize = width  // square buttons
@@ -59,8 +63,10 @@ final class PanelViewController: ZoneMapping {
         let totalHeight = CGFloat(items.count) * buttonSize
         let screen = NSScreen.screens.first(where: { $0.frame.origin == .zero }) ?? NSScreen.main
         let screenFrame = screen?.frame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
-        // Dock to the right edge at the configured Y (top-left offset).
-        let originX = screenFrame.maxX - width
+        // Position from settings (top-left space). X: saved value or right-edge
+        // dock; Y: offset from the top. Converted to AppKit bottom-left origin.
+        let originX = settings.panel.positionX.map { screenFrame.minX + CGFloat($0) }
+            ?? (screenFrame.maxX - width)
         let originY = screenFrame.maxY - CGFloat(settings.panel.positionY) - totalHeight
 
         let initialFrame = Self.clampToScreen(
@@ -75,11 +81,22 @@ final class PanelViewController: ZoneMapping {
         pill.isHidden = true
         container.addSubview(pill)                       // below the buttons
         buttons.forEach { container.addSubview($0) }     // transparent, icons on top
+        // Notify persistence when the move-handle finishes a drag.
+        buttons.forEach { $0.onMoved = { [weak self] in self?.reportPosition() } }
         layout()
     }
 
     func show() {
         window.orderFrontRegardless()
+    }
+
+    /// Report the panel's current TOP-LEFT origin so the app can persist it.
+    private func reportPosition() {
+        let screen = NSScreen.screens.first(where: { $0.frame.origin == .zero }) ?? NSScreen.main
+        let screenFrame = screen?.frame ?? .zero
+        let x = Int((window.frame.minX - screenFrame.minX).rounded())
+        let y = Int((screenFrame.maxY - window.frame.maxY).rounded())  // top-left Y
+        onPositionChanged?(x, y)
     }
 
     // MARK: - ZoneMapping

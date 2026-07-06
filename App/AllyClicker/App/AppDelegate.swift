@@ -56,6 +56,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         panel.armedProvider = { [weak controller] in controller?.armed }
+        panel.onPositionChanged = { [weak self] x, y in
+            guard let self else { return }
+            self.settings.panel.positionX = x
+            self.settings.panel.positionY = y
+            self.settingsStore.save(self.settings)
+        }
         panel.setArmed(controller.armed)
         panel.show()
         NSLog("AllyClicker: panel shown, window frame = \(NSStringFromRect(panel.window.frame))")
