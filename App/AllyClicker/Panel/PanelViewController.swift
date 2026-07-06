@@ -17,16 +17,9 @@ private final class FlippedView: NSView {
 }
 
 extension NSCursor {
-    /// The 4-arrow move cursor. AppKit only exposes it privately; fall back to
-    /// crosshair if unavailable. Private API is acceptable for this personal app.
-    static var moveArrows: NSCursor {
-        let sel = NSSelectorFromString("_moveCursor")
-        if NSCursor.responds(to: sel),
-           let c = NSCursor.perform(sel)?.takeUnretainedValue() as? NSCursor {
-            return c
-        }
-        return .crosshair
-    }
+    /// Cursor shown while dragging the panel. Uses the public "closed hand" (grab)
+    /// cursor — semantically a move/grab, and safe (no private API).
+    static var moveArrows: NSCursor { .closedHand }
 }
 
 // The sliding red highlight behind the armed button's icon.
