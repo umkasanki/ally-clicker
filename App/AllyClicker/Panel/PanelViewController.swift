@@ -16,6 +16,19 @@ private final class FlippedView: NSView {
     }
 }
 
+extension NSCursor {
+    /// The 4-arrow move cursor. AppKit only exposes it privately; fall back to
+    /// crosshair if unavailable. Private API is acceptable for this personal app.
+    static var moveArrows: NSCursor {
+        let sel = NSSelectorFromString("_moveCursor")
+        if NSCursor.responds(to: sel),
+           let c = NSCursor.perform(sel)?.takeUnretainedValue() as? NSCursor {
+            return c
+        }
+        return .crosshair
+    }
+}
+
 // The sliding red highlight behind the armed button's icon.
 private final class ArmedPillView: NSView {
     override init(frame: NSRect) {
@@ -39,6 +52,10 @@ final class PanelViewController: ZoneMapping {
     private let buttonSize: CGFloat
     private let width: CGFloat
     private(set) var isCollapsed = false
+
+    // Drop tolerance/time for panel move mode (reuse the user's tuned values).
+    private let dropRadius: Double
+    private let dropDwell: TimeInterval
     // Serializes collapse/expand: re-toggling mid-animation could otherwise leave
     // buttons hidden while logically expanded (completion handlers racing).
     private var isTogglingCollapse = false
@@ -54,6 +71,8 @@ final class PanelViewController: ZoneMapping {
     init(settings: Settings) {
         width = CGFloat(settings.panel.width)
         buttonSize = width  // square buttons
+        dropRadius = Double(settings.stillness.moveRadiusPx)
+        dropDwell = settings.timing.dwellTimeSeconds
 
         // Build buttons from the configured, normalized layout.
         let items = Settings.Panel.normalize(settings.panel.items)
@@ -204,6 +223,71 @@ final class PanelViewController: ZoneMapping {
         f.origin.x = min(max(f.origin.x, visible.minX), visible.maxX - f.width)
         f.origin.y = min(max(f.origin.y, visible.minY), visible.maxY - f.height)
         return f
+    }
+
+    // MARK: - Move mode (hands-free panel drag via the DRAG function)
+    //
+    // Entered when DRAG is armed and the user dwells the ON/OFF button. The panel
+    // follows the cursor (keeping the grab offset); stopping the cursor for
+    // dropDwell drops it. The DwellController is paused meanwhile (see AppDelegate).
+
+    private var moveTimer: DispatchSourceTimer?
+    private var moveGrabOffset: CGPoint? = nil
+    private var moveStillAnchor: CGPoint? = nil
+    private var moveStillElapsed: TimeInterval = 0
+    private let moveTick = 0.016
+
+    /// Called when move mode ends (dropped), so the app can resume dwelling.
+    var onMoveEnded: (() -> Void)? = nil
+    var isMoving: Bool { moveTimer != nil }
+
+    func beginMove() {
+        let mouse = NSEvent.mouseLocation
+        moveGrabOffset = CGPoint(x: mouse.x - window.frame.origin.x,
+                                 y: mouse.y - window.frame.origin.y)
+        moveStillAnchor = mouse
+        moveStillElapsed = 0
+        NSCursor.moveArrows.set()
+
+        let t = DispatchSource.makeTimerSource(queue: .main)
+        t.schedule(deadline: .now(), repeating: .milliseconds(16))
+        t.setEventHandler { [weak self] in self?.moveStep() }
+        t.resume()
+        moveTimer = t
+    }
+
+    private func moveStep() {
+        let mouse = NSEvent.mouseLocation
+        NSCursor.moveArrows.set()   // keep it, buttons' cursorUpdate would override
+
+        if let grab = moveGrabOffset {
+            var f = window.frame
+            f.origin = CGPoint(x: mouse.x - grab.x, y: mouse.y - grab.y)
+            f = Self.clampToScreen(f)
+            window.setFrameOrigin(f.origin)
+        }
+
+        // Stop the cursor for dropDwell to drop the panel.
+        if let anchor = moveStillAnchor {
+            let d = hypot(mouse.x - anchor.x, mouse.y - anchor.y)
+            if d <= dropRadius {
+                moveStillElapsed += moveTick
+                if moveStillElapsed >= dropDwell { endMove() }
+            } else {
+                moveStillAnchor = mouse
+                moveStillElapsed = 0
+            }
+        }
+    }
+
+    func endMove() {
+        moveTimer?.cancel()
+        moveTimer = nil
+        moveGrabOffset = nil
+        moveStillAnchor = nil
+        NSCursor.arrow.set()
+        reportPosition()   // persist the new spot
+        onMoveEnded?()
     }
 
     // MARK: - Collapse / expand (ON/OFF)

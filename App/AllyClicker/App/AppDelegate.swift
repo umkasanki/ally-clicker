@@ -9,6 +9,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var controller: DwellController!
     private var runner: DwellRunner!
 
+    // Tracks whether DRAG was armed just before the cursor entered the panel
+    // (swipe-reset clears it), so dwelling ON/OFF can enter panel-move mode.
+    private var lastArmed: DwellEngine.Action? = nil
+    private var dragArmedClearedAt: Date? = nil
+
+    private func dragWasRecentlyArmed() -> Bool {
+        guard let t = dragArmedClearedAt else { return false }
+        return Date().timeIntervalSince(t) < 3.0
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         BackgroundCursor.enable()   // allow cursor changes while never-active
         settings = settingsStore.load()
@@ -40,18 +50,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
 
         controller.onUIEffect = { [weak self] effect in
+            guard let self else { return }
             if case .setArmed(let action) = effect {
-                self?.panel.setArmed(action)
+                // DRAG armed → cleared (cursor entered panel) = intent to move.
+                if action == nil, self.lastArmed == .leftDrag {
+                    self.dragArmedClearedAt = Date()
+                }
+                self.lastArmed = action
+                self.panel.setArmed(action)
             }
             // dwellProgress / clearProgress intentionally ignored (spec §2).
         }
 
         controller.onCommand = { [weak self] command in
             guard let self else { return }
-            self.panel.showCommand(command)   // slide the pill under the command button
             switch command {
-            case .togglePanel:    self.panel.toggleCollapsed()
-            case .launchKeyboard: KeyboardLauncher.launch(self.settings.commands.keyboard)
+            case .togglePanel:
+                // If DRAG was armed just before entering the panel, move the panel
+                // instead of toggling it (hands-free reposition).
+                if self.dragWasRecentlyArmed() {
+                    self.dragArmedClearedAt = nil
+                    self.enterMoveMode()
+                } else {
+                    self.panel.showCommand(command)
+                    self.panel.toggleCollapsed()
+                }
+            case .launchKeyboard:
+                self.panel.showCommand(command)
+                KeyboardLauncher.launch(self.settings.commands.keyboard)
             }
         }
 
@@ -62,6 +88,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self.settings.panel.positionY = y
             self.settingsStore.save(self.settings)
         }
+        panel.onMoveEnded = { [weak self] in self?.runner.start() }
         panel.setArmed(controller.armed)
         panel.show()
         NSLog("AllyClicker: panel shown, window frame = \(NSStringFromRect(panel.window.frame))")
@@ -69,6 +96,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         runner = DwellRunner(controller: controller, intervalMs: settings.stillness.trackerIntervalMs)
         runner.start()
         NSLog("AllyClicker: dwell runner started")
+    }
+
+    /// Pause dwelling and let the panel follow the cursor until dropped.
+    private func enterMoveMode() {
+        runner.stop()          // no clicks while repositioning
+        panel.setArmed(nil)    // clear any pill
+        panel.beginMove()      // resumes via onMoveEnded
     }
 
     // MARK: - Accessibility permission
