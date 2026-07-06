@@ -32,6 +32,9 @@ public final class DwellController {
     /// KEYBOARD → launchKeyboard). The app performs the actual side effect.
     public var onCommand: ((DwellEngine.Command) -> Void)?
 
+    /// Called every tick with the current cursor zone (for cursor policy, etc.).
+    public var onZone: ((DwellEngine.Zone) -> Void)?
+
     public init(settings: Settings,
                 sampler: CursorSampling,
                 mapper: ZoneMapping,
@@ -67,6 +70,7 @@ public final class DwellController {
     public func advance(dt: TimeInterval) {
         let cursor = sampler.location
         let zone = mapper.zone(at: cursor)
+        onZone?(zone)
         for effect in engine.tick(cursor: cursor, zone: zone, dt: dt) {
             dispatch(effect)
         }

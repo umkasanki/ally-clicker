@@ -16,12 +16,6 @@ private final class FlippedView: NSView {
     }
 }
 
-extension NSCursor {
-    /// Cursor shown while dragging the panel. Uses the public "closed hand" (grab)
-    /// cursor — semantically a move/grab, and safe (no private API).
-    static var moveArrows: NSCursor { .closedHand }
-}
-
 // The sliding red highlight behind the armed button's icon.
 private final class ArmedPillView: NSView {
     override init(frame: NSRect) {
@@ -234,18 +228,12 @@ final class PanelViewController: ZoneMapping {
     var onMoveEnded: (() -> Void)? = nil
     var isMoving: Bool { moveTimer != nil }
 
-    /// True while the panel is being moved — buttons check this to stop resetting
-    /// the cursor (their cursorUpdate would otherwise override the move cursor).
-    static private(set) var isPanelMoving = false
-
     func beginMove() {
         let mouse = NSEvent.mouseLocation
         moveGrabOffset = CGPoint(x: mouse.x - window.frame.origin.x,
                                  y: mouse.y - window.frame.origin.y)
         moveStillAnchor = mouse
         moveStillElapsed = 0
-        Self.isPanelMoving = true
-        NSCursor.moveArrows.push()   // stays until pop(), resists resets
 
         let t = DispatchSource.makeTimerSource(queue: .main)
         t.schedule(deadline: .now(), repeating: .milliseconds(16))
@@ -256,6 +244,9 @@ final class PanelViewController: ZoneMapping {
 
     private func moveStep() {
         let mouse = NSEvent.mouseLocation
+        // Runner is paused during a move, so nothing else drives the cursor —
+        // set the move cursor here each tick (no tracking-area competition now).
+        CursorPolicy.moving.set()
 
         if let grab = moveGrabOffset {
             var f = window.frame
@@ -282,8 +273,6 @@ final class PanelViewController: ZoneMapping {
         moveTimer = nil
         moveGrabOffset = nil
         moveStillAnchor = nil
-        Self.isPanelMoving = false
-        NSCursor.pop()
         NSCursor.arrow.set()
         reportPosition()   // persist the new spot
         onMoveEnded?()

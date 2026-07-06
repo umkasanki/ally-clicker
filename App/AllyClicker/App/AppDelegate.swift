@@ -62,6 +62,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // dwellProgress / clearProgress intentionally ignored (spec §2).
         }
 
+        controller.onZone = { [weak self] zone in self?.updateCursor(zone: zone) }
+
         controller.onCommand = { [weak self] command in
             guard let self else { return }
             switch command {
@@ -96,6 +98,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         runner = DwellRunner(controller: controller, intervalMs: settings.stillness.trackerIntervalMs)
         runner.start()
         NSLog("AllyClicker: dwell runner started")
+    }
+
+    // MARK: - Cursor
+
+    private var appliedPanelCursor = false
+
+    private func updateCursor(zone: DwellEngine.Zone) {
+        if panel.isMoving { return }   // the move loop owns the cursor
+        if let c = CursorPolicy.cursor(zone: zone, dragIntent: dragWasRecentlyArmed()) {
+            c.set()
+            appliedPanelCursor = true
+        } else if appliedPanelCursor {
+            // Reset once when leaving the panel to the desktop (don't clobber other
+            // apps' cursors every tick).
+            NSCursor.arrow.set()
+            appliedPanelCursor = false
+        }
     }
 
     /// Pause dwelling and let the panel follow the cursor until dropped.
