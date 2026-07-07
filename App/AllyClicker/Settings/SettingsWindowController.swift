@@ -9,7 +9,7 @@ final class SettingsWindowController {
 
     /// Open (or focus) the settings window for the given settings.
     /// `onApply` receives the edited settings to persist + apply live.
-    func show(settings: Settings, onApply: @escaping (Settings) -> Void) {
+    func show(settings: AllyClickerCore.Settings, onApply: @escaping (AllyClickerCore.Settings) -> Void) {
         if let window {
             window.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
