@@ -27,14 +27,17 @@ struct ValueControl: View {
         }
     }
 
-    // Identical square buttons — frame the label content so both are the same size.
+    // Identical round buttons on both sides of the slider.
     private func stepButton(_ symbol: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .frame(width: 30, height: 22)
-                .contentShape(Rectangle())
+                .font(.system(size: 12, weight: .semibold))
+                .frame(width: 26, height: 26)
+                .contentShape(Circle())
         }
-        .buttonStyle(.bordered)
+        .buttonStyle(.borderless)
+        .background(Circle().fill(Color(nsColor: .controlColor)))
+        .overlay(Circle().stroke(Color(nsColor: .separatorColor), lineWidth: 0.5))
     }
 
     private func set(_ v: Double) {
