@@ -24,6 +24,7 @@ final class SettingsWindowController {
         win.title = "AllyClicker Settings"
         win.styleMask = [.titled, .closable]
         win.isReleasedWhenClosed = false
+        win.appearance = NSAppearance(named: .darkAqua)   // match the panel's dark look
         win.center()
         window = win
 
