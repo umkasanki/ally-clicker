@@ -11,7 +11,11 @@ final class StatusBarController {
         item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
         if let button = item.button {
-            let img = NSImage(systemSymbolName: "cursorarrow", accessibilityDescription: "AllyClicker")
+            // cursorarrow reads optically smaller than neighbouring menu-bar
+            // glyphs, so bump its point size to match.
+            let config = NSImage.SymbolConfiguration(pointSize: 19, weight: .regular)
+            let img = NSImage(systemSymbolName: "cursorarrow", accessibilityDescription: "AllyClicker")?
+                .withSymbolConfiguration(config)
             img?.isTemplate = true
             button.image = img
         }

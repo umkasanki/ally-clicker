@@ -23,29 +23,13 @@ struct SettingsView: View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    section("Timing") {
+                    section("Clicking", intro: "Arm an action on the panel, then hold the cursor still over your target. When it stays put for the AutoMouse Delay, the action fires at that spot.") {
                         ValueControl(title: "AutoMouse Delay", value: seconds($model.settings.timing.dwellTimeMouseMs),
                                      range: 0.10...1.50, step: 0.01, unit: "s", decimals: 2,
                                      help: "How long to hold the cursor still on the screen before the armed action fires.")
                         ValueControl(title: "Panel button", value: seconds($model.settings.timing.dwellTimeMs),
                                      range: 0.10...1.50, step: 0.01, unit: "s", decimals: 2,
                                      help: "How long to dwell on a panel button to select it.")
-                        ValueControl(title: "Drag press", value: seconds($model.settings.timing.autoSelectDownMs),
-                                     range: 0.10...1.50, step: 0.01, unit: "s", decimals: 2,
-                                     help: "Dwell at the start point before Drag presses the mouse button down.")
-                        ValueControl(title: "Drag release", value: seconds($model.settings.timing.autoSelectUpMs),
-                                     range: 0.10...1.50, step: 0.01, unit: "s", decimals: 2,
-                                     help: "Dwell at the end point before Drag releases the mouse button.")
-                    }
-                    section("Sensitivity") {
-                        ValueControl(title: "Jitter tolerance", value: asDouble($model.settings.stillness.sensitivity),
-                                     range: 1...10, step: 1,
-                                     help: "How much cursor tremor still counts as holding still. Higher = more forgiving for shaky control.")
-                        ValueControl(title: "Move threshold", value: asDouble($model.settings.stillness.moveRadiusPx),
-                                     range: 4...30, step: 1, unit: "px",
-                                     help: "Minimum movement counted as a real move — resets timers and ends a drag's first phase.")
-                    }
-                    section("Behavior") {
                         toggleRow("Default to Left Click", $model.settings.clicks.defaultLeft,
                                   help: "After any action fires, automatically re-arm Left click.")
                         toggleRow("Automatic Cancel", $model.settings.clicks.autoCancel,
@@ -54,10 +38,26 @@ struct SettingsView: View {
                                      range: 0...15, step: 1, unit: "min",
                                      help: "Clear the armed action after this long with no cursor movement. 0 = never.")
                     }
-                    section("Auto-scroll") {
+                    section("Drag", intro: "With Drag armed, hold still at the start point until the button presses down (Drag press), move to the destination, then hold still again until it releases (Drag release). Used for dragging and selecting.") {
+                        ValueControl(title: "Drag press", value: seconds($model.settings.timing.autoSelectDownMs),
+                                     range: 0.10...1.50, step: 0.01, unit: "s", decimals: 2,
+                                     help: "Dwell at the start point before Drag presses the mouse button down.")
+                        ValueControl(title: "Drag release", value: seconds($model.settings.timing.autoSelectUpMs),
+                                     range: 0.10...1.50, step: 0.01, unit: "s", decimals: 2,
+                                     help: "Dwell at the end point before Drag releases the mouse button.")
+                    }
+                    section("Scroll & Links", intro: "The MIDDLE action does two things depending on where the cursor is. Over a link: opens it in a new tab (middle click). Over empty page area: starts auto-scroll — an anchor drops where you stopped, and the page scrolls in the direction you move the cursor away from it, the farther out the faster. Move back toward the anchor to slow down. To stop, hold the cursor still anywhere — a left click fires and scrolling ends.") {
                         ValueControl(title: "Intensity", value: $model.settings.autoScroll.intensity,
                                      range: 0.25...3.0, step: 0.25, unit: "×", decimals: 2,
                                      help: "Scroll speed multiplier. Lower = slower and easier to control; higher = faster.")
+                    }
+                    section("Cursor precision", intro: "How steady the cursor must be to count as \"holding still\". These apply to every action above — raise them if head-tracker tremor triggers actions too early or ends drags by accident.") {
+                        ValueControl(title: "Jitter tolerance", value: asDouble($model.settings.stillness.sensitivity),
+                                     range: 1...10, step: 1,
+                                     help: "How much cursor tremor still counts as holding still. Higher = more forgiving for shaky control.")
+                        ValueControl(title: "Move threshold", value: asDouble($model.settings.stillness.moveRadiusPx),
+                                     range: 4...30, step: 1, unit: "px",
+                                     help: "Minimum movement counted as a real move — resets timers and ends a drag's first phase.")
                     }
                 }
                 .padding(20)
@@ -75,9 +75,16 @@ struct SettingsView: View {
     }
 
     @ViewBuilder
-    private func section<Content: View>(_ title: String, @ViewBuilder _ content: () -> Content) -> some View {
+    private func section<Content: View>(_ title: String, intro: String = "", @ViewBuilder _ content: () -> Content) -> some View {
         GroupBox {
             VStack(alignment: .leading, spacing: 14) {
+                if !intro.isEmpty {
+                    Text(intro)
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
                 content()
             }
             .frame(maxWidth: .infinity, alignment: .leading)
