@@ -14,11 +14,9 @@ struct ValueControl: View {
         HStack(spacing: 12) {
             Text(title)
                 .frame(width: 150, alignment: .leading)
-            Button { set(value - step) } label: { Image(systemName: "minus") }
-                .frame(width: 28)
+            stepButton("minus") { set(value - step) }
             Slider(value: Binding(get: { value }, set: { set($0) }), in: range, step: step)
-            Button { set(value + step) } label: { Image(systemName: "plus") }
-                .frame(width: 28)
+            stepButton("plus") { set(value + step) }
             TextField("", value: Binding(get: { value }, set: { set($0) }), formatter: formatter)
                 .frame(width: 56)
                 .multilineTextAlignment(.trailing)
@@ -26,6 +24,16 @@ struct ValueControl: View {
                 .foregroundStyle(.secondary)
                 .frame(width: 30, alignment: .leading)
         }
+    }
+
+    // Identical square buttons — frame the label content so both are the same size.
+    private func stepButton(_ symbol: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .frame(width: 30, height: 22)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.bordered)
     }
 
     private func set(_ v: Double) {
