@@ -26,7 +26,9 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
         win.isReleasedWhenClosed = false
         win.appearance = NSAppearance(named: .darkAqua)   // match the panel's dark look
         win.delegate = self                               // red-X close ⇒ reset like Cancel
-        win.center()
+        // Remember the window's position across opens; center only on first ever run.
+        win.setFrameAutosaveName("AllyClickerSettingsWindow")
+        if !win.setFrameUsingName("AllyClickerSettingsWindow") { win.center() }
         window = win
 
         NSApp.activate(ignoringOtherApps: true)   // .accessory app must come forward
