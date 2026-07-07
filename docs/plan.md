@@ -270,23 +270,49 @@ AllyClicker/
   мазок по панели→выход. Умный клик по ссылке (AX AXLink → средний клик/новая
   вкладка) в Safari/Firefox. Chrome — нужен AXManualAccessibility (отложено).
 
-### Фаза 4 — Settings Window
-- [ ] 4.1 SettingsWindowController + меню-бар
-- [ ] 4.2 Чекбоксы Options
-- [ ] 4.3 Диалог AutoMouse Delay
-- [ ] 4.4 Диалог AutoSelect Delay
-- [ ] 4.5 Sensitivity слайдер
-- [ ] 4.6 Transparency слайдер
-- [ ] 4.7 Редактор панели (состав + порядок, panel.items)
-- [ ] 4.8 Выбор KEYBOARD-цели (3 режима)
-- [ ] 4.9 About
+### Фаза 4 — Settings Window (SwiftUI, применение по кнопке Apply)
+
+**Решения:** SwiftUI в NSWindow (через NSHostingController); изменения
+применяются по кнопке **Apply** (правит рабочую копию → save → применить к
+запущенному приложению), Cancel отменяет. **Доступность:** окно управляется
+dwell-кликами (ЛКМ), поэтому вместо перетаскиваемых слайдеров — **степперы «−/+»**
+и дискретные кнопки (как ◄ ► в PNC); слайдер только там, где степпер неудобен.
+
+#### 4.0 — Инфраструктура (сначала)
+- [ ] 4.0.1 Status bar icon (`NSStatusItem`, иконка из references/menu-bar-icon)
+  с меню: «Настройки…», «Выход». ВАЖНО: сейчас у приложения нет способа выйти —
+  этот пункт решает и запуск настроек, и Quit.
+- [ ] 4.0.2 `SettingsWindowController` + SwiftUI-хост; при открытии `NSApp.activate`
+  (мы .accessory) — окно должно принимать фокус/ввод (в отличие от панели)
+- [ ] 4.0.3 Apply/Cancel: SwiftUI редактирует рабочую копию `Settings`; Apply →
+  валидация → `SettingsStore.save` → `applyToRunningApp` (updateSettings движка,
+  пересоздать AutoScroller, пересобрать панель при структурных изменениях)
+
+#### 4.1 — Секции формы
+- [ ] 4.1.1 Тайминги (степперы 0.05с): AutoMouse Delay (авто-клик по экрану =
+  `dwellTimeMouseMs`), задержка кнопки панели (`dwellTimeMs`), AutoSelect down/up (drag)
+- [ ] 4.1.2 Sensitivity — один уровень, пропорционально меняет `sensitivity`+`moveRadiusPx`
+- [ ] 4.1.3 Поведение: Default to Left (toggle), Automatic Cancel (toggle),
+  Idle-disarm в минутах (степпер, 0 = выкл)
+- [ ] 4.1.4 Auto-scroll: intensity (степпер 0.25/0.5/1.0/…); продвинутое
+  (deadZone, boost) — под раскрывашкой
+- [ ] 4.1.5 Редактор панели: список `panel.items` (добавить/убрать/переставить),
+  width, transparency, кнопка «сбросить позицию»
+- [ ] 4.1.6 KEYBOARD-цель: radio (Accessibility Keyboard / Keyboard Viewer /
+  стороннее + выбор файла). Действие пока отложено, но значение настраивается
+- [ ] 4.1.7 About: версия, кредиты PNC, ссылка на репозиторий
+
+#### 4.2 — Применение структурных изменений
+- [ ] 4.2.1 Пересборка панели при смене items/width/transparency (без перезапуска)
+- [ ] 4.2.2 Пересоздание/обновление AutoScroller и движка при смене таймингов/скролла
+- [ ] 4.2.3 Проверка на устройстве: всё управляется dwell-кликами
 
 ### Фаза 5 — Полировка
 - [ ] 5.1 Login item (SMAppService)
-- [ ] 5.2 Status bar icon + контекстное меню
-- [ ] 5.3 Audio feedback
-- [ ] 5.4 Финальное тестирование
-- [ ] 5.5 Сборка + нотаризация
+- [ ] 5.2 Audio feedback (звук при dwell-complete)
+- [ ] 5.3 Финальное тестирование
+- [ ] 5.4 Сборка + нотаризация
+- [ ] Косметика: курсор при перемещении панели; KEYBOARD toggle (отложено)
 
 ### Реализованные фичи (сверх базового PNC)
 - [x] Auto-scroll intensity — множитель скорости скролла (`autoScroll.intensity`, дефолт 0.5)
