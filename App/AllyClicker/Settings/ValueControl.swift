@@ -9,8 +9,21 @@ struct ValueControl: View {
     let step: Double
     var unit: String = ""
     var decimals: Int = 0
+    var help: String = ""
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            controlRow
+            if !help.isEmpty {
+                Text(help)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private var controlRow: some View {
         HStack(spacing: 12) {
             Text(title)
                 .frame(width: 150, alignment: .leading)
