@@ -25,16 +25,16 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 24) {
                     section("Timing") {
                         ValueControl(title: "AutoMouse Delay", value: seconds($model.settings.timing.dwellTimeMouseMs),
-                                     range: 0.10...1.50, step: 0.05, unit: "s", decimals: 2,
+                                     range: 0.10...1.50, step: 0.01, unit: "s", decimals: 2,
                                      help: "How long to hold the cursor still on the screen before the armed action fires.")
                         ValueControl(title: "Panel button", value: seconds($model.settings.timing.dwellTimeMs),
-                                     range: 0.10...1.50, step: 0.05, unit: "s", decimals: 2,
+                                     range: 0.10...1.50, step: 0.01, unit: "s", decimals: 2,
                                      help: "How long to dwell on a panel button to select it.")
                         ValueControl(title: "Drag press", value: seconds($model.settings.timing.autoSelectDownMs),
-                                     range: 0.10...1.50, step: 0.05, unit: "s", decimals: 2,
+                                     range: 0.10...1.50, step: 0.01, unit: "s", decimals: 2,
                                      help: "Dwell at the start point before Drag presses the mouse button down.")
                         ValueControl(title: "Drag release", value: seconds($model.settings.timing.autoSelectUpMs),
-                                     range: 0.10...1.50, step: 0.05, unit: "s", decimals: 2,
+                                     range: 0.10...1.50, step: 0.01, unit: "s", decimals: 2,
                                      help: "Dwell at the end point before Drag releases the mouse button.")
                     }
                     section("Sensitivity") {
