@@ -39,7 +39,32 @@ auto-scroll с intensity + умный клик по ссылке (Safari/Firefox
 - GUI запускать может только пользователь на самом Mac (SSH `open` работает,
   но скриншоты/GUI-интеракции — нет)
 
-### 🎯 Точка остановки (на чём прервались)
+### 🎯 Точка остановки (пауза на Фазе 4 — Settings Window)
+Фаза 4.0 (инфраструктура) + большинство 4.1 ГОТОВО вживую:
+- Статус-бар иконка (курсор) → меню Settings… / Quit (единственный способ выйти)
+- Окно настроек: SwiftUI в NSWindow, тёмная тема, крупные шрифты, группы (GroupBox),
+  запоминает позицию (UserDefaults `AllyClickerSettingsFrame`)
+- `ValueControl`: слайдер + круглые −/+ + поле, синхронно; пояснение под каждым
+- Секции: Timing (шаг 0.01с), Sensitivity, Behavior, Auto-scroll
+- Apply (live-apply engine-параметров через updateSettings + rebuildAutoScroller),
+  Cancel, Reset to defaults (только поля формы)
+- Ревью Фазы 4 отработано: NSWindowDelegate (крестик=Cancel), Reset не трогает
+  скрытые поля, rebuildAutoScroller.stop() перед заменой
+
+**СЛЕДУЮЩИЙ ШАГ — доделать Фазу 4:**
+- 4.1.5 Редактор панели: состав/порядок `panel.items` (add/remove/reorder),
+  width, transparency, «сбросить позицию» + **пересборка панели на лету**
+  (applySettings сейчас применяет только engine-параметры, панель НЕ трогает)
+- 4.1.6 Выбор KEYBOARD-цели (3 режима) — значение настраивается, действие отложено
+- 4.1.7 About (версия, кредиты PNC, ссылка)
+
+Файлы Settings: `App/AllyClicker/Settings/{SettingsView, ValueControl, SettingsModel,
+SettingsWindowController}.swift`, `StatusBar/StatusBarController.swift`.
+applySettings + rebuildAutoScroller — в `App/AllyClicker/App/AppDelegate.swift`.
+
+---
+
+### Архив: предыдущая точка остановки
 - **C1 стабильная подпись — ГОТОВО и проверено.** Keychain `allyclicker.keychain-db`
   (пароль `allyclicker`), self-signed "AllyClicker Self-Signed". `setup-signing.sh`
   настраивает (по SSH), `build-app.sh` подписывает. При пересборке грант не слетает.
