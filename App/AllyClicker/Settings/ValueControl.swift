@@ -16,7 +16,7 @@ struct ValueControl: View {
             controlRow
             if !help.isEmpty {
                 Text(help)
-                    .font(.caption)
+                    .font(.system(size: 13))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -26,17 +26,20 @@ struct ValueControl: View {
     private var controlRow: some View {
         HStack(spacing: 12) {
             Text(title)
-                .frame(width: 150, alignment: .leading)
+                .font(.system(size: 15))
+                .frame(width: 175, alignment: .leading)
             stepButton("minus") { set(value - step) }
             // Continuous slider (no `step:` → no tick marks); set() quantizes to step.
             Slider(value: Binding(get: { value }, set: { set($0) }), in: range)
             stepButton("plus") { set(value + step) }
             TextField("", value: Binding(get: { value }, set: { set($0) }), formatter: formatter)
-                .frame(width: 56)
+                .font(.system(size: 15))
+                .frame(width: 60)
                 .multilineTextAlignment(.trailing)
             Text(unit)
+                .font(.system(size: 14))
                 .foregroundStyle(.secondary)
-                .frame(width: 30, alignment: .leading)
+                .frame(width: 32, alignment: .leading)
         }
     }
 

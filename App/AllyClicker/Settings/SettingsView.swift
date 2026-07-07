@@ -71,7 +71,7 @@ struct SettingsView: View {
             }
             .padding(12)
         }
-        .frame(width: 560, height: 520)
+        .frame(width: 640, height: 560)
     }
 
     @ViewBuilder
@@ -83,15 +83,15 @@ struct SettingsView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(6)
         } label: {
-            Text(title).font(.headline).padding(.bottom, 2)
+            Text(title).font(.system(size: 17, weight: .semibold)).padding(.bottom, 2)
         }
     }
 
     private func toggleRow(_ title: String, _ isOn: Binding<Bool>, help: String) -> some View {
         VStack(alignment: .leading, spacing: 3) {
-            Toggle(title, isOn: isOn)
+            Toggle(title, isOn: isOn).font(.system(size: 15))
             Text(help)
-                .font(.caption)
+                .font(.system(size: 13))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
