@@ -10,6 +10,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var runner: DwellRunner!
     private let injector = CGMouseInjector()
     private var autoScroller: AutoScroller!
+    private var statusBar: StatusBarController!
+    private let settingsWindow = SettingsWindowController()
 
     // Tracks the armed action (and when a DRAG arm was cleared by a swipe), so
     // dwelling ON/OFF with DRAG intent enters panel-move mode instead of toggling.
@@ -33,6 +35,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // clicks just won't inject until access is granted.
         requestAccessibilityIfNeeded()
         startDwelling()
+
+        statusBar = StatusBarController(onOpenSettings: { [weak self] in
+            guard let self else { return }
+            self.settingsWindow.show(settings: self.settings) { [weak self] edited in
+                self?.applySettings(edited)
+            }
+        })
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -53,18 +62,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             injector: injector
         )
 
-        autoScroller = AutoScroller(
-            config: settings.autoScroll,
-            stillRadius: Double(settings.stillness.sensitivity),  // same as dwell-click
-            dwellSeconds: settings.effectiveDwellMouseSeconds,
-            injector: injector)
-        autoScroller.shouldExit = { [weak self] cursor in
-            // Brush the panel to stop scrolling (same muscle memory as swipe-reset).
-            guard let self else { return true }
-            if case .desktop = self.panel.zone(at: cursor) { return false }
-            return true
-        }
-        autoScroller.onExit = { [weak self] in self?.runner.start() }
+        rebuildAutoScroller()
 
         controller.willFire = { [weak self] action, point in
             guard let self, action == .middle else { return false }
@@ -124,6 +122,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         runner = DwellRunner(controller: controller, intervalMs: settings.stillness.trackerIntervalMs)
         runner.start()
+    }
+
+    /// (Re)build the auto-scroller from current settings (captures config + dwell).
+    private func rebuildAutoScroller() {
+        autoScroller = AutoScroller(
+            config: settings.autoScroll,
+            stillRadius: Double(settings.stillness.sensitivity),
+            dwellSeconds: settings.effectiveDwellMouseSeconds,
+            injector: injector)
+        autoScroller.shouldExit = { [weak self] cursor in
+            guard let self else { return true }
+            if case .desktop = self.panel.zone(at: cursor) { return false }
+            return true
+        }
+        autoScroller.onExit = { [weak self] in self?.runner.start() }
+    }
+
+    // MARK: - Apply settings (from the Settings window)
+
+    /// Persist edited settings and apply them to the running app live. Covers the
+    /// engine-side params (timing/sensitivity/clicks/scroll); panel layout/appearance
+    /// changes are handled in a later phase.
+    private func applySettings(_ edited: Settings) {
+        settings = edited
+        settingsStore.save(edited)
+        controller.updateSettings(edited)   // engine reads these each tick
+        rebuildAutoScroller()               // captures config/dwell at build time
     }
 
     // MARK: - Cursor
