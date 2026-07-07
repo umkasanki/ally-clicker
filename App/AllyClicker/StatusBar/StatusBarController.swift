@@ -11,7 +11,7 @@ final class StatusBarController {
         item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
         if let button = item.button {
-            let img = NSImage(systemSymbolName: "cursorarrow.click", accessibilityDescription: "AllyClicker")
+            let img = NSImage(systemSymbolName: "cursorarrow", accessibilityDescription: "AllyClicker")
             img?.isTemplate = true
             button.image = img
         }
