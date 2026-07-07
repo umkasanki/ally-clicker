@@ -54,6 +54,7 @@ struct SettingsView: View {
             }
             Divider()
             HStack {
+                Button("Reset to defaults") { model.resetToDefaults() }
                 Spacer()
                 Button("Cancel") { model.cancel() }.keyboardShortcut(.cancelAction)
                 Button("Apply") { model.apply() }.keyboardShortcut(.defaultAction)
