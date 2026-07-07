@@ -15,7 +15,8 @@ struct ValueControl: View {
             Text(title)
                 .frame(width: 150, alignment: .leading)
             stepButton("minus") { set(value - step) }
-            Slider(value: Binding(get: { value }, set: { set($0) }), in: range, step: step)
+            // Continuous slider (no `step:` → no tick marks); set() quantizes to step.
+            Slider(value: Binding(get: { value }, set: { set($0) }), in: range)
             stepButton("plus") { set(value + step) }
             TextField("", value: Binding(get: { value }, set: { set($0) }), formatter: formatter)
                 .frame(width: 56)
