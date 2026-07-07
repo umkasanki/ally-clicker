@@ -143,13 +143,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Apply settings (from the Settings window)
 
     /// Persist edited settings and apply them to the running app live. Covers the
-    /// engine-side params (timing/sensitivity/clicks/scroll); panel layout/appearance
-    /// changes are handled in a later phase.
+    /// engine-side params (timing/sensitivity/clicks/scroll) and the panel layout
+    /// (button set/width/transparency) — the latter rebuilt in place, no restart.
     private func applySettings(_ edited: Settings) {
+        var edited = edited
+        // The settings window holds a snapshot taken when it opened; if the user
+        // dragged the panel meanwhile, that snapshot's position is stale. Keep the
+        // live position so Apply never yanks the panel back to where it was.
+        edited.panel.positionX = settings.panel.positionX
+        edited.panel.positionY = settings.panel.positionY
+
+        let panelChanged = settings.panel.items != edited.panel.items
+            || settings.panel.width != edited.panel.width
+            || settings.appearance.transparency != edited.appearance.transparency
+            || settings.appearance.iconStyle != edited.appearance.iconStyle
+
         settings = edited
         settingsStore.save(edited)
         controller.updateSettings(edited)   // engine reads these each tick
         rebuildAutoScroller()               // captures config/dwell at build time
+
+        if panelChanged {
+            panel.rebuild(with: edited)
+            panel.setArmed(controller.armed)   // re-sync the pill to real armed state
+        }
     }
 
     // MARK: - Cursor

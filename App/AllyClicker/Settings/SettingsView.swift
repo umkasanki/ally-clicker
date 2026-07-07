@@ -21,8 +21,28 @@ struct SettingsView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
+            TabView {
+                behaviorTab
+                    .tabItem { Label("Behavior", systemImage: "slider.horizontal.3") }
+                PanelEditorView(model: model)
+                    .tabItem { Label("Panel", systemImage: "square.grid.3x1.below.line.grid.1x2") }
+            }
+            .padding(.top, 8)
+            Divider()
+            HStack {
+                Button("Reset to defaults") { model.resetToDefaults() }
+                Spacer()
+                Button("Cancel") { model.cancel() }.keyboardShortcut(.cancelAction)
+                Button("Apply") { model.apply() }.keyboardShortcut(.defaultAction)
+            }
+            .padding(12)
+        }
+        .frame(width: 640, height: 620)
+    }
+
+    private var behaviorTab: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
                     section("Clicking", intro: "Arm an action on the panel, then hold the cursor still over your target. When it stays put for the AutoMouse Delay, the action fires at that spot.") {
                         ValueControl(title: "AutoMouse Delay", value: seconds($model.settings.timing.dwellTimeMouseMs),
                                      range: 0.10...1.50, step: 0.01, unit: "s", decimals: 2,
@@ -59,39 +79,14 @@ struct SettingsView: View {
                                      range: 4...30, step: 1, unit: "px",
                                      help: "Minimum movement counted as a real move — resets timers and ends a drag's first phase.")
                     }
-                }
-                .padding(20)
             }
-            Divider()
-            HStack {
-                Button("Reset to defaults") { model.resetToDefaults() }
-                Spacer()
-                Button("Cancel") { model.cancel() }.keyboardShortcut(.cancelAction)
-                Button("Apply") { model.apply() }.keyboardShortcut(.defaultAction)
-            }
-            .padding(12)
+            .padding(20)
         }
-        .frame(width: 640, height: 560)
     }
 
     @ViewBuilder
-    private func section<Content: View>(_ title: String, intro: String = "", @ViewBuilder _ content: () -> Content) -> some View {
-        GroupBox {
-            VStack(alignment: .leading, spacing: 14) {
-                if !intro.isEmpty {
-                    Text(intro)
-                        .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                content()
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(6)
-        } label: {
-            Text(title).font(.system(size: 17, weight: .semibold)).padding(.bottom, 2)
-        }
+    private func section<Content: View>(_ title: String, intro: String = "", @ViewBuilder _ content: @escaping () -> Content) -> some View {
+        SettingsSection(title: title, intro: intro, content: content)
     }
 
     private func toggleRow(_ title: String, _ isOn: Binding<Bool>, help: String) -> some View {

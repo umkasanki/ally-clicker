@@ -176,9 +176,17 @@ extension Settings {
 
 extension Settings {
     public struct Appearance: Codable, Equatable {
+        /// Which icon set the panel buttons use.
+        public enum IconStyle: String, Codable, CaseIterable, Equatable {
+            case custom   // the project's own vector glyphs (Resources/icons)
+            case system   // macOS SF Symbols
+        }
+
         public var audio: Bool = true
         /// Panel opacity 0–255 (255 = fully opaque).
         public var transparency: Int = 255
+        /// Panel button icon set. Defaults to the project's custom glyphs.
+        public var iconStyle: IconStyle = .custom
 
         public init() {}
 
@@ -187,6 +195,7 @@ extension Settings {
             let d = Appearance()
             audio        = try c.decodeIfPresent(Bool.self, forKey: .audio)        ?? d.audio
             transparency = try c.decodeIfPresent(Int.self,  forKey: .transparency) ?? d.transparency
+            iconStyle    = try c.decodeIfPresent(IconStyle.self, forKey: .iconStyle) ?? d.iconStyle
         }
     }
 }
@@ -208,7 +217,8 @@ extension Settings {
         public var items: [PanelItem] = Panel.defaultItems
 
         /// Confirmed default layout (top → bottom): ON/OFF, LEFT, RIGHT, DOUBLE,
-        /// DRAG, MIDDLE, KEYBOARD.
+        /// DRAG, MIDDLE. KEYBOARD is intentionally NOT here — it will live on a
+        /// separate panel later (see normalize, which strips it from any layout).
         public static let defaultItems: [PanelItem] = [
             .command(.togglePanel),
             .action(.left),
@@ -216,7 +226,6 @@ extension Settings {
             .action(.doubleClick),
             .action(.leftDrag),
             .action(.middle),
-            .command(.launchKeyboard),
         ]
 
         public init() {}
@@ -245,6 +254,9 @@ extension Settings {
         public static func normalize(_ items: [PanelItem]) -> [PanelItem] {
             var seen = Set<PanelItem>()
             var result = items.filter { seen.insert($0).inserted }
+            // KEYBOARD is being moved to a dedicated panel — strip it from the main
+            // panel's layout wherever it appears (defaults, saved JSON, editor).
+            result.removeAll { $0 == .command(.launchKeyboard) }
             if result.isEmpty { return defaultItems }
             if !result.contains(.command(.togglePanel)) {
                 result.insert(.command(.togglePanel), at: 0)

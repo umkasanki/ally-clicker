@@ -8,6 +8,7 @@ import AllyClickerCore
 
 final class PanelButton: NSView {
     let item: PanelItem
+    private let iconStyle: Settings.Appearance.IconStyle
 
     private let iconView = NSImageView()
 
@@ -15,8 +16,9 @@ final class PanelButton: NSView {
         didSet { needsDisplay = true }
     }
 
-    init(item: PanelItem) {
+    init(item: PanelItem, iconStyle: Settings.Appearance.IconStyle = .custom) {
         self.item = item
+        self.iconStyle = iconStyle
         super.init(frame: .zero)
         wantsLayer = true
         setupIcon()
@@ -26,9 +28,7 @@ final class PanelButton: NSView {
 
     private func setupIcon() {
         iconView.imageScaling = .scaleProportionallyUpOrDown
-        let image = item.projectIcon ?? NSImage(systemSymbolName: item.sfSymbolName,
-                                                accessibilityDescription: item.id)
-        iconView.image = image
+        iconView.image = item.image(style: iconStyle)
         iconView.contentTintColor = .labelColor
         addSubview(iconView)
     }
@@ -45,11 +45,19 @@ final class PanelButton: NSView {
     /// Per-button glyph sizes: ON/OFF is the primary control (largest),
     /// KEYBOARD slightly larger than the click glyphs.
     private var iconSize: CGFloat {
+        let base: CGFloat
         switch item {
-        case .command(.togglePanel):    return 48
-        case .command(.launchKeyboard): return 42
-        default:                        return 36
+        case .command(.togglePanel):    base = 48
+        case .command(.launchKeyboard): base = 42
+        default:                        base = 36
         }
+        guard iconStyle == .system else { return base }
+        // SF Symbols fill their frame more tightly than the custom glyphs (which
+        // carry built-in padding), so render them smaller for matching weight.
+        // The power symbol is a solid ring that reads especially heavy — shrink it
+        // a bit more than the click glyphs.
+        if case .command(.togglePanel) = item { return base * 0.5 }
+        return base * 0.58
     }
 
     // The button itself is transparent — the container draws the panel background
@@ -111,6 +119,16 @@ final class PanelButton: NSView {
 }
 
 extension PanelItem {
+    /// NSImage for a panel button, honoring the chosen icon style. Custom falls
+    /// back to the SF Symbol when a project glyph is missing.
+    func image(style: Settings.Appearance.IconStyle) -> NSImage? {
+        let symbol = NSImage(systemSymbolName: sfSymbolName, accessibilityDescription: id)
+        switch style {
+        case .custom: return projectIcon ?? symbol
+        case .system: return symbol
+        }
+    }
+
     /// Project icon (vector PDF from Resources/icons), template-tinted.
     /// nil → fall back to an SF Symbol.
     var projectIcon: NSImage? {
@@ -133,6 +151,33 @@ extension PanelItem {
         case .command(.launchKeyboard): return "keyboard"
         default:                    return nil
         }
+    }
+
+    /// Human-readable name shown in the Settings panel editor.
+    var displayName: String {
+        switch self {
+        case .action(.left):            return "Left click"
+        case .action(.right):           return "Right click"
+        case .action(.doubleClick):     return "Double click"
+        case .action(.leftDrag):        return "Drag"
+        case .action(.middle):          return "Middle / Scroll"
+        case .action(.rightDouble):     return "Right double click"
+        case .action(.rightThenLeft):   return "Right then left"
+        case .command(.togglePanel):    return "Show / hide panel"
+        case .command(.launchKeyboard): return "Keyboard"
+        }
+    }
+
+    /// Items the user may add / remove / reorder in the panel editor. Excludes the
+    /// actions not yet wired for injection (rightDouble, rightThenLeft) and KEYBOARD
+    /// (moving to a separate panel).
+    static var editorCatalog: [PanelItem] {
+        [.command(.togglePanel),
+         .action(.left),
+         .action(.right),
+         .action(.doubleClick),
+         .action(.leftDrag),
+         .action(.middle)]
     }
 
     /// SF Symbol fallback for items without a project icon.

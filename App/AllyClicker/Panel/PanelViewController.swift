@@ -36,13 +36,13 @@ final class PanelViewController: ZoneMapping {
     private var pillTarget: PanelItem? = nil
     private let pillInset: CGFloat = 6
 
-    private let buttonSize: CGFloat
-    private let width: CGFloat
+    private var buttonSize: CGFloat
+    private var width: CGFloat
     private(set) var isCollapsed = false
 
     // Drop tolerance/time for panel move mode (reuse the user's tuned values).
-    private let dropRadius: Double
-    private let dropDwell: TimeInterval
+    private var dropRadius: Double
+    private var dropDwell: TimeInterval
     // Serializes collapse/expand: re-toggling mid-animation could otherwise leave
     // buttons hidden while logically expanded (completion handlers racing).
     private var isTogglingCollapse = false
@@ -63,7 +63,8 @@ final class PanelViewController: ZoneMapping {
 
         // Build buttons from the configured, normalized layout.
         let items = Settings.Panel.normalize(settings.panel.items)
-        buttons = items.map { PanelButton(item: $0) }
+        let iconStyle = settings.appearance.iconStyle
+        buttons = items.map { PanelButton(item: $0, iconStyle: iconStyle) }
 
         // Window docked to the right edge at the configured Y (top-left space).
         let totalHeight = CGFloat(items.count) * buttonSize
@@ -93,6 +94,37 @@ final class PanelViewController: ZoneMapping {
 
     func show() {
         window.orderFrontRegardless()
+    }
+
+    /// Rebuild the panel's buttons/size/transparency from edited settings, in place
+    /// (same instance + window, so the DwellController's mapper reference stays
+    /// valid). Called on Apply when the button set, width, or transparency changed.
+    /// Position is intentionally NOT touched here — the window keeps its current
+    /// top edge and origin (the app preserves the live position across Apply).
+    func rebuild(with settings: Settings) {
+        width = CGFloat(settings.panel.width)
+        buttonSize = width
+        dropRadius = Double(settings.stillness.moveRadiusPx)
+        dropDwell = settings.timing.dwellTimeSeconds
+
+        // Swap out the button views (pill stays below, added in init).
+        buttons.forEach { $0.removeFromSuperview() }
+        let items = Settings.Panel.normalize(settings.panel.items)
+        let iconStyle = settings.appearance.iconStyle
+        buttons = items.map { PanelButton(item: $0, iconStyle: iconStyle) }
+        buttons.forEach { button in
+            button.onMoved = { [weak self] in self?.reportPosition() }
+            container.addSubview(button)
+        }
+
+        // A rebuilt panel is fresh-expanded; drop any stale pill/collapse state.
+        isCollapsed = false
+        pillTarget = nil
+        pill.isHidden = true
+
+        window.alphaValue = CGFloat(settings.appearance.transparency) / 255.0
+
+        layout()
     }
 
     /// Report the panel's current TOP-LEFT origin so the app can persist it.
