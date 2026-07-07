@@ -126,6 +126,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// (Re)build the auto-scroller from current settings (captures config + dwell).
     private func rebuildAutoScroller() {
+        autoScroller?.stop()   // never orphan a running scroll timer / stranded anchor
         autoScroller = AutoScroller(
             config: settings.autoScroll,
             stillRadius: Double(settings.stillness.sensitivity),

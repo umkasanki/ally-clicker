@@ -18,12 +18,14 @@ final class SettingsModel: ObservableObject {
     func apply() { onApply(settings); onClose() }
     func cancel() { onClose() }
 
-    /// Reset the form's parameters to defaults, preserving panel layout/position
-    /// and keyboard target (not edited in this form). Takes effect on Apply.
+    /// Reset ONLY the parameters this form shows (timing, sensitivity, clicks,
+    /// autoScroll) to defaults. Fields not edited here — panel layout/position,
+    /// keyboard target, calibration, appearance — are preserved. Takes effect on Apply.
     func resetToDefaults() {
-        var defaults = AllyClickerCore.Settings()
-        defaults.panel = settings.panel
-        defaults.commands = settings.commands
-        settings = defaults
+        let d = AllyClickerCore.Settings()
+        settings.timing = d.timing
+        settings.stillness = d.stillness
+        settings.clicks = d.clicks
+        settings.autoScroll = d.autoScroll
     }
 }
