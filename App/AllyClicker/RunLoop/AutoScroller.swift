@@ -15,11 +15,12 @@ final class AutoScroller {
     private let dwellSeconds: TimeInterval
     private let tick = 0.016
 
-    // Dwell-to-exit tracking: keep scrolling while the cursor moves (zigzag), but
-    // when it holds still for the dwell time, fire a left click and exit.
+    // Exit = same gesture as a normal dwell-click: you scroll by MOVING the cursor
+    // ("водишь курсором"); when you stop moving (frame-to-frame stillness within
+    // stillRadius) for the dwell time, a left click fires and scroll ends.
     private var lastCursor: Point = .zero
     private var stillElapsed: TimeInterval = 0
-    private var hasScrolled = false   // arm exit only after leaving the dead zone
+    private var hasScrolled = false   // arm exit only after actually scrolling once
 
     /// Return true to exit auto-scroll (e.g. cursor entered the panel).
     var shouldExit: ((Point) -> Bool)?
@@ -55,7 +56,7 @@ final class AutoScroller {
         let cursor = ScreenGeometry.toTopLeft(NSEvent.mouseLocation)
         if shouldExit?(cursor) == true { stop(); return }
 
-        // Physical stillness (independent of scroll offset): moving resets it.
+        // Stillness = stopped moving the cursor (same threshold as dwell-click).
         if cursor.distance(to: lastCursor) <= stillRadius {
             stillElapsed += tick
         } else {
@@ -63,7 +64,7 @@ final class AutoScroller {
         }
         lastCursor = cursor
 
-        // Holding still after having scrolled → left click at that point + exit.
+        // Stopped after scrolling → left click here + exit (like a normal dwell).
         if hasScrolled, stillElapsed >= dwellSeconds {
             injector.click(.left, at: cursor)
             stop()
