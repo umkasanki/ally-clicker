@@ -83,6 +83,13 @@ public final class DwellController {
         let zone = mapper.zone(at: cursor)
         onZone?(zone)
         for effect in engine.tick(cursor: cursor, zone: zone, dt: dt) {
+            // If the app takes over a fire (e.g. MIDDLE → auto-scroll), stop
+            // processing the rest of this tick's effects — the trailing
+            // post-action revert (.setArmed) would otherwise contradict the
+            // app's takeover (e.g. clearArmed) and leave a lying pill.
+            if case .fire(let action, let point) = effect, willFire?(action, point) == true {
+                return
+            }
             dispatch(effect)
         }
     }
@@ -90,7 +97,6 @@ public final class DwellController {
     private func dispatch(_ effect: DwellEngine.Effect) {
         switch effect {
         case .fire(let action, let point):
-            if willFire?(action, point) == true { break }  // app took over (e.g. auto-scroll)
             injector.click(action, at: point)
         case .dragMouseDown(let point):
             injector.mouseDown(at: point)

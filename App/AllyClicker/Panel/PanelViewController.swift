@@ -228,6 +228,7 @@ final class PanelViewController: ZoneMapping {
     var isMoving: Bool { moveTimer != nil }
 
     func beginMove() {
+        guard moveTimer == nil else { return }   // idempotent
         let mouse = NSEvent.mouseLocation
         moveGrabOffset = CGPoint(x: mouse.x - window.frame.origin.x,
                                  y: mouse.y - window.frame.origin.y)

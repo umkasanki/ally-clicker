@@ -37,6 +37,7 @@ final class AutoScroller {
     }
 
     func start(at point: Point) {
+        guard timer == nil else { return }   // idempotent
         controller.activate(at: point)
         anchor.show(at: point)
         lastCursor = point

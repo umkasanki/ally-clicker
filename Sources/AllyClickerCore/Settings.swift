@@ -165,7 +165,9 @@ extension Settings {
             base            = try c.decodeIfPresent(Double.self, forKey: .base)            ?? d.base
             boost           = try c.decodeIfPresent(Double.self, forKey: .boost)           ?? d.boost
             maxSpeedPerTick = try c.decodeIfPresent(Double.self, forKey: .maxSpeedPerTick) ?? d.maxSpeedPerTick
-            intensity       = try c.decodeIfPresent(Double.self, forKey: .intensity)       ?? d.intensity
+            // Guard against a bad/hand-edited value inverting or exploding scroll.
+            let rawIntensity = try c.decodeIfPresent(Double.self, forKey: .intensity) ?? d.intensity
+            intensity = min(max(rawIntensity, 0.05), 5.0)
         }
     }
 }

@@ -55,7 +55,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         autoScroller = AutoScroller(
             config: settings.autoScroll,
-            stillRadius: Double(settings.stillness.sensitivity),
+            stillRadius: Double(settings.stillness.moveRadiusPx),   // tremor-tolerant exit
             dwellSeconds: settings.effectiveDwellMouseSeconds,
             injector: injector)
         autoScroller.shouldExit = { [weak self] cursor in

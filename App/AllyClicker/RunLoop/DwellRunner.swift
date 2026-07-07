@@ -16,6 +16,7 @@ final class DwellRunner {
     }
 
     func start() {
+        guard timer == nil else { return }   // idempotent — never run two timers
         let dt = Double(intervalMs) / 1000.0
         let t = DispatchSource.makeTimerSource(queue: .main)
         t.schedule(deadline: .now(), repeating: .milliseconds(intervalMs), leeway: .milliseconds(1))

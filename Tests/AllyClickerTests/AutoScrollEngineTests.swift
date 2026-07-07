@@ -34,6 +34,13 @@ final class AutoScrollEngineTests: XCTestCase {
         XCTAssertLessThanOrEqual(d.dy, engine.config.maxSpeedPerTick)
     }
 
+    func testIntensityNeverExceedsMaxSpeed() {
+        var cfg = Settings.AutoScroll(); cfg.intensity = 5.0
+        let d = AutoScrollEngine(config: cfg)
+            .delta(anchor: anchor, cursor: Point(x: 500, y: 50000)).dy
+        XCTAssertLessThanOrEqual(d, cfg.maxSpeedPerTick, "Cap holds regardless of intensity")
+    }
+
     func testIntensityScalesSpeed() {
         var cfg = Settings.AutoScroll(); cfg.intensity = 1.0
         let base = AutoScrollEngine(config: cfg)

@@ -10,6 +10,9 @@ enum ElementInspector {
     /// True if the element under `point` (or a near ancestor) is a hyperlink.
     static func isLink(at point: Point) -> Bool {
         let systemWide = AXUIElementCreateSystemWide()
+        // Cap cross-process AX calls: a hung target app must NOT freeze the dwell
+        // loop / cursor for a hands-free user. 100ms is plenty for a hit-test.
+        AXUIElementSetMessagingTimeout(systemWide, 0.1)
         var element: AXUIElement?
         let err = AXUIElementCopyElementAtPosition(systemWide, Float(point.x), Float(point.y), &element)
         guard err == .success, var current = element else { return false }
