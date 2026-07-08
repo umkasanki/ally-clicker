@@ -43,7 +43,7 @@ cg.restoreGState()
 // --- Plump rounded cursor (gradient fill, soft shadow, no ring) ---
 cg.saveGState()
 cg.translateBy(x: 104, y: 100)   // centered, nudged slightly right
-cg.scaleBy(x: 1.5, y: 1.5)
+cg.scaleBy(x: 1.229, y: 1.229)
 cg.translateBy(x: -105, y: -107)
 
 let cursor = CGMutablePath()

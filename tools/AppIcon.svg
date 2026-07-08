@@ -28,7 +28,7 @@
     <rect width="200" height="200" rx="46" fill="url(#sheen)"/>
 
     <!-- plump rounded cursor, no ring -->
-    <g filter="url(#soft)" transform="translate(104,100) scale(1.5) translate(-105,-107)">
+    <g filter="url(#soft)" transform="translate(104,100) scale(1.229) translate(-105,-107)">
       <path d="M78 66 L78 138 L96 121 L108 148 L120 143 L107 117 L132 117 Z"
             fill="url(#cur)" stroke="url(#cur)" stroke-width="11"
             stroke-linejoin="round" stroke-linecap="round"/>
