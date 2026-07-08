@@ -33,6 +33,21 @@ struct PanelEditorView: View {
                     orientationRow
                 }
 
+                SettingsSection(title: "Startup") {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Toggle("Launch collapsed", isOn: $model.settings.panel.launchCollapsed)
+                            .toggleStyle(.switch)
+                            .font(.system(size: 15))
+                            .disabled(!model.hasOnOffButton)
+                        Text(model.hasOnOffButton
+                             ? "Start with only the ON/OFF button showing; expand it when needed. Takes effect on next launch."
+                             : "Requires the ON/OFF button on the panel.")
+                            .font(.system(size: 13)).foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .opacity(model.hasOnOffButton ? 1 : 0.5)
+                }
+
                 SettingsSection(title: "Panel buttons",
                                 intro: "Toggle a button on to show it on the panel; reorder the active ones with the arrows. Turning off \"Show / hide panel\" (ON/OFF) also drops the ability to collapse or drag the panel.") {
                     let catalog = model.orderedPanelCatalog

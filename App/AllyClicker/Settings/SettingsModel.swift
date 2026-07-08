@@ -68,7 +68,12 @@ final class SettingsModel: ObservableObject {
             enabled.remove(item)
         }
         syncPanelItems(enabled: enabled)
+        // "Launch collapsed" needs ON/OFF to expand again — force it off without it.
+        if !hasOnOffButton { settings.panel.launchCollapsed = false }
     }
+
+    /// Whether the ON/OFF (collapse) button is currently on the panel.
+    var hasOnOffButton: Bool { settings.panel.items.contains(.command(.togglePanel)) }
 
     /// Move a button up (offset -1) or down (offset +1) in the stable list; the
     /// derived `panel.items` order follows. ON/OFF is pinned first: it can't move,

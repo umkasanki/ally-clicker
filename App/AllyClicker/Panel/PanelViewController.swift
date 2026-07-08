@@ -100,6 +100,18 @@ final class PanelViewController: ZoneMapping {
         window.orderFrontRegardless()
     }
 
+    /// Start the panel collapsed (no animation), used at launch when the user opts
+    /// in. No-op if already collapsed or if there's no ON/OFF button to expand with.
+    func startCollapsed() {
+        guard !isCollapsed,
+              buttons.contains(where: { $0.item == .command(.togglePanel) }) else { return }
+        isCollapsed = true
+        for button in buttons where button.item != .command(.togglePanel) {
+            button.isHidden = true
+        }
+        applyLayout(animated: false)
+    }
+
     /// Rebuild the panel's buttons/size/orientation/transparency from edited
     /// settings, in place (same instance + window, so the DwellController's mapper
     /// reference stays valid). Called on Apply when any of those changed.

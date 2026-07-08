@@ -227,6 +227,8 @@ extension Settings {
         public var positionX: Int? = nil
         /// Panel layout direction. Defaults to vertical (the PNC-style column).
         public var orientation: Orientation = .vertical
+        /// Start the panel collapsed (only the ON/OFF button showing) on launch.
+        public var launchCollapsed: Bool = false
         /// Ordered buttons shown on the panel. Defaults to the confirmed PNC layout.
         public var items: [PanelItem] = Panel.defaultItems
 
@@ -251,6 +253,7 @@ extension Settings {
             positionY   = try c.decodeIfPresent(Int.self, forKey: .positionY) ?? d.positionY
             positionX   = try c.decodeIfPresent(Int.self, forKey: .positionX)
             orientation = try c.decodeIfPresent(Orientation.self, forKey: .orientation) ?? d.orientation
+            launchCollapsed = try c.decodeIfPresent(Bool.self, forKey: .launchCollapsed) ?? d.launchCollapsed
             // Decode items leniently: unknown ids (e.g. from a newer build) are
             // dropped rather than throwing — a single bad token must NOT discard the
             // whole Panel (which would also lose width/positionY). Then normalize.

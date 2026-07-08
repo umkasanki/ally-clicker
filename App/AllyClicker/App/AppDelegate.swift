@@ -119,6 +119,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.onMoveEnded = { [weak self] in self?.runner.start() }
         panel.setArmed(controller.armed)
         panel.show()
+        if settings.panel.launchCollapsed { panel.startCollapsed() }
 
         runner = DwellRunner(controller: controller, intervalMs: settings.stillness.trackerIntervalMs)
         runner.start()
