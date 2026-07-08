@@ -157,6 +157,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             || settings.panel.width != edited.panel.width
             || settings.appearance.transparency != edited.appearance.transparency
             || settings.appearance.iconStyle != edited.appearance.iconStyle
+            || settings.appearance.iconScale != edited.appearance.iconScale
 
         settings = edited
         settingsStore.save(edited)

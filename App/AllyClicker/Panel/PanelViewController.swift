@@ -64,7 +64,8 @@ final class PanelViewController: ZoneMapping {
         // Build buttons from the configured, normalized layout.
         let items = Settings.Panel.normalize(settings.panel.items)
         let iconStyle = settings.appearance.iconStyle
-        buttons = items.map { PanelButton(item: $0, iconStyle: iconStyle) }
+        let iconScale = settings.appearance.iconScale
+        buttons = items.map { PanelButton(item: $0, iconStyle: iconStyle, iconScale: iconScale) }
 
         // Window docked to the right edge at the configured Y (top-left space).
         let totalHeight = CGFloat(items.count) * buttonSize
@@ -111,7 +112,8 @@ final class PanelViewController: ZoneMapping {
         buttons.forEach { $0.removeFromSuperview() }
         let items = Settings.Panel.normalize(settings.panel.items)
         let iconStyle = settings.appearance.iconStyle
-        buttons = items.map { PanelButton(item: $0, iconStyle: iconStyle) }
+        let iconScale = settings.appearance.iconScale
+        buttons = items.map { PanelButton(item: $0, iconStyle: iconStyle, iconScale: iconScale) }
         buttons.forEach { button in
             button.onMoved = { [weak self] in self?.reportPosition() }
             container.addSubview(button)

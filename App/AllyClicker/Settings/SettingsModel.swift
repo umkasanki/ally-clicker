@@ -15,7 +15,9 @@ final class SettingsModel: ObservableObject {
         self.onClose = onClose
     }
 
-    func apply() { onApply(settings); onClose() }
+    // Apply keeps the window open so the user can keep tuning and watch the live
+    // panel update; closing is via Cancel or the window's close button.
+    func apply() { onApply(settings) }
     func cancel() { onClose() }
 
     // MARK: - Panel editor
@@ -47,14 +49,17 @@ final class SettingsModel: ObservableObject {
         PanelItem.editorCatalog.filter { !settings.panel.items.contains($0) }
     }
 
-    /// Reset ONLY the parameters this form shows (timing, sensitivity, clicks,
-    /// autoScroll) to defaults. Fields not edited here — panel layout/position,
-    /// keyboard target, calibration, appearance — are preserved. Takes effect on Apply.
+    /// Reset the parameters both tabs show (timing, sensitivity, clicks, autoScroll,
+    /// panel layout, appearance) to defaults. Fields NOT edited here — the KEYBOARD
+    /// target and calibration — are preserved. The panel's live position also
+    /// survives (applySettings re-injects it). Takes effect on Apply.
     func resetToDefaults() {
         let d = AllyClickerCore.Settings()
         settings.timing = d.timing
         settings.stillness = d.stillness
         settings.clicks = d.clicks
         settings.autoScroll = d.autoScroll
+        settings.panel = d.panel
+        settings.appearance = d.appearance
     }
 }

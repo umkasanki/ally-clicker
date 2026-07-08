@@ -9,6 +9,7 @@ import AllyClickerCore
 final class PanelButton: NSView {
     let item: PanelItem
     private let iconStyle: Settings.Appearance.IconStyle
+    private let iconScale: CGFloat
 
     private let iconView = NSImageView()
 
@@ -16,9 +17,10 @@ final class PanelButton: NSView {
         didSet { needsDisplay = true }
     }
 
-    init(item: PanelItem, iconStyle: Settings.Appearance.IconStyle = .custom) {
+    init(item: PanelItem, iconStyle: Settings.Appearance.IconStyle = .custom, iconScale: Double = 1.0) {
         self.item = item
         self.iconStyle = iconStyle
+        self.iconScale = CGFloat(iconScale)
         super.init(frame: .zero)
         wantsLayer = true
         setupIcon()
@@ -51,13 +53,12 @@ final class PanelButton: NSView {
         case .command(.launchKeyboard): base = 42
         default:                        base = 36
         }
-        guard iconStyle == .system else { return base }
-        // SF Symbols fill their frame more tightly than the custom glyphs (which
-        // carry built-in padding), so render them smaller for matching weight.
-        // The power symbol is a solid ring that reads especially heavy — shrink it
-        // a bit more than the click glyphs.
-        if case .command(.togglePanel) = item { return base * 0.5 }
-        return base * 0.58
+        // Custom glyphs carry built-in padding and differ per icon, so they use
+        // per-button base sizes. SF Symbols are optically uniform and fill their
+        // frame tightly, so in System mode every glyph shares ONE smaller size —
+        // this also keeps the power ring from towering over the click glyphs.
+        let styled: CGFloat = (iconStyle == .system) ? 21 : base
+        return styled * iconScale
     }
 
     // The button itself is transparent — the container draws the panel background

@@ -187,6 +187,9 @@ extension Settings {
         public var transparency: Int = 255
         /// Panel button icon set. Defaults to the project's custom glyphs.
         public var iconStyle: IconStyle = .custom
+        /// Icon size multiplier relative to each button's default glyph size.
+        /// 1.0 = default; user-tunable in 5% steps.
+        public var iconScale: Double = 1.0
 
         public init() {}
 
@@ -196,6 +199,9 @@ extension Settings {
             audio        = try c.decodeIfPresent(Bool.self, forKey: .audio)        ?? d.audio
             transparency = try c.decodeIfPresent(Int.self,  forKey: .transparency) ?? d.transparency
             iconStyle    = try c.decodeIfPresent(IconStyle.self, forKey: .iconStyle) ?? d.iconStyle
+            // Guard against a hand-edited value shrinking icons to nothing or huge.
+            let rawScale = try c.decodeIfPresent(Double.self, forKey: .iconScale) ?? d.iconScale
+            iconScale = min(max(rawScale, 0.5), 2.0)
         }
     }
 }

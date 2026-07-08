@@ -16,12 +16,20 @@ struct PanelEditorView: View {
     private func asDouble(_ i: Binding<Int>) -> Binding<Double> {
         Binding(get: { Double(i.wrappedValue) }, set: { i.wrappedValue = Int($0.rounded()) })
     }
+    // iconScale multiplier (1.0 = 100%) shown/edited as a percentage.
+    private func scalePercent(_ b: Binding<Double>) -> Binding<Double> {
+        Binding(get: { (b.wrappedValue * 100).rounded() },
+                set: { b.wrappedValue = $0 / 100 })
+    }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 SettingsSection(title: "Icon style") {
                     iconStyleRow
+                    ValueControl(title: "Icon size", value: scalePercent($model.settings.appearance.iconScale),
+                                 range: 50...150, step: 5, unit: "%",
+                                 help: "Glyph size relative to the default for each button.")
                 }
 
                 SettingsSection(title: "Panel buttons",
