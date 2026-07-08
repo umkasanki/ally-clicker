@@ -90,6 +90,10 @@ struct SettingsView: View {
                                      range: 4...30, step: 1, unit: "px",
                                      help: "Minimum movement counted as a real move — resets timers and ends a drag's first phase.")
                     }
+                    section("Sound") {
+                        toggleRow("Sound feedback", $model.settings.appearance.audio,
+                                  help: "Play a short sound when you arm a panel button and when a click fires.")
+                    }
             }
             .padding(20)
         }

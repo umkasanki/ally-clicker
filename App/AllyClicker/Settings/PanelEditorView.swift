@@ -35,10 +35,15 @@ struct PanelEditorView: View {
 
                 SettingsSection(title: "Startup") {
                     VStack(alignment: .leading, spacing: 3) {
-                        Toggle("Launch collapsed", isOn: $model.settings.panel.launchCollapsed)
-                            .toggleStyle(.switch)
-                            .font(.system(size: 15))
-                            .disabled(!model.hasOnOffButton)
+                        HStack {
+                            Text("Launch collapsed").font(.system(size: 15))
+                            Spacer()
+                            Toggle("", isOn: $model.settings.panel.launchCollapsed)
+                                .labelsHidden()
+                                .toggleStyle(.switch)
+                                .controlSize(.small)
+                                .disabled(!model.hasOnOffButton)
+                        }
                         Text(model.hasOnOffButton
                              ? "Start with only the ON/OFF button showing; expand it when needed. Takes effect on next launch."
                              : "Requires the ON/OFF button on the panel.")

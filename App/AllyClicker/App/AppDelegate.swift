@@ -10,6 +10,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var runner: DwellRunner!
     private let injector = CGMouseInjector()
     private var autoScroller: AutoScroller!
+    private let sound = SoundPlayer()
     private var statusBar: StatusBarController!
     private let settingsWindow = SettingsWindowController()
 
@@ -30,6 +31,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         BackgroundCursor.enable()   // allow cursor changes while never-active
         settings = settingsStore.load()
+        sound.enabled = settings.appearance.audio
         // Request Accessibility if missing: the system adds AllyClicker to the list
         // and shows its own "Open System Settings" dialog. The panel still appears;
         // clicks just won't inject until access is granted.
@@ -69,11 +71,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // Over a link → plain middle click (open in new tab). Otherwise scroll.
             if ElementInspector.isLink(at: point) {
                 self.injector.click(.middle, at: point)
+                self.sound.playClick()
             } else {
                 self.enterAutoScroll(at: point)
             }
             return true   // handled either way — no default injection
         }
+
+        controller.onFired = { [weak self] _ in self?.sound.playClick() }
 
         controller.onUIEffect = { [weak self] effect in
             guard let self else { return }
@@ -84,6 +89,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 }
                 self.lastArmed = action
                 self.panel.setArmed(action)
+                if action != nil { self.sound.playArm() }
             }
             // dwellProgress / clearProgress intentionally ignored (spec §2).
         }
@@ -171,6 +177,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         settings = edited
         settingsStore.save(edited)
+        sound.enabled = edited.appearance.audio
         controller.updateSettings(edited)   // engine reads these each tick
         rebuildAutoScroller()               // captures config/dwell at build time
 
