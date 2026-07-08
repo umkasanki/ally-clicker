@@ -153,8 +153,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         edited.panel.positionX = settings.panel.positionX
         edited.panel.positionY = settings.panel.positionY
 
+        // Changing orientation invalidates the old placement (a right-edge column
+        // makes no sense as a row): drop the saved position so the panel re-docks to
+        // the new orientation's default (horizontal → top-center).
+        if settings.panel.orientation != edited.panel.orientation {
+            edited.panel.positionX = nil
+            edited.panel.positionY = Settings.Panel().positionY
+        }
+
         let panelChanged = settings.panel.items != edited.panel.items
             || settings.panel.width != edited.panel.width
+            || settings.panel.orientation != edited.panel.orientation
             || settings.appearance.transparency != edited.appearance.transparency
             || settings.appearance.iconStyle != edited.appearance.iconStyle
             || settings.appearance.iconScale != edited.appearance.iconScale

@@ -213,12 +213,20 @@ extension Settings {
     /// buttons — its order IS the on-screen order; adding/removing an item adds or
     /// removes the button.
     public struct Panel: Codable, Equatable {
+        /// Layout direction: buttons stacked top→bottom or left→right.
+        public enum Orientation: String, Codable, CaseIterable, Equatable {
+            case vertical
+            case horizontal
+        }
+
         public var width: Int = 70
         /// Top-left position of the panel (points from the top of the screen).
         public var positionY: Int = 204
         /// Top-left X (points from the left). nil = dock to the right edge (default).
         /// Set once the user drags the panel, so its place is remembered.
         public var positionX: Int? = nil
+        /// Panel layout direction. Defaults to vertical (the PNC-style column).
+        public var orientation: Orientation = .vertical
         /// Ordered buttons shown on the panel. Defaults to the confirmed PNC layout.
         public var items: [PanelItem] = Panel.defaultItems
 
@@ -239,9 +247,10 @@ extension Settings {
         public init(from decoder: Decoder) throws {
             let c = try decoder.container(keyedBy: CodingKeys.self)
             let d = Panel()
-            width     = try c.decodeIfPresent(Int.self, forKey: .width)     ?? d.width
-            positionY = try c.decodeIfPresent(Int.self, forKey: .positionY) ?? d.positionY
-            positionX = try c.decodeIfPresent(Int.self, forKey: .positionX)
+            width       = try c.decodeIfPresent(Int.self, forKey: .width)     ?? d.width
+            positionY   = try c.decodeIfPresent(Int.self, forKey: .positionY) ?? d.positionY
+            positionX   = try c.decodeIfPresent(Int.self, forKey: .positionX)
+            orientation = try c.decodeIfPresent(Orientation.self, forKey: .orientation) ?? d.orientation
             // Decode items leniently: unknown ids (e.g. from a newer build) are
             // dropped rather than throwing — a single bad token must NOT discard the
             // whole Panel (which would also lose width/positionY). Then normalize.
@@ -252,11 +261,12 @@ extension Settings {
             }
         }
 
-        /// Guarantee a usable layout: drop duplicates (keeping first occurrence),
-        /// ensure ON/OFF is present (so the user can always recover the panel), and
-        /// fall back to the default layout if the result would be empty. This is an
-        /// accessibility safeguard — an empty or ON/OFF-less panel could lock the
-        /// hands-free user out.
+        /// Guarantee a usable layout: drop duplicates (keeping first occurrence) and
+        /// fall back to the default layout if the result would be empty. ON/OFF is
+        /// NOT forced in — the user may remove it (the panel then can't be collapsed
+        /// or dragged, but it's re-addable, and Settings is always reachable from the
+        /// menu-bar icon, so this can't lock the user out). But WHEN present, ON/OFF
+        /// is pinned to the front — it is always the first button.
         public static func normalize(_ items: [PanelItem]) -> [PanelItem] {
             var seen = Set<PanelItem>()
             var result = items.filter { seen.insert($0).inserted }
@@ -264,7 +274,9 @@ extension Settings {
             // panel's layout wherever it appears (defaults, saved JSON, editor).
             result.removeAll { $0 == .command(.launchKeyboard) }
             if result.isEmpty { return defaultItems }
-            if !result.contains(.command(.togglePanel)) {
+            // Pin ON/OFF first if it's present.
+            if let i = result.firstIndex(of: .command(.togglePanel)), i != 0 {
+                result.remove(at: i)
                 result.insert(.command(.togglePanel), at: 0)
             }
             return result

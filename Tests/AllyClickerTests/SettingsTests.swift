@@ -69,11 +69,11 @@ final class SettingsTests: XCTestCase {
     // MARK: - Configurable panel layout
 
     func testDefaultPanelLayout() {
+        // KEYBOARD is intentionally absent (moving to a separate panel).
         XCTAssertEqual(Settings().panel.items, [
             .command(.togglePanel),
             .action(.left), .action(.right), .action(.doubleClick),
             .action(.leftDrag), .action(.middle),
-            .command(.launchKeyboard),
         ])
     }
 
@@ -89,12 +89,12 @@ final class SettingsTests: XCTestCase {
 
     func testPanelItemsRoundTripPreservingOrder() throws {
         var s = Settings()
-        // Reorder + drop some + keep commands.
+        // Reorder + drop some. (KEYBOARD is stripped by normalize, so it's not
+        // used here — the round trip must preserve exactly this custom order.)
         s.panel.items = [
             .command(.togglePanel),
             .action(.middle),
             .action(.left),
-            .command(.launchKeyboard),
         ]
         let decoded = try Settings.load(from: try s.jsonData())
         XCTAssertEqual(decoded.panel.items, s.panel.items, "Order and membership preserved")
@@ -121,16 +121,24 @@ final class SettingsTests: XCTestCase {
         XCTAssertFalse(decoded.panel.items.contains { $0.id == "totallyNewButton" })
     }
 
-    func testPanelNormalizeDedupesEnsuresOnOffAndFallsBack() {
+    func testPanelNormalizeDedupesAndFallsBack() {
         // Duplicates removed (first occurrence kept).
         let deduped = Settings.Panel.normalize([
             .command(.togglePanel), .action(.left), .action(.left), .action(.right)
         ])
         XCTAssertEqual(deduped, [.command(.togglePanel), .action(.left), .action(.right)])
 
-        // Missing ON/OFF gets re-inserted at the front (recovery safeguard).
-        let withOnOff = Settings.Panel.normalize([.action(.left)])
-        XCTAssertEqual(withOnOff.first, .command(.togglePanel))
+        // ON/OFF is optional: a layout without it is kept as-is (not re-inserted).
+        let withoutOnOff = Settings.Panel.normalize([.action(.left), .action(.right)])
+        XCTAssertEqual(withoutOnOff, [.action(.left), .action(.right)])
+
+        // But when present, ON/OFF is pinned to the front regardless of input order.
+        let pinned = Settings.Panel.normalize([.action(.left), .command(.togglePanel), .action(.right)])
+        XCTAssertEqual(pinned, [.command(.togglePanel), .action(.left), .action(.right)])
+
+        // KEYBOARD is stripped (moving to a separate panel).
+        let noKeyboard = Settings.Panel.normalize([.action(.left), .command(.launchKeyboard)])
+        XCTAssertEqual(noKeyboard, [.action(.left)])
 
         // Empty → default layout, never an unusable empty panel.
         XCTAssertEqual(Settings.Panel.normalize([]), Settings.Panel.defaultItems)

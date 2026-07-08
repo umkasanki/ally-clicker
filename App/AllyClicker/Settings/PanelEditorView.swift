@@ -27,27 +27,18 @@ struct PanelEditorView: View {
             VStack(alignment: .leading, spacing: 24) {
                 SettingsSection(title: "Icon style") {
                     iconStyleRow
-                    ValueControl(title: "Icon size", value: scalePercent($model.settings.appearance.iconScale),
-                                 range: 50...150, step: 5, unit: "%",
-                                 help: "Glyph size relative to the default for each button.")
+                }
+
+                SettingsSection(title: "Shape") {
+                    orientationRow
                 }
 
                 SettingsSection(title: "Panel buttons",
-                                intro: "Buttons appear top-to-bottom in this order. Reorder with the arrows, remove with the ✕. \"Show / hide panel\" (ON/OFF) can't be removed — it's how the panel is collapsed and moved.") {
-                    let items = model.settings.panel.items
-                    ForEach(Array(items.enumerated()), id: \.element) { index, item in
-                        buttonRow(item, isFirst: index == 0, isLast: index == items.count - 1)
-                        if index < items.count - 1 { Divider() }
-                    }
-                }
-
-                let addable = model.addablePanelItems
-                if !addable.isEmpty {
-                    SettingsSection(title: "Add button",
-                                    intro: "Buttons not currently on the panel.") {
-                        ForEach(addable, id: \.self) { item in
-                            addRow(item)
-                        }
+                                intro: "Toggle a button on to show it on the panel; reorder the active ones with the arrows. Turning off \"Show / hide panel\" (ON/OFF) also drops the ability to collapse or drag the panel.") {
+                    let catalog = model.orderedPanelCatalog
+                    ForEach(Array(catalog.enumerated()), id: \.element) { index, item in
+                        buttonRow(item)
+                        if index < catalog.count - 1 { Divider() }
                     }
                 }
 
@@ -59,6 +50,9 @@ struct PanelEditorView: View {
                     ValueControl(title: "Opacity", value: opacityPercent($model.settings.appearance.transparency),
                                  range: 40...100, step: 5, unit: "%",
                                  help: "Panel transparency. Lower lets the screen behind show through.")
+                    ValueControl(title: "Icon size", value: scalePercent($model.settings.appearance.iconScale),
+                                 range: 50...150, step: 5, unit: "%",
+                                 help: "Glyph size relative to the default for each button.")
                 }
             }
             .padding(20)
@@ -66,6 +60,23 @@ struct PanelEditorView: View {
     }
 
     // MARK: - Rows
+
+    private var orientationRow: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 12) {
+                Text("Orientation").font(.system(size: 15)).frame(width: 175, alignment: .leading)
+                Picker("", selection: $model.settings.panel.orientation) {
+                    Text("Vertical").tag(Settings.Panel.Orientation.vertical)
+                    Text("Horizontal").tag(Settings.Panel.Orientation.horizontal)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+            }
+            Text("Stack the buttons in a column or a row.")
+                .font(.system(size: 13)).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
 
     private var iconStyleRow: some View {
         VStack(alignment: .leading, spacing: 3) {
@@ -84,25 +95,30 @@ struct PanelEditorView: View {
         }
     }
 
-    private func buttonRow(_ item: PanelItem, isFirst: Bool, isLast: Bool) -> some View {
-        HStack(spacing: 12) {
+    private func buttonRow(_ item: PanelItem) -> some View {
+        let present = model.isOnPanel(item)
+        let order = model.orderedPanelCatalog
+        let index = order.firstIndex(of: item) ?? 0
+        let pinned = model.isPinned(item)
+        // Can't move a pinned item, and can't move above the pinned ON/OFF.
+        let upDisabled = pinned || index == 0 || model.isPinned(order[index - 1])
+        let downDisabled = pinned || index == order.count - 1
+        return HStack(spacing: 12) {
             iconView(item)
             Text(item.displayName).font(.system(size: 15))
+                .foregroundStyle(present ? .primary : .secondary)
             Spacer()
-            iconButton("chevron.up", disabled: isFirst) { model.movePanelItem(item, by: -1) }
-            iconButton("chevron.down", disabled: isLast) { model.movePanelItem(item, by: 1) }
-            iconButton("xmark", disabled: !model.canRemove(item)) { model.removePanelItem(item) }
-        }
-    }
-
-    private func addRow(_ item: PanelItem) -> some View {
-        HStack(spacing: 12) {
-            iconView(item)
-            Text(item.displayName).font(.system(size: 15))
-            Spacer()
-            Button { model.addPanelItem(item) } label: {
-                Label("Add", systemImage: "plus")
+            iconButton("chevron.up", disabled: upDisabled) {
+                model.movePanelItem(item, by: -1)
             }
+            iconButton("chevron.down", disabled: downDisabled) {
+                model.movePanelItem(item, by: 1)
+            }
+            Toggle("", isOn: Binding(get: { model.isOnPanel(item) },
+                                     set: { model.setOnPanel(item, $0) }))
+                .labelsHidden()
+                // Can't turn off the last remaining button (panel must not be empty).
+                .disabled(present && !model.canRemove(item))
         }
     }
 

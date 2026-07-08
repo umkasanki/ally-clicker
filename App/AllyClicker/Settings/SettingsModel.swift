@@ -13,6 +13,7 @@ final class SettingsModel: ObservableObject {
         self.settings = settings
         self.onApply = onApply
         self.onClose = onClose
+        rebuildCatalogOrder()
     }
 
     // Apply keeps the window open so the user can keep tuning and watch the live
@@ -21,32 +22,65 @@ final class SettingsModel: ObservableObject {
     func cancel() { onClose() }
 
     // MARK: - Panel editor
+    //
+    // The editor keeps a STABLE full ordering of every catalog button (active +
+    // inactive). Toggling a button off only flips its on/off state — it stays put
+    // in the list instead of jumping. The real `panel.items` is derived as the
+    // enabled buttons in this order.
 
-    /// ON/OFF is the panel's move handle and its only way back when collapsed —
-    /// it can never be removed (also enforced by Panel.normalize as a safety net).
-    func canRemove(_ item: PanelItem) -> Bool { item != .command(.togglePanel) }
+    @Published var panelCatalogOrder: [PanelItem] = []
 
-    func removePanelItem(_ item: PanelItem) {
-        guard canRemove(item) else { return }
-        settings.panel.items.removeAll { $0 == item }
+    private func rebuildCatalogOrder() {
+        let present = settings.panel.items
+        let absent = PanelItem.editorCatalog.filter { !present.contains($0) }
+        var order = present + absent
+        // ON/OFF is pinned to the top of the list — always the first button when on.
+        if let i = order.firstIndex(of: .command(.togglePanel)), i != 0 {
+            order.remove(at: i)
+            order.insert(.command(.togglePanel), at: 0)
+        }
+        panelCatalogOrder = order
     }
 
-    func addPanelItem(_ item: PanelItem) {
-        guard !settings.panel.items.contains(item) else { return }
-        settings.panel.items.append(item)
+    /// ON/OFF's position is fixed (always first); it can be toggled but not moved.
+    func isPinned(_ item: PanelItem) -> Bool { item == .command(.togglePanel) }
+
+    /// Recompute `panel.items` = enabled buttons, in the editor's stable order.
+    private func syncPanelItems(enabled: Set<PanelItem>) {
+        settings.panel.items = panelCatalogOrder.filter { enabled.contains($0) }
     }
 
-    /// Move an item up (offset -1) or down (offset +1) in the on-screen order.
+    /// The full catalog in stable display order. Drives the single toggle list.
+    var orderedPanelCatalog: [PanelItem] { panelCatalogOrder }
+
+    func isOnPanel(_ item: PanelItem) -> Bool { settings.panel.items.contains(item) }
+
+    /// A button may be turned off unless it's the last one still on (an empty panel
+    /// would snap back to defaults on Apply).
+    func canRemove(_ item: PanelItem) -> Bool { settings.panel.items.count > 1 }
+
+    func setOnPanel(_ item: PanelItem, _ on: Bool) {
+        var enabled = Set(settings.panel.items)
+        if on {
+            enabled.insert(item)
+        } else {
+            guard canRemove(item) else { return }
+            enabled.remove(item)
+        }
+        syncPanelItems(enabled: enabled)
+    }
+
+    /// Move a button up (offset -1) or down (offset +1) in the stable list; the
+    /// derived `panel.items` order follows. ON/OFF is pinned first: it can't move,
+    /// and nothing can move above it.
     func movePanelItem(_ item: PanelItem, by offset: Int) {
-        guard let i = settings.panel.items.firstIndex(of: item) else { return }
+        guard !isPinned(item) else { return }
+        guard let i = panelCatalogOrder.firstIndex(of: item) else { return }
         let j = i + offset
-        guard settings.panel.items.indices.contains(j) else { return }
-        settings.panel.items.swapAt(i, j)
-    }
-
-    /// Catalog items not currently on the panel (candidates for "Add button").
-    var addablePanelItems: [PanelItem] {
-        PanelItem.editorCatalog.filter { !settings.panel.items.contains($0) }
+        guard panelCatalogOrder.indices.contains(j) else { return }
+        guard !isPinned(panelCatalogOrder[j]) else { return }   // don't cross ON/OFF
+        panelCatalogOrder.swapAt(i, j)
+        syncPanelItems(enabled: Set(settings.panel.items))
     }
 
     /// Reset the parameters both tabs show (timing, sensitivity, clicks, autoScroll,
@@ -61,5 +95,6 @@ final class SettingsModel: ObservableObject {
         settings.autoScroll = d.autoScroll
         settings.panel = d.panel
         settings.appearance = d.appearance
+        rebuildCatalogOrder()   // restore the default button set + order in the list
     }
 }

@@ -38,6 +38,8 @@ final class PanelViewController: ZoneMapping {
 
     private var buttonSize: CGFloat
     private var width: CGFloat
+    private var orientation: Settings.Panel.Orientation
+    private var isHorizontal: Bool { orientation == .horizontal }
     private(set) var isCollapsed = false
 
     // Drop tolerance/time for panel move mode (reuse the user's tuned values).
@@ -58,6 +60,7 @@ final class PanelViewController: ZoneMapping {
     init(settings: Settings) {
         width = CGFloat(settings.panel.width)
         buttonSize = width  // square buttons
+        orientation = settings.panel.orientation
         dropRadius = Double(settings.stillness.moveRadiusPx)
         dropDwell = settings.timing.dwellTimeSeconds
 
@@ -67,20 +70,20 @@ final class PanelViewController: ZoneMapping {
         let iconScale = settings.appearance.iconScale
         buttons = items.map { PanelButton(item: $0, iconStyle: iconStyle, iconScale: iconScale) }
 
-        // Window docked to the right edge at the configured Y (top-left space).
-        let totalHeight = CGFloat(items.count) * buttonSize
-        let screen = NSScreen.screens.first(where: { $0.frame.origin == .zero }) ?? NSScreen.main
-        let screenFrame = screen?.frame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
-        // Position from settings (top-left space). X: saved value or right-edge
-        // dock; Y: offset from the top. Converted to AppKit bottom-left origin.
-        let originX = settings.panel.positionX.map { screenFrame.minX + CGFloat($0) }
-            ?? (screenFrame.maxX - width)
-        let originY = screenFrame.maxY - CGFloat(settings.panel.positionY) - totalHeight
+        // Panel dimensions depend on orientation: a vertical column (width × N·size)
+        // or a horizontal row (N·size × height). Buttons are square, size = width.
+        let horizontal = settings.panel.orientation == .horizontal
+        let run = CGFloat(items.count) * buttonSize
+        let panelW = horizontal ? run : width
+        let panelH = horizontal ? buttonSize : run
 
+        let screenFrame = Self.primaryScreenFrame()
+        let origin = Self.defaultOrigin(settings: settings, horizontal: horizontal,
+                                        panelW: panelW, panelH: panelH, screenFrame: screenFrame)
         let initialFrame = Self.clampToScreen(
-            NSRect(x: originX, y: originY, width: width, height: totalHeight))
+            NSRect(x: origin.x, y: origin.y, width: panelW, height: panelH))
         window = PanelWindow(contentRect: initialFrame)
-        container.frame = NSRect(x: 0, y: 0, width: width, height: totalHeight)
+        container.frame = NSRect(x: 0, y: 0, width: panelW, height: panelH)
         container.wantsLayer = true
         container.layer?.cornerRadius = 12
         container.layer?.masksToBounds = true
@@ -97,14 +100,15 @@ final class PanelViewController: ZoneMapping {
         window.orderFrontRegardless()
     }
 
-    /// Rebuild the panel's buttons/size/transparency from edited settings, in place
-    /// (same instance + window, so the DwellController's mapper reference stays
-    /// valid). Called on Apply when the button set, width, or transparency changed.
-    /// Position is intentionally NOT touched here — the window keeps its current
-    /// top edge and origin (the app preserves the live position across Apply).
+    /// Rebuild the panel's buttons/size/orientation/transparency from edited
+    /// settings, in place (same instance + window, so the DwellController's mapper
+    /// reference stays valid). Called on Apply when any of those changed.
+    /// If the user has never positioned the panel (positionX == nil), it re-docks to
+    /// the orientation's default spot; otherwise it keeps its current top-left corner.
     func rebuild(with settings: Settings) {
         width = CGFloat(settings.panel.width)
         buttonSize = width
+        orientation = settings.panel.orientation
         dropRadius = Double(settings.stillness.moveRadiusPx)
         dropDwell = settings.timing.dwellTimeSeconds
 
@@ -125,6 +129,19 @@ final class PanelViewController: ZoneMapping {
         pill.isHidden = true
 
         window.alphaValue = CGFloat(settings.appearance.transparency) / 255.0
+
+        // With no user-set position, re-dock to the orientation's default (e.g.
+        // switching to horizontal jumps to top-center). applyLayout then keeps this
+        // corner fixed. With a saved position, leave the current corner untouched.
+        if settings.panel.positionX == nil {
+            let run = CGFloat(buttons.count) * buttonSize
+            let panelW = isHorizontal ? run : width
+            let panelH = isHorizontal ? buttonSize : run
+            let origin = Self.defaultOrigin(settings: settings, horizontal: isHorizontal,
+                                            panelW: panelW, panelH: panelH,
+                                            screenFrame: Self.primaryScreenFrame())
+            window.setFrameOrigin(origin)
+        }
 
         layout()
     }
@@ -235,6 +252,29 @@ final class PanelViewController: ZoneMapping {
     /// The panel must ALWAYS be fully on screen — a control surface that slides
     /// off-screen would be unreachable for a hands-free user. Clamp any frame
     /// into the visible area of the screen it (mostly) belongs to.
+    /// The primary screen's full frame (top-left origin at 0,0), with a sane
+    /// fallback for headless/edge cases.
+    static func primaryScreenFrame() -> NSRect {
+        let screen = NSScreen.screens.first(where: { $0.frame.origin == .zero }) ?? NSScreen.main
+        return screen?.frame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
+    }
+
+    /// Bottom-left AppKit origin for the panel. A user-saved X wins; otherwise the
+    /// default depends on orientation — horizontal docks TOP-CENTER, vertical docks
+    /// to the RIGHT edge at the configured Y offset from the top.
+    static func defaultOrigin(settings: Settings, horizontal: Bool,
+                              panelW: CGFloat, panelH: CGFloat, screenFrame: NSRect) -> CGPoint {
+        if let px = settings.panel.positionX {
+            return CGPoint(x: screenFrame.minX + CGFloat(px),
+                           y: screenFrame.maxY - CGFloat(settings.panel.positionY) - panelH)
+        }
+        if horizontal {
+            return CGPoint(x: screenFrame.midX - panelW / 2, y: screenFrame.maxY - panelH)
+        }
+        return CGPoint(x: screenFrame.maxX - panelW,
+                       y: screenFrame.maxY - CGFloat(settings.panel.positionY) - panelH)
+    }
+
     static func clampToScreen(_ frame: NSRect) -> NSRect {
         let screen = NSScreen.screens.first { $0.frame.intersects(frame) }
             ?? NSScreen.main
@@ -365,19 +405,26 @@ final class PanelViewController: ZoneMapping {
 
     private func applyLayout(animated: Bool, completion: (() -> Void)? = nil) {
         let visible = buttons.filter { !$0.isHidden }
-        let height = CGFloat(visible.count) * buttonSize
+        let run = CGFloat(visible.count) * buttonSize
 
-        var y: CGFloat = 0
+        // Lay buttons along the run axis: left→right (horizontal) or top→bottom
+        // (vertical, flipped container so index 0 is at the top).
+        var offset: CGFloat = 0
         for button in buttons where !button.isHidden {
-            button.frame = NSRect(x: 0, y: y, width: width, height: buttonSize)
-            y += buttonSize
+            button.frame = isHorizontal
+                ? NSRect(x: offset, y: 0, width: buttonSize, height: buttonSize)
+                : NSRect(x: 0, y: offset, width: width, height: buttonSize)
+            offset += buttonSize
         }
 
-        // Resize the window keeping its TOP edge fixed (panel stays docked at top).
+        // Resize the window keeping its TOP-LEFT corner fixed (the panel's anchor).
         var frame = window.frame
         let topEdge = frame.maxY
-        frame.size = NSSize(width: width, height: height)
-        frame.origin.y = topEdge - height
+        let leftEdge = frame.minX
+        frame.size = isHorizontal ? NSSize(width: run, height: buttonSize)
+                                  : NSSize(width: width, height: run)
+        frame.origin.x = leftEdge
+        frame.origin.y = topEdge - frame.size.height
         frame = Self.clampToScreen(frame)
 
         let finish = { [weak self] in
