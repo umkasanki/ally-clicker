@@ -1,8 +1,9 @@
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
-  <!-- AllyClicker app icon — version 1 (indigo). Source of truth for the rendered
+  <!-- AllyClicker app icon — version 2 (indigo). Source of truth for the rendered
        .icns; tools/make-icon.swift reproduces this in CoreGraphics for rasterizing.
-       Design: macOS squircle + vertical indigo gradient + top sheen, a white dwell
-       ring, and a white cursor (scaled 1.1×, nudged right inside the ring).
+       Design: macOS squircle + vertical indigo gradient + top sheen, and a plump,
+       rounded cursor (no ring) with a subtle white→lavender gradient and soft shadow
+       — envelope-style rounding via a round-joined/capped stroke of the fill color.
        Drawn in a 200-unit space mapped onto an 832 body inset 96px in the 1024 canvas. -->
   <defs>
     <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
@@ -13,8 +14,12 @@
       <stop offset="0" stop-color="#ffffff" stop-opacity="0.35"/>
       <stop offset="0.5" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
-    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
-      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.28"/>
+    <linearGradient id="cur" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#E2D9F5"/>
+    </linearGradient>
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#2a0a5e" flood-opacity="0.35"/>
     </filter>
   </defs>
 
@@ -22,14 +27,11 @@
     <rect width="200" height="200" rx="46" fill="url(#tile)"/>
     <rect width="200" height="200" rx="46" fill="url(#sheen)"/>
 
-    <!-- dwell ring -->
-    <circle cx="100" cy="100" r="70" fill="none" stroke="#ffffff" stroke-opacity="0.9" stroke-width="12"/>
-    <circle cx="100" cy="100" r="70" fill="none" stroke="#ffffff" stroke-opacity="0.45" stroke-width="12"
-            stroke-dasharray="55 1000" stroke-linecap="round" transform="rotate(-90 100 100)"/>
-
-    <!-- cursor -->
-    <g filter="url(#soft)" transform="translate(108,100) scale(1.1) translate(-105,-107)">
-      <path d="M78 66 L78 138 L96 121 L108 148 L120 143 L107 117 L132 117 Z" fill="#ffffff"/>
+    <!-- plump rounded cursor, no ring -->
+    <g filter="url(#soft)" transform="translate(104,100) scale(1.5) translate(-105,-107)">
+      <path d="M78 66 L78 138 L96 121 L108 148 L120 143 L107 117 L132 117 Z"
+            fill="url(#cur)" stroke="url(#cur)" stroke-width="11"
+            stroke-linejoin="round" stroke-linecap="round"/>
     </g>
   </g>
 </svg>

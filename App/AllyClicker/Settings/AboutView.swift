@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 // The "About" tab: app identity, version, credits, and the project link.
 struct AboutView: View {
@@ -8,14 +9,29 @@ struct AboutView: View {
         return "Version \(short) (\(build))"
     }
 
+    private var appIcon: NSImage? {
+        if let url = Bundle.main.url(forResource: "AppIcon", withExtension: "icns"),
+           let img = NSImage(contentsOf: url) {
+            return img
+        }
+        return NSImage(named: NSImage.applicationIconName)
+    }
+
     private let repoURL = URL(string: "https://github.com/umkasanki/ally-clicker")!
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("AllyClicker").font(.system(size: 28, weight: .bold))
-                    Text(version).font(.system(size: 14)).foregroundStyle(.secondary)
+                HStack(spacing: 16) {
+                    if let icon = appIcon {
+                        Image(nsImage: icon)
+                            .resizable().interpolation(.high)
+                            .frame(width: 72, height: 72)
+                    }
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("AllyClicker").font(.system(size: 28, weight: .bold))
+                        Text(version).font(.system(size: 14)).foregroundStyle(.secondary)
+                    }
                 }
 
                 SettingsSection(title: "What it is") {

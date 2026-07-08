@@ -1,8 +1,9 @@
 import AppKit
 
-// Renders the AllyClicker app icon (indigo squircle + dwell ring + cursor) to a
-// 1024×1024 PNG. Mirrors the approved SVG concept. Run: swiftc make-icon.swift -o
-// make-icon && ./make-icon out.png
+// Renders the AllyClicker app icon (v2: indigo squircle + plump rounded cursor with
+// a subtle white→lavender gradient, no ring) to a 1024×1024 PNG. Mirrors the
+// approved SVG (tools/AppIcon.svg). Run:
+//   swiftc make-icon.swift -o make-icon && ./make-icon out.png
 
 let size = 1024
 let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: size, pixelsHigh: size,
@@ -16,16 +17,15 @@ let cg = ctx.cgContext
 func rgb(_ r: Double, _ g: Double, _ b: Double, _ a: Double = 1) -> CGColor {
     CGColor(red: r, green: g, blue: b, alpha: a)
 }
-
-// --- Map an SVG-style 200×200 y-down space onto an 832 body inset by 96. ---
-let inset: CGFloat = 96
-let body: CGFloat = CGFloat(size) - inset * 2   // 832
-cg.translateBy(x: inset, y: CGFloat(size) - inset)   // top-left of body
-cg.scaleBy(x: body / 200, y: -body / 200)            // y-down, 200-unit space
-
 let space = CGColorSpace(name: CGColorSpace.sRGB)!
 
-// --- Squircle tile with vertical indigo gradient ---
+// Map an SVG-style 200×200 y-down space onto an 832 body inset 96px in the canvas.
+let inset: CGFloat = 96
+let body: CGFloat = CGFloat(size) - inset * 2
+cg.translateBy(x: inset, y: CGFloat(size) - inset)
+cg.scaleBy(x: body / 200, y: -body / 200)
+
+// --- Squircle tile: vertical indigo gradient + top sheen ---
 let tile = CGPath(roundedRect: CGRect(x: 0, y: 0, width: 200, height: 200),
                   cornerWidth: 46, cornerHeight: 46, transform: nil)
 cg.saveGState()
@@ -34,34 +34,18 @@ let grad = CGGradient(colorsSpace: space,
                       colors: [rgb(0.655, 0.545, 0.980), rgb(0.427, 0.157, 0.850)] as CFArray,
                       locations: [0, 1])!
 cg.drawLinearGradient(grad, start: CGPoint(x: 0, y: 0), end: CGPoint(x: 0, y: 200), options: [])
-
-// Top sheen (white fading out over the upper half)
 let sheen = CGGradient(colorsSpace: space,
                        colors: [rgb(1, 1, 1, 0.35), rgb(1, 1, 1, 0)] as CFArray,
                        locations: [0, 1])!
 cg.drawLinearGradient(sheen, start: CGPoint(x: 0, y: 0), end: CGPoint(x: 0, y: 100), options: [])
 cg.restoreGState()
 
-// --- Dwell ring ---
-cg.setLineWidth(12)
-cg.setStrokeColor(rgb(1, 1, 1, 0.9))
-cg.addEllipse(in: CGRect(x: 30, y: 30, width: 140, height: 140))
-cg.strokePath()
-
-// Faint progress arc from the top
-cg.setStrokeColor(rgb(1, 1, 1, 0.45))
-cg.setLineCap(.round)
-cg.addArc(center: CGPoint(x: 100, y: 100), radius: 70,
-          startAngle: -.pi / 2, endAngle: -.pi / 2 + 0.9, clockwise: false)
-cg.strokePath()
-cg.setLineCap(.butt)
-
-// --- Cursor (enlarged 1.1×, nudged right inside the ring), with soft shadow ---
+// --- Plump rounded cursor (gradient fill, soft shadow, no ring) ---
 cg.saveGState()
-cg.setShadow(offset: CGSize(width: 0, height: -8), blur: 22, color: rgb(0, 0, 0, 0.28))
-cg.translateBy(x: 108, y: 100)
-cg.scaleBy(x: 1.1, y: 1.1)
+cg.translateBy(x: 104, y: 100)   // centered, nudged slightly right
+cg.scaleBy(x: 1.5, y: 1.5)
 cg.translateBy(x: -105, y: -107)
+
 let cursor = CGMutablePath()
 cursor.move(to: CGPoint(x: 78, y: 66))
 cursor.addLine(to: CGPoint(x: 78, y: 138))
@@ -71,9 +55,28 @@ cursor.addLine(to: CGPoint(x: 120, y: 143))
 cursor.addLine(to: CGPoint(x: 107, y: 117))
 cursor.addLine(to: CGPoint(x: 132, y: 117))
 cursor.closeSubpath()
-cg.addPath(cursor)
+// Rounded, fattened outline (round joins/caps make it plump like the Mail envelope).
+let fat = cursor.copy(strokingWithWidth: 11, lineCap: .round, lineJoin: .round, miterLimit: 10)
+
+// Base fill establishes the shape and casts a soft shadow.
+cg.saveGState()
+cg.setShadow(offset: CGSize(width: 0, height: 5), blur: 7, color: rgb(0.16, 0.04, 0.37, 0.35))
+cg.addPath(cursor); cg.addPath(fat)
 cg.setFillColor(rgb(1, 1, 1))
-cg.fillPath()
+cg.fillPath(using: .winding)
+cg.restoreGState()
+
+// Gradient fill (white top → lavender bottom) clipped to the cursor.
+cg.saveGState()
+cg.addPath(cursor); cg.addPath(fat)
+cg.clip(using: .winding)
+let curGrad = CGGradient(colorsSpace: space,
+                         colors: [rgb(1, 1, 1), rgb(0.886, 0.851, 0.961)] as CFArray,
+                         locations: [0, 1])!
+cg.drawLinearGradient(curGrad, start: CGPoint(x: 105, y: 60), end: CGPoint(x: 105, y: 150),
+                      options: [.drawsBeforeStartLocation, .drawsAfterEndLocation])
+cg.restoreGState()
+
 cg.restoreGState()
 
 // --- Save PNG ---
