@@ -19,23 +19,34 @@ struct SettingsView: View {
                 set: { s.wrappedValue = Int(($0 * 60).rounded()) })
     }
 
+    private enum Tab { case behavior, panel, about }
+    @State private var tab: Tab = .behavior
+
     var body: some View {
         VStack(spacing: 0) {
-            TabView {
+            TabView(selection: $tab) {
                 behaviorTab
                     .tabItem { Label("Behavior", systemImage: "slider.horizontal.3") }
+                    .tag(Tab.behavior)
                 PanelEditorView(model: model)
                     .tabItem { Label("Panel", systemImage: "square.grid.3x1.below.line.grid.1x2") }
+                    .tag(Tab.panel)
+                AboutView()
+                    .tabItem { Label("About", systemImage: "info.circle") }
+                    .tag(Tab.about)
             }
             .padding(.top, 8)
-            Divider()
-            HStack {
-                Button("Reset to defaults") { model.resetToDefaults() }
-                Spacer()
-                Button("Cancel") { model.cancel() }.keyboardShortcut(.cancelAction)
-                Button("Apply") { model.apply() }.keyboardShortcut(.defaultAction)
+            // The action footer only makes sense for the editable tabs.
+            if tab != .about {
+                Divider()
+                HStack {
+                    Button("Reset to defaults") { model.resetToDefaults() }
+                    Spacer()
+                    Button("Cancel") { model.cancel() }.keyboardShortcut(.cancelAction)
+                    Button("Apply") { model.apply() }.keyboardShortcut(.defaultAction)
+                }
+                .padding(12)
             }
-            .padding(12)
         }
         .frame(width: 640, height: 620)
     }
