@@ -30,9 +30,7 @@ final class SettingsModel: ObservableObject {
         rebuildCatalogOrder()
     }
 
-    // Apply keeps the window open so the user can keep tuning and watch the live
-    // panel update; closing is via Cancel or the window's close button.
-    func apply() { onApply(settings) }
+    func apply() { onApply(settings); onClose() }
     func cancel() { onClose() }
 
     // MARK: - Panel editor

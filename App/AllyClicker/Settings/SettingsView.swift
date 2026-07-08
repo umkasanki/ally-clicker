@@ -43,7 +43,7 @@ struct SettingsView: View {
                     Button("Reset to defaults") { model.resetToDefaults() }
                     Spacer()
                     Button("Cancel") { model.cancel() }.keyboardShortcut(.cancelAction)
-                    Button("Apply") { model.apply() }.keyboardShortcut(.defaultAction)
+                    Button("Save") { model.apply() }.keyboardShortcut(.defaultAction)
                 }
                 .padding(12)
             }
