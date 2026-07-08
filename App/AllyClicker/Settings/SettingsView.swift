@@ -94,6 +94,10 @@ struct SettingsView: View {
                         toggleRow("Sound feedback", $model.settings.appearance.audio,
                                   help: "Play a short sound when you arm a panel button and when a click fires.")
                     }
+                    section("Startup") {
+                        toggleRow("Launch at login", $model.launchAtLogin,
+                                  help: "Start AllyClicker automatically when you log in. Applies immediately.")
+                    }
             }
             .padding(20)
         }

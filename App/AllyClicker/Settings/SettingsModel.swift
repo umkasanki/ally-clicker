@@ -6,11 +6,25 @@ import AllyClickerCore
 // can bind straight into nested fields ($model.settings.timing.dwellTimeMs).
 final class SettingsModel: ObservableObject {
     @Published var settings: AllyClickerCore.Settings
+
+    /// Launch-at-login is a system registration (SMAppService), applied immediately
+    /// on toggle — not part of the Apply/Cancel working copy.
+    @Published var launchAtLogin: Bool {
+        didSet {
+            guard launchAtLogin != oldValue else { return }
+            if !LoginItem.setEnabled(launchAtLogin) {
+                // System refused — reflect the real state back into the toggle.
+                DispatchQueue.main.async { self.launchAtLogin = LoginItem.isEnabled }
+            }
+        }
+    }
+
     private let onApply: (AllyClickerCore.Settings) -> Void
     private let onClose: () -> Void
 
     init(settings: AllyClickerCore.Settings, onApply: @escaping (AllyClickerCore.Settings) -> Void, onClose: @escaping () -> Void) {
         self.settings = settings
+        self.launchAtLogin = LoginItem.isEnabled
         self.onApply = onApply
         self.onClose = onClose
         rebuildCatalogOrder()
