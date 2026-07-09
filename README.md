@@ -111,17 +111,21 @@ The pure core builds and tests cross-platform via SwiftPM: `swift test`.
 
 ### Install via Homebrew (own tap)
 
-AllyClicker is distributed through a personal tap (it is self-signed, not
-notarized, so pass `--no-quarantine`):
+AllyClicker is distributed through a personal tap:
 
 ```bash
 brew tap umkasanki/tap
 brew trust umkasanki/tap          # third-party taps must be trusted once
-brew install --cask --no-quarantine allyclicker
+brew install --cask allyclicker
 ```
 
-Then grant Accessibility (System Settings → Privacy & Security → Accessibility).
-If macOS still blocks it: `xattr -dr com.apple.quarantine /Applications/AllyClicker.app`.
+The app is self-signed (not notarized), so clear the quarantine flag once, then
+grant Accessibility:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/AllyClicker.app
+```
+System Settings → Privacy & Security → Accessibility → enable AllyClicker.
 
 Maintainer: `./App/make-dmg.sh` builds `build/AllyClicker-<version>.dmg` and prints
 its SHA-256; upload the DMG to a GitHub Release and update the cask in the tap. See

@@ -12,8 +12,8 @@
 # Install (users):
 #   brew tap umkasanki/tap
 #   brew trust umkasanki/tap        # third-party taps must be trusted once
-#   brew install --cask --no-quarantine allyclicker
-#   (--no-quarantine because the app is self-signed, not notarized)
+#   brew install --cask allyclicker
+#   xattr -dr com.apple.quarantine /Applications/AllyClicker.app  # self-signed
 cask "allyclicker" do
   version "0.1.0"
   sha256 "REPLACE_WITH_DMG_SHA256"   # from `shasum -a 256` printed by make-dmg.sh
@@ -29,9 +29,7 @@ cask "allyclicker" do
     AllyClicker needs Accessibility permission to inject clicks:
       System Settings → Privacy & Security → Accessibility → enable AllyClicker
 
-    It is not notarized. If macOS blocks it on first launch, either install with
-      brew install --cask --no-quarantine allyclicker
-    or clear the quarantine flag:
+    It is not notarized. Clear the quarantine flag once so macOS lets it launch:
       xattr -dr com.apple.quarantine "/Applications/AllyClicker.app"
   EOS
 end
