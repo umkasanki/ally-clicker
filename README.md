@@ -9,6 +9,8 @@ paralyzed user.
 
 Inspired by [Point-N-Click](https://polital.com/pnc/) by Polital Enterprises.
 
+![AllyClicker panel on the desktop](docs/images/ally-clicker.png)
+
 ---
 
 ## Highlights
