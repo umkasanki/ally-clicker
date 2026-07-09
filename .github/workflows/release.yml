@@ -1,0 +1,71 @@
+name: Release
+
+# Push a tag like v0.2.0 to cut a release:
+#   git tag v0.2.0 && git push origin v0.2.0
+# The job builds a .dmg, publishes a GitHub Release, and updates the Homebrew cask
+# in umkasanki/homebrew-tap.
+#
+# Requires a repo secret TAP_TOKEN: a GitHub token with write access to the
+# homebrew-tap repo (fine-grained PAT → Contents: Read/Write on homebrew-tap,
+# or a classic PAT with `repo` scope).
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write   # GITHUB_TOKEN may create the release on this repo
+
+jobs:
+  release:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Derive version from tag
+        id: ver
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Stamp bundle version from the tag
+        run: /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${{ steps.ver.outputs.version }}" App/Info.plist
+
+      - name: Test core
+        run: swift test
+
+      - name: Build DMG (ad-hoc signed)
+        run: ./App/make-dmg.sh
+
+      - name: Compute SHA-256
+        id: sha
+        run: echo "sha=$(shasum -a 256 build/AllyClicker-${{ steps.ver.outputs.version }}.dmg | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "AllyClicker ${{ steps.ver.outputs.version }}" \
+            --notes "Install via Homebrew:
+          \`\`\`
+          brew tap umkasanki/tap
+          brew trust umkasanki/tap
+          brew install --cask allyclicker
+          xattr -dr com.apple.quarantine /Applications/AllyClicker.app
+          \`\`\`
+          Then grant Accessibility (System Settings → Privacy & Security → Accessibility).
+          Self-signed, not notarized." \
+            "build/AllyClicker-${{ steps.ver.outputs.version }}.dmg"
+
+      - name: Update Homebrew cask
+        env:
+          TAP_TOKEN: ${{ secrets.TAP_TOKEN }}
+        run: |
+          git clone "https://x-access-token:${TAP_TOKEN}@github.com/umkasanki/homebrew-tap.git" tap
+          cd tap
+          sed -i '' -E "s/version \".*\"/version \"${{ steps.ver.outputs.version }}\"/" Casks/allyclicker.rb
+          sed -i '' -E "s/sha256 \".*\"/sha256 \"${{ steps.sha.outputs.sha }}\"/" Casks/allyclicker.rb
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -am "allyclicker ${{ steps.ver.outputs.version }}"
+          git push
