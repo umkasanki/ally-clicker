@@ -109,6 +109,23 @@ cd ally-clicker
 `./App/build-app.sh` builds to `build/AllyClicker.app` without installing.
 The pure core builds and tests cross-platform via SwiftPM: `swift test`.
 
+### Install via Homebrew (own tap)
+
+AllyClicker is distributed through a personal tap (it is self-signed, not
+notarized, so pass `--no-quarantine`):
+
+```bash
+brew tap umkasanki/tap
+brew install --cask --no-quarantine allyclicker
+```
+
+Then grant Accessibility (System Settings → Privacy & Security → Accessibility).
+If macOS still blocks it: `xattr -dr com.apple.quarantine /Applications/AllyClicker.app`.
+
+Maintainer: `./App/make-dmg.sh` builds `build/AllyClicker-<version>.dmg` and prints
+its SHA-256; upload the DMG to a GitHub Release and update the cask in the tap. See
+[packaging/homebrew/allyclicker.rb](packaging/homebrew/allyclicker.rb).
+
 App icon: edit `tools/AppIcon.svg`, mirror it in `tools/make-icon.swift`, then
 regenerate the `.icns` (see the `macos-app-icon` skill).
 
