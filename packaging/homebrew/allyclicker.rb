@@ -11,6 +11,7 @@
 #
 # Install (users):
 #   brew tap umkasanki/tap
+#   brew trust umkasanki/tap        # third-party taps must be trusted once
 #   brew install --cask --no-quarantine allyclicker
 #   (--no-quarantine because the app is self-signed, not notarized)
 cask "allyclicker" do

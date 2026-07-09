@@ -116,6 +116,7 @@ notarized, so pass `--no-quarantine`):
 
 ```bash
 brew tap umkasanki/tap
+brew trust umkasanki/tap          # third-party taps must be trusted once
 brew install --cask --no-quarantine allyclicker
 ```
 
