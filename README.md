@@ -127,8 +127,21 @@ xattr -dr com.apple.quarantine /Applications/AllyClicker.app
 ```
 System Settings → Privacy & Security → Accessibility → enable AllyClicker.
 
-Maintainer: `./App/make-dmg.sh` builds `build/AllyClicker-<version>.dmg` and prints
-its SHA-256; upload the DMG to a GitHub Release and update the cask in the tap. See
+### Cutting a release (maintainer)
+
+Releases are automated by [`.github/workflows/release.yml`](.github/workflows/release.yml).
+Push a version tag and the workflow builds the `.dmg`, publishes a GitHub Release, and
+bumps the Homebrew cask in `umkasanki/homebrew-tap`:
+
+```bash
+git tag v0.2.0 && git push origin v0.2.0
+```
+
+One-time setup: add a repo secret **`TAP_TOKEN`** — a token with **Contents: write** on
+the `homebrew-tap` repo (the default `GITHUB_TOKEN` can't push to another repo).
+
+Manual fallback: `./App/make-dmg.sh` builds `build/AllyClicker-<version>.dmg` and
+prints its SHA-256; upload the DMG to a Release and edit the cask by hand. See
 [packaging/homebrew/allyclicker.rb](packaging/homebrew/allyclicker.rb).
 
 App icon: edit `tools/AppIcon.svg`, mirror it in `tools/make-icon.swift`, then
