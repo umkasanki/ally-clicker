@@ -69,6 +69,23 @@ Author in a 200×200, **y-down** space (matches SVG), then map onto the body:
    `lsregister -f TheApp.app`
    (`/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister`).
 
+## Xcode asset-catalog variant (no .icns)
+
+If the app is an Xcode project, it uses `Assets.xcassets/AppIcon.appiconset/` instead
+of an `.icns`. Render the 1024 master the same way, then `sips` it to the sizes the
+set's `Contents.json` references and drop the PNGs in (filenames must match it):
+
+```bash
+ICO=Path/To/AppIcon.appiconset
+for s in 16 32 64 128 256 512 1024; do
+  sips -z $s $s icon_1024.png --out "$ICO/AppIcon$s.png"
+done
+```
+
+A macOS `Contents.json` maps these to 16/32/64/128/256/512 at 1x+2x (so 32/64/256/512/1024
+double as the @2x entries). No `iconutil` — Xcode builds the icon from the set.
+Real example: `ally-keyboard/tools/` + its `AppIcon.appiconset`.
+
 ## Gotchas
 
 - **CoreGraphics gradient-filled glyph**: to fill a *stroked/plumped* shape with a
