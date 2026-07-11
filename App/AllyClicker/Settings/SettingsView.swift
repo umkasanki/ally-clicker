@@ -87,8 +87,8 @@ struct SettingsView: View {
                                      range: 1...10, step: 1,
                                      help: "How much cursor tremor still counts as holding still. Higher = more forgiving for shaky control.")
                         ValueControl(title: "Move threshold", value: asDouble($model.settings.stillness.moveRadiusPx),
-                                     range: 4...30, step: 1, unit: "px",
-                                     help: "Minimum movement counted as a real move — resets timers and ends a drag's first phase.")
+                                     range: 4...30, step: 1, unit: "pt",
+                                     help: "Minimum movement (points) counted as a real move — resets timers and ends a drag's first phase.")
                     }
                     section("Sound") {
                         toggleRow("Sound feedback", $model.settings.appearance.audio,

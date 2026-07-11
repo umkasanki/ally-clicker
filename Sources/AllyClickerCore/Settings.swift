@@ -85,12 +85,12 @@ extension Settings {
 
 extension Settings {
     public struct Stillness: Codable, Equatable {
-        /// Movement tolerance in pixels. 1 = tightest. Higher = more jitter-tolerant.
+        /// Movement tolerance in points. 1 = tightest. Higher = more jitter-tolerant.
         /// Crucial for head trackers: the head always trembles slightly.
         public var sensitivity: Int = 1
         /// Cursor sampling interval (ms). 5ms = 200 Hz — matches PNC.
         public var trackerIntervalMs: Int = 5
-        /// Minimum cursor movement (px) that counts as "moved to a new target".
+        /// Minimum cursor movement (points) that counts as "moved to a new target".
         /// Used in two places:
         ///  • after a fire, the cursor must move this far before anything fires
         ///    again (so a parked cursor does not machine-gun clicks);
