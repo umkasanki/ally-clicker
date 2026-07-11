@@ -221,7 +221,7 @@ extension Settings {
 
         /// Panel width in points (AppKit units; pixels derive via the screen's scale).
         /// Buttons are square, so this is also each button's height.
-        public var width: Int = 70
+        public var width: Int = 50
         /// Top-left position of the panel (points from the top of the screen).
         public var positionY: Int = 204
         /// Top-left X (points from the left). nil = dock to the right edge (default).

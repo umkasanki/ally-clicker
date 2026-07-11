@@ -44,20 +44,23 @@ final class PanelButton: NSView {
                                 width: size, height: size)
     }
 
-    /// Per-button glyph sizes: ON/OFF is the primary control (largest),
+    /// Per-button glyph size as a FRACTION of the (square) button — so any panel
+    /// width looks right. Fractions are the original 70pt sizes over 70, so a 70pt
+    /// button renders identically to before. ON/OFF is the primary control (largest),
     /// KEYBOARD slightly larger than the click glyphs.
     private var iconSize: CGFloat {
-        let base: CGFloat
+        let w = bounds.width   // square button = panel width
+        let frac: CGFloat
         switch item {
-        case .command(.togglePanel):    base = 48
-        case .command(.launchKeyboard): base = 42
-        default:                        base = 36
+        case .command(.togglePanel):    frac = 48.0 / 70
+        case .command(.launchKeyboard): frac = 42.0 / 70
+        default:                        frac = 36.0 / 70
         }
         // Custom glyphs carry built-in padding and differ per icon, so they use
-        // per-button base sizes. SF Symbols are optically uniform and fill their
-        // frame tightly, so in System mode every glyph shares ONE smaller size —
-        // this also keeps the power ring from towering over the click glyphs.
-        let styled: CGFloat = (iconStyle == .system) ? 21 : base
+        // per-button fractions. SF Symbols are optically uniform and fill their frame
+        // tightly, so in System mode every glyph shares ONE smaller fraction — this
+        // also keeps the power ring from towering over the click glyphs.
+        let styled = (iconStyle == .system) ? (21.0 / 70) * w : frac * w
         return styled * iconScale
     }
 
