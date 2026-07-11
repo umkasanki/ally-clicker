@@ -219,6 +219,8 @@ extension Settings {
             case horizontal
         }
 
+        /// Panel width in points (AppKit units; pixels derive via the screen's scale).
+        /// Buttons are square, so this is also each button's height.
         public var width: Int = 70
         /// Top-left position of the panel (points from the top of the screen).
         public var positionY: Int = 204
