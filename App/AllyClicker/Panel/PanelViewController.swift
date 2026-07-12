@@ -21,7 +21,7 @@ private final class ArmedPillView: NSView {
     override init(frame: NSRect) {
         super.init(frame: frame)
         wantsLayer = true
-        layer?.cornerRadius = 9   // slightly less than the panel's 12pt
+        layer?.cornerRadius = 9   // placeholder — set from panel width (0.075·w) in PanelViewController
         layer?.backgroundColor = NSColor.systemRed.cgColor
     }
     required init?(coder: NSCoder) { fatalError("init(coder:) not used") }
@@ -85,8 +85,9 @@ final class PanelViewController: ZoneMapping {
         window = PanelWindow(contentRect: initialFrame)
         container.frame = NSRect(x: 0, y: 0, width: panelW, height: panelH)
         container.wantsLayer = true
-        container.layer?.cornerRadius = 12
+        container.layer?.cornerRadius = width * 0.10   // 10% of panel width
         container.layer?.masksToBounds = true
+        pill.layer?.cornerRadius = width * 0.075        // slightly less than the panel
         window.contentView = container
         pill.isHidden = true
         container.addSubview(pill)                       // below the buttons
@@ -123,6 +124,8 @@ final class PanelViewController: ZoneMapping {
         orientation = settings.panel.orientation
         dropRadius = Double(settings.stillness.moveRadiusPx)
         dropDwell = settings.timing.dwellTimeSeconds
+        container.layer?.cornerRadius = width * 0.10
+        pill.layer?.cornerRadius = width * 0.075
 
         // Swap out the button views (pill stays below, added in init).
         buttons.forEach { $0.removeFromSuperview() }

@@ -65,7 +65,7 @@ struct PanelEditorView: View {
                 SettingsSection(title: "Size & look",
                                 intro: "Changes apply to the live panel on Apply.") {
                     ValueControl(title: "Panel width", value: asDouble($model.settings.panel.width),
-                                 range: 50...110, step: 5, unit: "pt",
+                                 range: 30...110, step: 1, unit: "pt",
                                  help: "Width of the panel and its square buttons (points). Larger = easier to hit.")
                     ValueControl(title: "Opacity", value: opacityPercent($model.settings.appearance.transparency),
                                  range: 40...100, step: 5, unit: "%",
