@@ -127,6 +127,21 @@ xattr -dr com.apple.quarantine /Applications/AllyClicker.app
 ```
 System Settings → Privacy & Security → Accessibility → enable AllyClicker.
 
+### Install from .dmg (no Homebrew)
+
+1. Open the [latest release](https://github.com/umkasanki/ally-clicker/releases/latest)
+   and download **`AllyClicker-<version>.dmg`**.
+2. Double-click the `.dmg`, then **drag AllyClicker into the Applications folder**.
+3. First launch (the app is self-signed, not notarized, so macOS asks to confirm):
+   - **right-click** `AllyClicker` in Applications → **Open** → **Open** in the dialog; or
+   - if it's still blocked, run once in Terminal:
+     ```bash
+     xattr -dr com.apple.quarantine /Applications/AllyClicker.app
+     ```
+4. Grant Accessibility: **System Settings → Privacy & Security → Accessibility → enable AllyClicker**, then relaunch.
+
+To update, download the newer `.dmg` and drag over the old app (replace).
+
 ### Cutting a release (maintainer)
 
 Releases are automated by [`.github/workflows/release.yml`](.github/workflows/release.yml).
