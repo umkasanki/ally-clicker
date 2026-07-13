@@ -14,6 +14,9 @@ import Foundation
 public protocol MouseInjecting {
     func click(_ action: DwellEngine.Action, at point: Point)
     func mouseDown(at point: Point)
+    /// Left button held: report a drag to the given point (posts leftMouseDragged).
+    /// Needed between mouseDown and mouseUp so apps register a real drag/selection.
+    func mouseDragged(at point: Point)
     func mouseUp(at point: Point)
 }
 

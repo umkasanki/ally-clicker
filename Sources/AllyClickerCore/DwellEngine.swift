@@ -55,6 +55,7 @@ public struct DwellEngine {
         case clearProgress
         case fire(Action, at: Point)
         case dragMouseDown(at: Point)   // DRAG phase 1 committed: press and hold
+        case dragMouseMoved(at: Point)  // DRAG held: cursor moved (stream leftMouseDragged)
         case dragMouseUp(at: Point)     // DRAG phase 2 committed (or cancelled): release
         case runCommand(Command)        // a one-shot panel command fired (ON/OFF, KEYBOARD)
     }
@@ -238,8 +239,11 @@ public struct DwellEngine {
                 resetDwell(at: cursor)
             }
         } else {
-            // Phase 2: require the cursor to move away from the start point first,
-            // otherwise a still cursor would release immediately (zero-length drag).
+            // Phase 2: stream the drag so apps see a real selection/move — the OS
+            // won't turn head-tracker motion into leftMouseDragged on its own.
+            effects.append(.dragMouseMoved(at: cursor))
+            // Require the cursor to move away from the start point first, otherwise a
+            // still cursor would release immediately (zero-length drag).
             if let down = dragDownPoint, !dragHasMoved,
                cursor.distance(to: down) > Double(settings.stillness.moveRadiusPx) {
                 dragHasMoved = true

@@ -21,8 +21,9 @@ struct CGMouseInjector: MouseInjecting {
         }
     }
 
-    func mouseDown(at point: Point) { post(.leftMouseDown, at: cgPoint(point)) }
-    func mouseUp(at point: Point)   { post(.leftMouseUp,   at: cgPoint(point)) }
+    func mouseDown(at point: Point)    { post(.leftMouseDown,    at: cgPoint(point)) }
+    func mouseDragged(at point: Point) { post(.leftMouseDragged, at: cgPoint(point)) }
+    func mouseUp(at point: Point)      { post(.leftMouseUp,      at: cgPoint(point)) }
 
     /// Post a pixel-precise scroll. dy = vertical, dx = horizontal (screen sense;
     /// sign may need flipping for natural scrolling — verified on-device).

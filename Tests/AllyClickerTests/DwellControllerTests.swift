@@ -15,9 +15,11 @@ final class MockMapper: ZoneMapping {
 final class MockInjector: MouseInjecting {
     var clicks: [(DwellEngine.Action, Point)] = []
     var downs: [Point] = []
+    var drags: [Point] = []
     var ups: [Point] = []
     func click(_ action: DwellEngine.Action, at point: Point) { clicks.append((action, point)) }
     func mouseDown(at point: Point) { downs.append(point) }
+    func mouseDragged(at point: Point) { drags.append(point) }
     func mouseUp(at point: Point) { ups.append(point) }
 }
 

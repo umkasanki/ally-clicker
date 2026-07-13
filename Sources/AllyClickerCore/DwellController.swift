@@ -106,6 +106,8 @@ public final class DwellController {
             onFired?(action)
         case .dragMouseDown(let point):
             injector.mouseDown(at: point)
+        case .dragMouseMoved(let point):
+            injector.mouseDragged(at: point)
         case .dragMouseUp(let point):
             injector.mouseUp(at: point)
             onFired?(.leftDrag)
