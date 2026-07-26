@@ -19,7 +19,7 @@ struct SettingsView: View {
                 set: { s.wrappedValue = Int(($0 * 60).rounded()) })
     }
 
-    private enum Tab { case behavior, panel, about }
+    private enum Tab { case behavior, panel, feedback, about }
     @State private var tab: Tab = .behavior
 
     var body: some View {
@@ -31,6 +31,9 @@ struct SettingsView: View {
                 PanelEditorView(model: model)
                     .tabItem { Label("Panel", systemImage: "square.grid.3x1.below.line.grid.1x2") }
                     .tag(Tab.panel)
+                feedbackTab
+                    .tabItem { Label("Feedback", systemImage: "dot.radiowaves.left.and.right") }
+                    .tag(Tab.feedback)
                 AboutView()
                     .tabItem { Label("About", systemImage: "info.circle") }
                     .tag(Tab.about)
@@ -90,14 +93,24 @@ struct SettingsView: View {
                                      range: 4...30, step: 1, unit: "pt",
                                      help: "Minimum movement (points) counted as a real move — resets timers and ends a drag's first phase.")
                     }
-                    section("Sound") {
-                        toggleRow("Sound feedback", $model.settings.appearance.audio,
-                                  help: "Play a short sound when you arm a panel button and when a click fires.")
-                    }
                     section("Startup") {
                         toggleRow("Launch at login", $model.launchAtLogin,
                                   help: "Start AllyClicker automatically when you log in. Applies immediately.")
                     }
+            }
+            .padding(20)
+        }
+    }
+
+    private var feedbackTab: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                section("Feedback", intro: "Confirmation cues when a click or drag fires — helpful when you can't feel the mouse button.") {
+                    toggleRow("Sound feedback", $model.settings.appearance.audio,
+                              help: "Play a short sound when you arm a panel button and when a click fires.")
+                    toggleRow("Visual click feedback", $model.settings.appearance.clickFeedback,
+                              help: "Show a brief ripple at the cursor when a click or drag fires.")
+                }
             }
             .padding(20)
         }

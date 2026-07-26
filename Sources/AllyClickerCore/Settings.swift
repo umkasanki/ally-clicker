@@ -183,6 +183,8 @@ extension Settings {
         }
 
         public var audio: Bool = true
+        /// Show a brief expanding ripple at the cursor when a click/drag fires.
+        public var clickFeedback: Bool = true
         /// Panel opacity 0–255 (255 = fully opaque).
         public var transparency: Int = 255
         /// Panel button icon set. Defaults to the project's custom glyphs.
@@ -196,8 +198,9 @@ extension Settings {
         public init(from decoder: Decoder) throws {
             let c = try decoder.container(keyedBy: CodingKeys.self)
             let d = Appearance()
-            audio        = try c.decodeIfPresent(Bool.self, forKey: .audio)        ?? d.audio
-            transparency = try c.decodeIfPresent(Int.self,  forKey: .transparency) ?? d.transparency
+            audio         = try c.decodeIfPresent(Bool.self, forKey: .audio)         ?? d.audio
+            clickFeedback = try c.decodeIfPresent(Bool.self, forKey: .clickFeedback) ?? d.clickFeedback
+            transparency  = try c.decodeIfPresent(Int.self,  forKey: .transparency)  ?? d.transparency
             iconStyle    = try c.decodeIfPresent(IconStyle.self, forKey: .iconStyle) ?? d.iconStyle
             // Guard against a hand-edited value shrinking icons to nothing or huge.
             let rawScale = try c.decodeIfPresent(Double.self, forKey: .iconScale) ?? d.iconScale

@@ -40,9 +40,9 @@ public final class DwellController {
     public var willFire: ((DwellEngine.Action, Point) -> Bool)?
 
     /// Called right after an action is injected — a click, and BOTH the mouse-down
-    /// that starts a drag and the mouse-up that ends it — for audio/haptic feedback.
-    /// Not called for intercepted actions handled by `willFire`.
-    public var onFired: ((DwellEngine.Action) -> Void)?
+    /// that starts a drag and the mouse-up that ends it — with the fire point, for
+    /// audio/visual feedback. Not called for intercepted actions handled by `willFire`.
+    public var onFired: ((DwellEngine.Action, Point) -> Void)?
 
     public init(settings: Settings,
                 sampler: CursorSampling,
@@ -103,15 +103,15 @@ public final class DwellController {
         switch effect {
         case .fire(let action, let point):
             injector.click(action, at: point)
-            onFired?(action)
+            onFired?(action, point)
         case .dragMouseDown(let point):
             injector.mouseDown(at: point)
-            onFired?(.leftDrag)   // feedback at the start of a drag, not only the end
+            onFired?(.leftDrag, point)   // feedback at the start of a drag, not only the end
         case .dragMouseMoved(let point):
             injector.mouseDragged(at: point)
         case .dragMouseUp(let point):
             injector.mouseUp(at: point)
-            onFired?(.leftDrag)
+            onFired?(.leftDrag, point)
         case .runCommand(let command):
             onCommand?(command)
         case .setArmed, .dwellProgress, .clearProgress:
