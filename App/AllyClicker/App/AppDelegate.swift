@@ -91,13 +91,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         controller.onUIEffect = { [weak self] effect in
             guard let self else { return }
             if case .setArmed(let action) = effect {
+                let changed = action != self.lastArmed
                 // DRAG armed → cleared (cursor entered panel) = intent to move.
                 if action == nil, self.lastArmed == .leftDrag {
                     self.dragArmedClearedAt = Date()
                 }
                 self.lastArmed = action
                 self.panel.setArmed(action)
-                if action != nil { self.sound.playArm() }
+                // Only chirp on a real change — the engine re-emits setArmed(same)
+                // every dwell cycle while the cursor sits on a panel button.
+                if changed, action != nil { self.sound.playArm() }
             }
             // dwellProgress / clearProgress intentionally ignored (spec §2).
         }
