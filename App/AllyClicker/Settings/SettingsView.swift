@@ -60,7 +60,7 @@ struct SettingsView: View {
                 .padding(12)
             }
         }
-        .frame(width: 640, height: 620)
+        .frame(width: 740, height: 720)
     }
 
     private var behaviorTab: some View {
