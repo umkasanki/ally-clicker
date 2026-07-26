@@ -1,8 +1,13 @@
 import SwiftUI
+import AppKit
 import AllyClickerCore
 
 struct SettingsView: View {
     @ObservedObject var model: SettingsModel
+
+    // Curated short macOS system sounds for the click cue.
+    private let clickSounds = ["Tock", "Tap", "Tink", "Pop", "Morse", "Bottle", "Purr"]
+    @State private var soundPreview: NSSound?   // retained so the preview finishes playing
 
     // Int(ms) binding shown/edited in seconds.
     private func seconds(_ ms: Binding<Int>) -> Binding<Double> {
@@ -44,14 +49,13 @@ struct SettingsView: View {
                     .tag(Tab.about)
             }
             .padding(.top, 8)
-            // The action footer only makes sense for the editable tabs.
+            // Changes auto-save; the footer just offers reset + close.
             if tab != .about {
                 Divider()
                 HStack {
                     Button("Reset to defaults") { model.resetToDefaults() }
                     Spacer()
-                    Button("Cancel") { model.cancel() }.keyboardShortcut(.cancelAction)
-                    Button("Save") { model.apply() }.keyboardShortcut(.defaultAction)
+                    Button("Done") { model.done() }.keyboardShortcut(.defaultAction)
                 }
                 .padding(12)
             }
@@ -118,12 +122,44 @@ struct SettingsView: View {
                                  help: "Loudness of the feedback sounds.")
                         .disabled(!model.settings.appearance.audio)
                         .opacity(model.settings.appearance.audio ? 1 : 0.5)
+                    clickSoundRow
+                        .disabled(!model.settings.appearance.audio)
+                        .opacity(model.settings.appearance.audio ? 1 : 0.5)
                     toggleRow("Visual click feedback", $model.settings.appearance.clickFeedback,
                               help: "Show a brief ripple at the cursor when a click or drag fires.")
                 }
             }
             .padding(20)
         }
+    }
+
+    private var clickSoundRow: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 12) {
+                Text("Click sound").font(.system(size: 15)).frame(width: 175, alignment: .leading)
+                Picker("", selection: $model.settings.appearance.clickSound) {
+                    ForEach(clickSounds, id: \.self) { Text($0).tag($0) }
+                }
+                .labelsHidden()
+                .frame(width: 150)
+                .onChange(of: model.settings.appearance.clickSound) { _, name in previewClickSound(name) }
+                Button { previewClickSound(model.settings.appearance.clickSound) } label: {
+                    Image(systemName: "play.circle")
+                }
+                .buttonStyle(.borderless)
+                .help("Preview")
+                Spacer()
+            }
+            Text("System sound played when a click fires.")
+                .font(.system(size: 13)).foregroundStyle(.secondary)
+        }
+    }
+
+    private func previewClickSound(_ name: String) {
+        let s = SoundPlayer.makeClickSound(name)
+        s?.volume = Float(model.settings.appearance.audioVolume)
+        soundPreview = s
+        s?.play()
     }
 
     @ViewBuilder

@@ -185,6 +185,8 @@ extension Settings {
         public var audio: Bool = true
         /// Audio feedback volume, 0.0–1.0.
         public var audioVolume: Double = 1.0
+        /// Name of the macOS system sound played on click (e.g. "Tink", "Pop").
+        public var clickSound: String = "Tink"
         /// Show a brief expanding ripple at the cursor when a click/drag fires.
         public var clickFeedback: Bool = true
         /// Panel opacity 0–255 (255 = fully opaque).
@@ -203,6 +205,7 @@ extension Settings {
             audio         = try c.decodeIfPresent(Bool.self, forKey: .audio)         ?? d.audio
             let rawVol    = try c.decodeIfPresent(Double.self, forKey: .audioVolume) ?? d.audioVolume
             audioVolume   = min(max(rawVol, 0), 1)
+            clickSound    = try c.decodeIfPresent(String.self, forKey: .clickSound) ?? d.clickSound
             clickFeedback = try c.decodeIfPresent(Bool.self, forKey: .clickFeedback) ?? d.clickFeedback
             transparency  = try c.decodeIfPresent(Int.self,  forKey: .transparency)  ?? d.transparency
             iconStyle    = try c.decodeIfPresent(IconStyle.self, forKey: .iconStyle) ?? d.iconStyle

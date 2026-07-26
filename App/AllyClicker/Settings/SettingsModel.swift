@@ -1,9 +1,11 @@
 import SwiftUI
+import Combine
 import AllyClickerCore
 
-// Holds a working copy of AllyClickerCore.Settings that the form edits. Apply commits it (persist
-// + apply to the running app); Cancel discards. Value-type AllyClickerCore.Settings means SwiftUI
-// can bind straight into nested fields ($model.settings.timing.dwellTimeMs).
+// Holds the live Settings the form edits. Changes AUTO-SAVE: any edit is persisted +
+// applied to the running app after a short debounce (no Save button). Value-type
+// AllyClickerCore.Settings means SwiftUI can bind straight into nested fields
+// ($model.settings.timing.dwellTimeMs).
 final class SettingsModel: ObservableObject {
     @Published var settings: AllyClickerCore.Settings
 
@@ -21,6 +23,7 @@ final class SettingsModel: ObservableObject {
 
     private let onApply: (AllyClickerCore.Settings) -> Void
     private let onClose: () -> Void
+    private var autosave: AnyCancellable?
 
     init(settings: AllyClickerCore.Settings, onApply: @escaping (AllyClickerCore.Settings) -> Void, onClose: @escaping () -> Void) {
         self.settings = settings
@@ -28,10 +31,19 @@ final class SettingsModel: ObservableObject {
         self.onApply = onApply
         self.onClose = onClose
         rebuildCatalogOrder()
+        // Auto-save: persist + apply live shortly after the last edit. Debounced so
+        // dragging a slider doesn't rebuild the panel on every pixel.
+        autosave = $settings
+            .dropFirst()
+            .debounce(for: .milliseconds(250), scheduler: RunLoop.main)
+            .sink { [weak self] latest in self?.onApply(latest) }
     }
 
-    func apply() { onApply(settings); onClose() }
-    func cancel() { onClose() }
+    /// Persist the current settings immediately (flush any pending debounced save).
+    func flush() { onApply(settings) }
+
+    /// Close the window (flush first so a just-made edit isn't lost to the debounce).
+    func done() { flush(); onClose() }
 
     // MARK: - Panel editor
     //
