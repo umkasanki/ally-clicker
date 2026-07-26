@@ -5,6 +5,11 @@ import AppKit
 final class SoundPlayer {
     var enabled: Bool = true
 
+    /// Playback volume 0.0–1.0.
+    var volume: Float = 1.0 {
+        didSet { click?.volume = volume; arm?.volume = volume }
+    }
+
     // Prebuilt instances; stop+play lets rapid actions retrigger without lag.
     private let click = NSSound(named: NSSound.Name("Tink"))
     private let arm = NSSound(named: NSSound.Name("Pop"))

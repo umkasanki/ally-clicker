@@ -18,6 +18,11 @@ struct SettingsView: View {
         Binding(get: { Double(s.wrappedValue) / 60 },
                 set: { s.wrappedValue = Int(($0 * 60).rounded()) })
     }
+    // 0.0–1.0 binding shown/edited as a percentage.
+    private func percent01(_ b: Binding<Double>) -> Binding<Double> {
+        Binding(get: { (b.wrappedValue * 100).rounded() },
+                set: { b.wrappedValue = $0 / 100 })
+    }
 
     private enum Tab { case behavior, panel, feedback, about }
     @State private var tab: Tab = .behavior
@@ -108,6 +113,11 @@ struct SettingsView: View {
                 section("Feedback", intro: "Confirmation cues when a click or drag fires — helpful when you can't feel the mouse button.") {
                     toggleRow("Sound feedback", $model.settings.appearance.audio,
                               help: "Play a short sound when you arm a panel button and when a click fires.")
+                    ValueControl(title: "Volume", value: percent01($model.settings.appearance.audioVolume),
+                                 range: 0...100, step: 5, unit: "%",
+                                 help: "Loudness of the feedback sounds.")
+                        .disabled(!model.settings.appearance.audio)
+                        .opacity(model.settings.appearance.audio ? 1 : 0.5)
                     toggleRow("Visual click feedback", $model.settings.appearance.clickFeedback,
                               help: "Show a brief ripple at the cursor when a click or drag fires.")
                 }
