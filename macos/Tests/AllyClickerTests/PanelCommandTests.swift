@@ -71,8 +71,9 @@ final class PanelCommandTests: XCTestCase {
         XCTAssertEqual(engine.armed, .right)
 
         // Coming from desktop onto a command button is a swipe — clears armed.
+        // The swipe-reset is debounced, so stay on the button for a few ticks.
         _ = engine.tick(cursor: .zero, zone: .desktop, dt: dt)
-        _ = engine.tick(cursor: .zero, zone: .panelCommand(.togglePanel), dt: dt)
+        for _ in 0..<5 { _ = engine.tick(cursor: .zero, zone: .panelCommand(.togglePanel), dt: dt) }
         XCTAssertNil(engine.armed, "Entering a command button (panel) clears the armed action")
     }
 }

@@ -339,11 +339,13 @@ final class DwellEngineTests: XCTestCase {
         armAction(.right)
         XCTAssertEqual(engine.armed, .right)
 
-        // Tremor with the cursor parked on the panel's edge: the zone flips every
-        // tick. That must NOT count as a deliberate brush.
-        for _ in 0..<40 {
-            _ = engine.tick(cursor: .zero, zone: .desktop, dt: tickDt)
-            _ = engine.tick(cursor: .zero, zone: .panel(button: nil), dt: tickDt)
+        // Tremor with the cursor on the panel's edge: it wobbles across the boundary,
+        // so the zone flips every tick (and the wobble keeps resetting the dwell, so
+        // nothing fires). That must NOT count as a deliberate brush.
+        for i in 0..<40 {
+            let a = Point(x: 0, y: 0), b = Point(x: 0, y: 5)   // > sensitivity (1pt)
+            _ = engine.tick(cursor: i % 2 == 0 ? a : b, zone: .desktop, dt: tickDt)
+            _ = engine.tick(cursor: i % 2 == 0 ? b : a, zone: .panel(button: nil), dt: tickDt)
         }
         XCTAssertEqual(engine.armed, .right, "Edge jitter must not clear the armed action")
 
