@@ -1,9 +1,9 @@
 #!/bin/bash
 # Build AllyClicker and install it to /Applications — a stable home so its icon,
 # Accessibility grant, and login-item registration stay valid across rebuilds.
-# Run on macOS:  ./App/install.sh
+# Run on macOS:  ./macos/App/install.sh
 set -euo pipefail
-cd "$(dirname "$0")/.."   # repo root
+cd "$(dirname "$0")/.."   # macos/ (the Swift package root)
 
 App/build-app.sh
 

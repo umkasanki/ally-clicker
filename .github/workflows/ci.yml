@@ -5,6 +5,10 @@ on:
     branches: [main]
   pull_request:
 
+defaults:
+  run:
+    working-directory: macos   # the Swift package root
+
 jobs:
   test:
     name: Test AllyClickerCore (Linux)

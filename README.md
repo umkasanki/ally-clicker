@@ -102,11 +102,11 @@ No Xcode project needed — the app is assembled with Command Line Tools.
 git clone git@github.com:umkasanki/ally-clicker.git
 cd ally-clicker
 
-./App/setup-signing.sh   # once: stable self-signed identity (keeps the a11y grant)
-./App/install.sh         # build + install to /Applications, then launch
+./macos/App/setup-signing.sh   # once: stable self-signed identity (keeps the a11y grant)
+./macos/App/install.sh         # build + install to /Applications, then launch
 ```
 
-`./App/build-app.sh` builds to `build/AllyClicker.app` without installing.
+`./macos/App/build-app.sh` builds to `macos/build/AllyClicker.app` without installing.
 The pure core builds and tests cross-platform via SwiftPM: `swift test`.
 
 ### Install via Homebrew (own tap)
@@ -155,31 +155,35 @@ git tag v0.2.0 && git push origin v0.2.0
 One-time setup: add a repo secret **`TAP_TOKEN`** — a token with **Contents: write** on
 the `homebrew-tap` repo (the default `GITHUB_TOKEN` can't push to another repo).
 
-Manual fallback: `./App/make-dmg.sh` builds `build/AllyClicker-<version>.dmg` and
+Manual fallback: `./macos/App/make-dmg.sh` builds `macos/build/AllyClicker-<version>.dmg` and
 prints its SHA-256; upload the DMG to a Release and edit the cask by hand. See
 [packaging/homebrew/allyclicker.rb](packaging/homebrew/allyclicker.rb).
 
-App icon: edit `tools/AppIcon.svg`, mirror it in `tools/make-icon.swift`, then
+App icon: edit `macos/tools/AppIcon.svg`, mirror it in `macos/tools/make-icon.swift`, then
 regenerate the `.icns` (see the `macos-app-icon` skill).
 
 ---
 
 ## Project structure
 
+A monorepo, one directory per platform. There is no shared *code* between them
+(Swift vs. C#) — the shared contract is [`docs/spec.md`](docs/spec.md).
+
 ```
-Sources/
-  AllyClickerCore/   — pure logic (DwellEngine state machine, AutoScroll, Settings)
-App/
-  AllyClicker/       — macOS app (AppKit panel, SwiftUI settings, CGEvent injection)
-  build-app.sh · install.sh · setup-signing.sh
-Tests/
-  AllyClickerTests/  — unit tests (dwell engine, settings, panel commands)
-tools/               — app-icon SVG source + CoreGraphics generator
-docs/                — spec, plan, session context
+macos/                 — the macOS app (Swift, shipping)
+  Sources/AllyClickerCore/   pure logic (DwellEngine state machine, AutoScroll, Settings)
+  App/AllyClicker/           AppKit panel, SwiftUI settings, CGEvent injection
+  App/                       build-app.sh · install.sh · make-dmg.sh · setup-signing.sh
+  Tests/AllyClickerTests/    unit tests (dwell engine, settings, panel commands)
+  tools/                     app-icon SVG source + CoreGraphics generator
+windows/               — the Windows app (C#/.NET, in progress)
+docs/                  — spec (shared contract), plans, session context
+packaging/             — Homebrew cask template
 ```
 
 `AllyClickerCore` has no macOS UI dependencies and is fully unit-testable (it uses
-its own `Point` type, not `CGPoint`, so it builds on Linux CI too).
+its own `Point` type, not `CGPoint`, so it builds on Linux CI too — and, as a spike
+confirmed, on Windows as well).
 
 ---
 

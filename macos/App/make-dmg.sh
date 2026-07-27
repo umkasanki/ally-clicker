@@ -2,9 +2,9 @@
 # Build AllyClicker and package it as a distributable .dmg (drag-to-Applications).
 # Free path — no Apple Developer account needed. The app is self-signed, NOT
 # notarized, so users bypass Gatekeeper once on first launch (see README / cask).
-# Run on macOS:  ./App/make-dmg.sh
+# Run on macOS:  ./macos/App/make-dmg.sh
 set -euo pipefail
-cd "$(dirname "$0")/.."   # repo root
+cd "$(dirname "$0")/.."   # macos/ (the Swift package root)
 
 App/build-app.sh
 

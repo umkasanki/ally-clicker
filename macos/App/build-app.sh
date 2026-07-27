@@ -2,10 +2,10 @@
 # Assemble a runnable AllyClicker.app WITHOUT Xcode -- using Command Line Tools only.
 # For quick on-device testing before the Xcode project exists. Run on macOS.
 #
-#   ./App/build-app.sh && open build/AllyClicker.app
+#   ./macos/App/build-app.sh && open macos/build/AllyClicker.app
 #
 set -euo pipefail
-cd "$(dirname "$0")/.."   # repo root
+cd "$(dirname "$0")/.."   # macos/ (the Swift package root)
 
 echo "[1/4] Building core (swift build)..."
 swift build
@@ -43,7 +43,7 @@ if [ -f "$ALLY_KC" ] && security find-identity 2>/dev/null | grep -q "$IDENTITY"
     codesign --force --sign "$IDENTITY" --keychain "$ALLY_KC" "$APP"
 else
     echo "  stable identity not found -> ad-hoc (grant will reset each build)."
-    echo "  run ./App/setup-signing.sh once to make the grant persist."
+    echo "  run ./macos/App/setup-signing.sh once to make the grant persist."
     codesign --force --sign - "$APP"
 fi
 

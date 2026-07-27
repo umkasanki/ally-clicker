@@ -23,3 +23,8 @@ build/
 
 # Windows download metadata (illegal path on Windows checkouts)
 *:Zone.Identifier
+
+# .NET (Windows app)
+bin/
+obj/
+*.user

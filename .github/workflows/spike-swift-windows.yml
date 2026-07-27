@@ -37,6 +37,8 @@ jobs:
 
       - name: Build core
         run: swift build --target AllyClickerCore
+        working-directory: macos
 
       - name: Run core tests
         run: swift test
+        working-directory: macos

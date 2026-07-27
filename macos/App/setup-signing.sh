@@ -46,4 +46,4 @@ echo
 echo "Done. Identity:"
 security find-identity -k "$KC" | grep "AllyClicker Self-Signed" || echo "  (not found — check import)"
 echo
-echo "Now rebuild:  ./App/build-app.sh"
+echo "Now rebuild:  ./macos/App/build-app.sh"
