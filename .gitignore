@@ -20,3 +20,6 @@ build/
 
 # JetBrains IDE
 .idea/
+
+# Windows download metadata (illegal path on Windows checkouts)
+*:Zone.Identifier
