@@ -20,7 +20,20 @@
 - Экспорт private key возможен только из GUI-сессии Мака (по SSH —
   «User interaction is not allowed»); keychain-пароль связки = `allyclicker`.
 
+### 🔀 Reorg в монорепо — СДЕЛАН (2026-07-27)
+`App/ Sources/ Tests/ tools/ Package.swift` → **`macos/`** (через `git mv`, история цела).
+Скрипты (`build-app.sh`/`install.sh`/`make-dmg.sh`) работали и так — они делают
+`cd $(dirname $0)/..`, что теперь = `macos/`; обновлены только usage-комментарии.
+Пути поправлены в `ci.yml` (`working-directory: macos`), `release.yml`
+(`macos/App/Info.plist`, `./macos/App/make-dmg.sh`, `macos/build/*.dmg`), README.
+**Проверено:** Linux CI зелёный (72 теста) с новой структурой.
+**НЕ проверено (Мак был офлайн):** сборка бандла `build-app.sh` + codesign и
+release.yml вживую — прогнать `./macos/App/install.sh` при первом включении Мака.
+Мелочь: в корне лежит `counds/tone1.WAV` (опечатка в имени папки, звук не используется) —
+решить, удалить или переименовать.
+
 ### 🪟 Следующая большая веха: Windows-версия (план в docs/windows-plan.md)
+**Решено: C#/.NET** (после спайка — см. ниже). Следующий шаг: W0 (каркас `windows/`) → W1 (порт движка + xUnit).
 Решено (2026-07-26): **C#/.NET (WPF)**, монорепо с **полным reorg** (`macos/` + `windows/`),
 спека — общий контракт. Главное требование — не зависать вместе с чужим софтом
 (SendInput async + UIA с таймаутом). **Завтра начинаем с reorg репо**, затем W0→W8.
