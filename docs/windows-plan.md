@@ -77,7 +77,10 @@ ally-clicker/
 ├── packaging/                # homebrew cask (в корне)
 └── .github/workflows/        # правим пути macOS + добавляем windows-ci.yml
 ```
-Без платформенных веток; фичи — обычными ветками/тегами.
+Без **долгоживущих платформенных** веток. Но саму разработку Windows-версии ведём в
+**feature-ветке `feature/windows-app`** и мёржим в `main` по готовности (или по частям —
+W0/W1 могут влиться раньше). Это держит `main` всегда релизным для macOS: пока Windows
+сырая, её код не мешает выпускать macOS-релизы тегами из `main`.
 
 ### Шаги reorg (первым делом, ДО Windows-кода)
 1. `git mv App Sources Tests tools Package.swift macos/` (история сохраняется).

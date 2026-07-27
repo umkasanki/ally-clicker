@@ -7,9 +7,10 @@
 
 ## Статус проекта
 
-**Текущая фаза:** Фаза 4 (Settings) и большая часть Фазы 5 ЗАВЕРШЕНЫ.
-Выпущен публичный релиз **v0.1.1**; приложение ставится через Homebrew tap.
-**Последнее действие:** перерыв после выпуска v0.1.1.
+**Текущая фаза:** macOS-версия в рабочем состоянии, релиз **v0.1.6** (Homebrew tap + .dmg).
+Репо реструктурирован в монорепо (`macos/` + будущий `windows/`).
+**Последнее действие:** выпущен v0.1.6; Windows-версия (C#/.NET) стартует в ветке
+`feature/windows-app` — план в `docs/windows-plan.md`.
 
 ### ✅ Закрыто (сессия 2026-07-14)
 - **Звук на старте драга** (`c8eb48d`) — собрано, установлено, подтверждено на слух.
@@ -20,6 +21,19 @@
 - Экспорт private key возможен только из GUI-сессии Мака (по SSH —
   «User interaction is not allowed»); keychain-пароль связки = `allyclicker`.
 
+### ✅ Релиз v0.1.6 (2026-07-27) — модель «активной команды» доведена
+Проверено вживую на Маке (включая сборку из новой структуры `macos/`):
+- **Активная функция больше не слетает сама:** idle-disarm выключен по умолчанию
+  (`idleDisarmSeconds = 0`). Пользователь: «автоматическое снятие левого клика больше
+  добавляет проблем, чем решает». Настройка осталась, но по умолчанию off.
+- **Left возвращается после ВСЕХ функций,** включая режимы-захваты: после выхода из
+  авто-скролла и после перемещения панели (`DwellController.armDefaultIfEnabled()`).
+  Раньше там не оставалось активной функции вообще — это был реальный пробел.
+- **Дребезг кромки панели** больше не отменяет функцию: swipe-reset дебаунсится
+  (`DwellEngine.swipeDebounce = 15 мс`); настоящий мазок отменяет мгновенно.
+- 75 тестов зелёные. ⚠️ При апгрейде со старых версий в `settings.json` остаётся
+  `idleDisarmSeconds: 120` — лечится Reset to defaults или вручную (у Олега уже 0).
+
 ### 🔀 Reorg в монорепо — СДЕЛАН (2026-07-27)
 `App/ Sources/ Tests/ tools/ Package.swift` → **`macos/`** (через `git mv`, история цела).
 Скрипты (`build-app.sh`/`install.sh`/`make-dmg.sh`) работали и так — они делают
@@ -27,8 +41,10 @@
 Пути поправлены в `ci.yml` (`working-directory: macos`), `release.yml`
 (`macos/App/Info.plist`, `./macos/App/make-dmg.sh`, `macos/build/*.dmg`), README.
 **Проверено:** Linux CI зелёный (72 теста) с новой структурой.
-**НЕ проверено (Мак был офлайн):** сборка бандла `build-app.sh` + codesign и
-release.yml вживую — прогнать `./macos/App/install.sh` при первом включении Мака.
+**Проверено на Маке (2026-07-27):** `./macos/App/install.sh` собирает, подписывает
+(стабильная identity) и ставит в `/Applications` из новой структуры; артефакты — в
+`macos/build/`. release.yml тоже отработал (релиз v0.1.6). Старые `App/`+`build/` в корне
+Мака удалены как остатки прежней структуры.
 Мелочь закрыта: папка с опечаткой `counds/` → **`sounds/`** (в ней `tone1.WAV`, пока не используется).
 
 ### 🪟 Следующая большая веха: Windows-версия (план в docs/windows-plan.md)
@@ -51,7 +67,7 @@ release.yml вживую — прогнать `./macos/App/install.sh` при п
   (нужен секрет `TAP_TOKEN` — добавлен). Установка:
   `brew tap umkasanki/tap && brew trust umkasanki/tap && brew install --cask allyclicker`
   (+ `xattr -dr com.apple.quarantine …`, т.к. self-signed без нотаризации).
-- Текущий релиз: **v0.1.1**. `App/make-dmg.sh` — ручная сборка dmg.
+- Текущий релиз: **v0.1.6**. `macos/App/make-dmg.sh` — ручная сборка dmg.
 - Codesign по SSH: чинится через `security set-key-partition-list … -k allyclicker`
   (ключ требовал интерактивного подтверждения → «errSecInternalComponent»).
 
@@ -90,7 +106,8 @@ release.yml вживую — прогнать `./macos/App/install.sh` при п
   (замер на месте) → автоклик ЛКМ + выход** (как обычный dwell); либо мазок по панели
 - Панель: сворачивание, перемещение головой (DRAG+ON/OFF), сохранение позиции,
   immune к desktop-reveal, зажим в экран, тёмная тема, скользящая плашка
-- Стабильная подпись (грант не слетает); авто-снятие функции после 2 мин простоя
+- Стабильная подпись (грант не слетает). NB: авто-снятие функции по простою с v0.1.6
+  ВЫКЛЮЧЕНО по умолчанию (активная функция держится, пока её не смахнут)
 
 ### Исправления по ревью сессии (все закрыты)
 - Runaway scroll: intensity зажат в [0.05, 5.0] + clamp maxSpeed ПОСЛЕ множителя
@@ -102,9 +119,9 @@ release.yml вживую — прогнать `./macos/App/install.sh` при п
 - SSH: `ssh mishkin@100.126.136.17`, проект в `~/projects/ally-clicker`
 - macOS 26.3.1 (arm64), Xcode 26.6 установлен, лицензия принята
 - Все 72 теста проходят на Mac (`swift test`) и на Linux-CI
-- Сборка без Xcode-проекта: `./App/build-app.sh` → `build/AllyClicker.app`
-  (swift build + swiftc против AppKit + ad-hoc codesign)
-- Цикл итерации: правка на WSL → commit/push → `ssh … git pull && ./App/build-app.sh && pkill … && open …`
+- Сборка без Xcode-проекта: `./macos/App/build-app.sh` → `macos/build/AllyClicker.app`
+  (swift build + swiftc против AppKit + codesign стабильной identity)
+- Цикл итерации: правка на WSL → commit/push → `ssh … git reset --hard origin/main && ./macos/App/install.sh`
 - GUI запускать может только пользователь на самом Mac (SSH `open` работает,
   но скриншоты/GUI-интеракции — нет)
 
