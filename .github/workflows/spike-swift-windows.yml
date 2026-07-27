@@ -1,0 +1,29 @@
+name: Spike - Swift on Windows
+
+# Risk-reduction spike: does the pure AllyClickerCore build & test with the official
+# Swift toolchain on Windows? Informs the Windows-port decision (C# rewrite vs.
+# reusing this core as a native DLL). Manual trigger only — delete once decided.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  core-on-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Swift toolchain
+        uses: compnerd/gha-setup-swift@main
+        with:
+          branch: swift-6.0.3-release
+          tag: 6.0.3-RELEASE
+
+      - name: Swift version
+        run: swift --version
+
+      - name: Build core
+        run: swift build --target AllyClickerCore
+
+      - name: Run core tests
+        run: swift test
