@@ -150,31 +150,97 @@ windows/AllyClicker.App/AllyClicker.App.csproj              (net8.0-windows, WPF
 `DwellControllerTests`, `AutoScrollEngineTests`, `AutoScrollControllerTests`, `CalibrationTests`.
 **Готово, когда:** все 75 портированных тестов зелёные (= поведенческий паритет со Swift).
 Ядро не ссылается ни на один Win32/WPF API.
-- **W2 — Freeze-safe адаптеры:** `SendInput`-инжектор (async), `GetCursorPos`-семплер на
-  таймер-потоке, dwell-петля на своём потоке. + харнесс с «зависшим окном»-заглушкой.
-- **W3 — Панель:** WPF borderless topmost click-through overlay, DPI-aware; кнопки, плашка,
-  сворачивание, перетаскивание, тёмная тема — по спеке.
-- **W4 — Умный MIDDLE:** UIA «ссылка под курсором» на отдельном потоке с таймаутом 100 мс,
-  иначе auto-scroll (`SendInput` wheel).
-- **W5 — Настройки:** WPF-окно, авто-сохранение в `%AppData%\AllyClicker\settings.json`
-  (та же схема, что на маке), live-apply.
-- **W6 — Feedback + автозапуск + трей:** звук, визуальная рябь, автозапуск (реестр `Run` /
-  папка Startup), иконка в трее.
-- **W7 — Упаковка/подпись:** self-contained single-file `.exe` (или MSIX) + Authenticode,
-  инсталлятор (Inno Setup), release-workflow.
-- **W8 — Проверка на устройстве** с head-tracker.
+### W2 — Freeze-safe адаптеры (ядро анти-зависания; логика тестируется в WSL, проверка — на Windows)
+Файлы:
+```
+windows/AllyClicker.App/Interop/Win32.cs                    P/Invoke: SendInput, GetCursorPos, INPUT/MOUSEINPUT
+windows/AllyClicker.App/Adapters/SendInputMouseInjector.cs  IMouseInjector
+windows/AllyClicker.App/Adapters/CursorSampler.cs           ICursorSampler (GetCursorPos)
+windows/AllyClicker.App/RunLoop/DwellRunner.cs              dwell-петля
+```
+**Модель потоков (это и есть защита от зависаний, см. spec.md §3.5):**
+- **dwell-поток** — выделенный `Thread` (НЕ ThreadPool), `IsBackground = true`, приоритет
+  `AboveNormal`; тикает каждые `trackerIntervalMs`, зовёт `DwellController.Advance(dt)`.
+  Обращений к чужим окнам не делает вообще.
+- **UI-поток (WPF Dispatcher)** — только рисует. Эффекты приходят через
+  `Dispatcher.BeginInvoke` (**асинхронно**; синхронный `Dispatcher.Invoke` в dwell-пути
+  запрещён — иначе зависший UI застопорит петлю).
+- **Инъекция** — `SendInput` прямо из dwell-потока: он не блокируется по определению.
 
-## Definition of done по остальным фазам
-- **W2:** харнесс с «зависшим окном» доказывает, что dwell-петля и инъекция не встают;
-  ни одного синхронного вызова в чужой процесс из UI/dwell-потока.
-- **W3:** панель по спеке (кнопки, плашка, сворачивание, перетаскивание, тёмная тема),
-  click-through, DPI-aware, не воруёт фокус.
-- **W4:** над ссылкой — средний клик (новая вкладка), иначе auto-scroll; UIA-запрос
-  укладывается в 100 мс или отбрасывается.
-- **W5:** окно настроек с авто-сохранением; схема `settings.json` совместима со спекой.
-- **W6:** звук + визуальная рябь + автозапуск + иконка в трее.
-- **W7:** подписанный `.exe`/MSIX + инсталлятор + release-workflow по тегу.
-- **W8:** проверено вживую с head-tracker.
+Двухфазный drag: `LEFTDOWN` → поток `MOUSEEVENTF_MOVE | ABSOLUTE` (координаты нормализованы
+в 0..65535) → `LEFTUP`. Паритет с фиксом macOS (`leftMouseDragged`) — без потока move-событий
+приложения не видят перетаскивания.
+
+**Харнесс проверки:** тестовое окно с кнопкой «зависнуть на 30 с» (`Thread.Sleep` в его
+UI-потоке). Пока оно висит: панель отвечает, dwell тикает, клики уходят, приложение можно
+закрыть.
+**Готово, когда:** харнесс пройден; в коде нет `SendMessage`/`AttachThreadInput`/journal-хуков;
+синхронный `Dispatcher.Invoke` в dwell-пути отсутствует.
+
+### W3 — Панель (нужен .NET SDK на Windows)
+Файлы: `PanelWindow.xaml(.cs)`, `PanelButton.cs`, `ArmedPill.cs`, `ScreenGeometry.cs`, `CursorPolicy.cs`.
+- Borderless/поверх всех: `WindowStyle=None`, `AllowsTransparency=True`, `Topmost=True`,
+  `ShowInTaskbar=False`; **не забирать фокус** — `WS_EX_NOACTIVATE` (аналог `.nonactivatingPanel`).
+- Оверлеи (рябь, индикатор якоря) — click-through: `WS_EX_TRANSPARENT | WS_EX_LAYERED`.
+- **DPI — главный подводный камень.** Движок мыслит в «точках» (как на macOS), а
+  `GetCursorPos` отдаёт физические пиксели. Нужен пересчёт по DPI-фактору монитора, иначе
+  `sensitivity`/`moveRadiusPx` будут вести себя иначе, чем на маке. Манифест: `PerMonitorV2`.
+- Анимации (скольжение плашки, сворачивание/разворачивание) — WPF `Storyboard`/`DoubleAnimation`.
+- Перемещение панели за ON/OFF (в т.ч. hands-free через DRAG) — паритет со macOS.
+**Готово, когда:** панель по спеке; не воруёт фокус; корректна при 100/125/150/200 % и на двух
+мониторах с разным DPI.
+
+### W4 — Умный MIDDLE + auto-scroll
+- `LinkProbe.cs` — «курсор над ссылкой?»: UI Automation `ElementFromPoint`, проверка
+  `ControlType.Hyperlink` / доступности `InvokePattern`. **Строго вне UI/dwell-потока и с
+  таймаутом 100 мс** (`Task.WhenAny(uia, Task.Delay(100))`); не успело → считаем «не ссылка»
+  и уходим в auto-scroll. Это единственное место, где мы вообще спрашиваем чужое приложение.
+- `AutoScroller.cs` — 60 fps; дельта из `AutoScrollEngine` (та же формула); скролл через
+  `SendInput` + `MOUSEEVENTF_WHEEL` / `HWHEEL`; выход по остановке курсора → левый клик.
+  Знак дельты проверить вживую (на macOS пришлось инвертировать).
+**Готово, когда:** над ссылкой — новая вкладка; над пустым местом — скролл; зависший браузер
+не тормозит панель (проверить харнессом W2).
+
+### W5 — Настройки
+- Хранение: `%AppData%\AllyClicker\settings.json`, **те же ключи**, что в Swift-версии
+  (общая схема из спеки), устойчивый декод: отсутствующий ключ → дефолт.
+- Окно: `TabControl` — Behavior / Panel / Feedback / About (паритет с macOS).
+- Авто-сохранение с дебаунсом ~250 мс + live-apply (как на macOS).
+**Готово, когда:** все параметры применяются на лету; файл от старой версии читается без потерь.
+
+### W6 — Feedback, автозапуск, трей
+- Звук: `System.Media.SoundPlayer` (или NAudio, если понадобится громкость) — переиспользовать
+  готовые `Tock.wav`/`Tap.wav` из `macos/App/AllyClicker/Resources/Sounds/`.
+- Визуальная рябь: отдельное click-through оверлей-окно + WPF-анимация (паритет `ClickFeedback.swift`).
+- Автозапуск: `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` (или папка Startup).
+- Трей: `NotifyIcon` (WinForms-interop либо H.NotifyIcon) с меню Settings… / Quit.
+**Готово, когда:** фидбэк и автозапуск на паритете с macOS; автозапуск виден в
+Диспетчере задач → Автозагрузка.
+
+### W7 — Упаковка и подпись
+- `dotnet publish -r win-x64 --self-contained -p:PublishSingleFile=true`.
+- Иконка `.ico` из `macos/tools/AppIcon.svg` (расширить скилл `macos-app-icon` веткой .ico).
+- Подпись **Authenticode** (нужен сертификат; без него SmartScreen будет предупреждать —
+  прямой аналог нашей ситуации с нотаризацией на macOS).
+- Инсталлятор — Inno Setup; `windows-release.yml` по тегу `win-v*` (macOS-релизы остаются на `v*`).
+**Готово, когда:** инсталлятор ставится на чистой Windows и приложение запускается.
+
+### W8 — Проверка вживую с head-tracker
+Чек-лист по образцу `docs/manual-test.md` (адаптировать под Windows).
+**Готово, когда:** все пункты пройдены; отдельным пунктом — сценарий «зависший Viber»:
+панель продолжает работать, зависшее приложение можно закрыть самому.
+
+## Риски и открытые вопросы
+1. **DPI / точки vs пиксели** (W3) — самое вероятное место расхождения поведения с macOS.
+   Решить один раз в `ScreenGeometry` и покрыть тестами.
+2. **Head-tracker на Windows** — нужен рабочий тракер на той машине для W8 (вероятно тот же,
+   где раньше работал PNC).
+3. **Сертификат для подписи** (W7) — платный; без него будет предупреждение SmartScreen.
+   Решение отложено, как и нотаризация на macOS.
+4. **Библиотека трея** — `NotifyIcon` через WinForms-interop тянет `UseWindowsForms`;
+   альтернатива H.NotifyIcon (NuGet). Выбрать в W6.
+5. **UIA-детект ссылок** может работать по-разному в Chrome/Firefox/Edge — проверять на всех
+   трёх (на macOS AX-детект пришлось проверять в Safari и Firefox отдельно).
 
 ## Как возобновить работу в новой сессии
 1. `git checkout feature/windows-app` (вся Windows-работа идёт здесь; `main` остаётся
