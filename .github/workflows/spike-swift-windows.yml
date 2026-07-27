@@ -3,6 +3,9 @@ name: Spike - Swift on Windows
 # Risk-reduction spike: does the pure AllyClickerCore build & test with the official
 # Swift toolchain on Windows? Informs the Windows-port decision (C# rewrite vs.
 # reusing this core as a native DLL). Manual trigger only — delete once decided.
+#
+# Matrix over toolchains: 6.0.3 failed with "could not build module 'ucrt'" (toolchain
+# vs. Windows SDK mismatch on the runner), so try newer releases in one go.
 
 on:
   workflow_dispatch:
@@ -10,14 +13,19 @@ on:
 jobs:
   core-on-windows:
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        swift: ["6.1.2", "6.2", "6.0.3"]
+    name: core (Swift ${{ matrix.swift }})
     steps:
       - uses: actions/checkout@v5
 
       - name: Install Swift toolchain
         uses: compnerd/gha-setup-swift@main
         with:
-          branch: swift-6.0.3-release
-          tag: 6.0.3-RELEASE
+          swift-version: ${{ matrix.swift }}-RELEASE
+          swift-build: ${{ matrix.swift }}-RELEASE
 
       - name: Swift version
         run: swift --version
