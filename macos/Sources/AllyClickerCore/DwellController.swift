@@ -69,6 +69,14 @@ public final class DwellController {
         onUIEffect?(.setArmed(nil))
     }
 
+    /// Hand control back after a takeover mode (auto-scroll, panel move): re-arm the
+    /// default action so Left resumes being the resting state, and tell the UI.
+    public func armDefaultIfEnabled() {
+        if let action = engine.armDefaultIfEnabled() {
+            onUIEffect?(.setArmed(action))
+        }
+    }
+
     /// Release any button held by an in-progress drag. The app MUST call this on
     /// termination / resign-active so a synthetic button is never left stuck down.
     /// Also invoked automatically on deinit.

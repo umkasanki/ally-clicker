@@ -133,7 +133,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self.settings.panel.positionY = y
             self.settingsStore.save(self.settings)
         }
-        panel.onMoveEnded = { [weak self] in self?.runner.start() }
+        panel.onMoveEnded = { [weak self] in
+            self?.controller.armDefaultIfEnabled()   // Left resumes as the resting state
+            self?.runner.start()
+        }
         panel.setArmed(controller.armed)
         panel.show()
         if settings.panel.launchCollapsed { panel.startCollapsed() }
@@ -155,7 +158,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if case .desktop = self.panel.zone(at: cursor) { return false }
             return true
         }
-        autoScroller.onExit = { [weak self] in self?.runner.start() }
+        autoScroller.onExit = { [weak self] in
+            self?.controller.armDefaultIfEnabled()   // Left resumes after MIDDLE's one-shot
+            self?.runner.start()
+        }
     }
 
     // MARK: - Apply settings (from the Settings window)

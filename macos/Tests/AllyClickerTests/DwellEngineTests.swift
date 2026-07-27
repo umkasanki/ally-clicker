@@ -160,6 +160,26 @@ final class DwellEngineTests: XCTestCase {
         XCTAssertEqual(engine.armed, .right, "autoCancel=false → stay armed with same action")
     }
 
+    func testArmDefaultIfEnabledRestoresLeftAfterTakeover() {
+        // Auto-scroll / panel-move clear the arm while the app drives; handing control
+        // back must restore Left as the resting state (Default-to-Left on).
+        armAction(.middle)
+        engine.clearArmed()
+        XCTAssertNil(engine.armed)
+
+        engine.armDefaultIfEnabled()
+        XCTAssertEqual(engine.armed, .left, "Left resumes after a takeover mode ends")
+    }
+
+    func testArmDefaultIfEnabledDoesNothingWhenOptionOff() {
+        var settings = Settings()
+        settings.clicks.defaultLeft = false
+        engine = DwellEngine(settings: settings)
+
+        engine.armDefaultIfEnabled()
+        XCTAssertNil(engine.armed, "Without Default-to-Left nothing is auto-armed")
+    }
+
     // MARK: - Idle disarm
 
     func testIdleDisarmClearsArmedAfterInactivity() {
@@ -180,8 +200,10 @@ final class DwellEngineTests: XCTestCase {
         XCTAssertNil(engine.armed, "Armed action cleared after idle timeout")
     }
 
-    func testIdleDisarmDefaultIsTwoMinutes() {
-        XCTAssertEqual(Settings().clicks.idleDisarmSeconds, 120)
+    func testIdleDisarmIsOffByDefault() {
+        // The armed action must persist until the user swipes it away or picks another
+        // one — a silent timeout contradicted that model, so it ships disabled.
+        XCTAssertEqual(Settings().clicks.idleDisarmSeconds, 0)
     }
 
     func testIdleDisarmDisabledWhenZero() {

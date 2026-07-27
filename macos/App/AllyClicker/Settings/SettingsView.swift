@@ -79,7 +79,7 @@ struct SettingsView: View {
                                   help: "Clear the armed action after one execution (otherwise it repeats on each stop).")
                         ValueControl(title: "Idle-disarm", value: minutes($model.settings.clicks.idleDisarmSeconds),
                                      range: 0...15, step: 1, unit: "min",
-                                     help: "Clear the armed action after this long with no cursor movement. 0 = never.")
+                                     help: "Optional safety: clear the armed action after this long with no cursor movement. 0 = never (default) — the armed action then stays until you swipe it away or pick another.")
                     }
                     section("Drag", intro: "With Drag armed, hold still at the start point until the button presses down (Drag press), move to the destination, then hold still again until it releases (Drag release). Used for dragging and selecting.") {
                         ValueControl(title: "Drag press", value: seconds($model.settings.timing.autoSelectDownMs),

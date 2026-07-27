@@ -120,10 +120,12 @@ extension Settings {
         public var defaultLeft: Bool = true
         /// Cancel the armed action after one execution (vs. repeat forever).
         public var autoCancel: Bool = true
-        /// Auto-disarm after this many seconds of NO cursor movement.
-        /// 0 = never. Default 120s (2 min): if the user steps away, a later stray
-        /// move won't auto-fire; they re-arm via the panel.
-        public var idleDisarmSeconds: Int = 120
+        /// Auto-disarm after this many seconds of NO cursor movement. 0 = never.
+        /// DEFAULT OFF: the armed action must persist until the user swipes it away or
+        /// picks another one. A silent timeout contradicts that model and reads as the
+        /// app "switching itself off" (e.g. while reading a page without moving), which
+        /// confused more than it protected. Still available for anyone who wants it.
+        public var idleDisarmSeconds: Int = 0
 
         public init() {}
 

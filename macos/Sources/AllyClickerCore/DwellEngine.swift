@@ -310,6 +310,21 @@ public struct DwellEngine {
         armed = nil
     }
 
+    /// Re-arm the default action after the app finishes a takeover mode (auto-scroll,
+    /// panel move). Mirrors the post-action revert: with Default-to-Left on, Left is
+    /// the resting state the user expects to come back to — every other action is a
+    /// one-shot. Returns the newly armed action, or nil if the option is off.
+    @discardableResult
+    public mutating func armDefaultIfEnabled() -> Action? {
+        guard settings.clicks.defaultLeft else { return nil }
+        armed = .left
+        // The cursor is parked wherever the mode ended; require a real move before
+        // this fresh arm can fire, so it can't click on the spot.
+        awaitingMoveAfterFire = true
+        lastFirePoint = dwellAnchor
+        return armed
+    }
+
     /// Force-release a held drag, clearing all drag state. Returns true if a drag
     /// was actually active (so the caller can inject the matching mouseUp). Used on
     /// teardown / app termination so a held button is never stranded.
