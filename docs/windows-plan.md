@@ -92,11 +92,64 @@ W0/W1 могут влиться раньше). Это держит `main` все
 5. Обновить `docs/context.md` и root `README` под монорепо.
 Только после зелёной macOS-сборки — начинать `windows/`.
 
+## Среда разработки и цикл проверки (выяснено 2026-07-27)
+
+Проверено фактически:
+- **В WSL (Linux) .NET SDK нет** (`command -v dotnet` → пусто).
+- **На Windows-хосте** (`/mnt/c/Program Files/dotnet/`) есть только **рантаймы**
+  (`Microsoft.NETCore.App`, `Microsoft.WindowsDesktop.App` — т.е. WPF запускать есть чем),
+  но **папки `sdk/` нет** → собирать нечем. `dotnet.exe --version` не работает.
+- Путь репо со стороны Windows: `\\wsl.localhost\Ubuntu\home\oleg\projects\ally-clicker`
+  (UNC — MSBuild такие пути переносит плохо, поэтому для Windows-сборок нужна рабочая
+  копия на диске `C:` либо сборка через CI).
+
+**Решение (трёхуровневый цикл):**
+1. **Ядро + тесты (W1, W2-логика) — .NET SDK для Linux в WSL.** `AllyClicker.Core` и
+   `AllyClicker.Core.Tests` кросс-платформенные (`net8.0`, без Win32) → мгновенный локальный
+   цикл `dotnet build && dotnet test` прямо в WSL. Это 80% работы по движку.
+2. **WPF-приложение (W3+) — .NET SDK на Windows-хосте.** Понадобится, когда дойдём до
+   панели/окна настроек и локальных запусков. Ставится один раз (winget/инсталлятор).
+   Рабочую копию репо держать на `C:\` (например `C:\dev\ally-clicker`) во избежание UNC.
+3. **Windows CI (`windows-ci.yml`) — источник истины.** Собирает и `Core`, и `App` на
+   `windows-latest`. Медленнее (~1–2 мин), зато не зависит от локальных установок —
+   как и было со спайком Swift.
+
+⚠️ Установка SDK — изменение системы, спросить пользователя перед первой установкой.
+
 ## Фазы Windows-реализации
-- **W0 — Каркас:** `windows/` solution (3 проекта), `windows-ci.yml` (build+test на
-  windows-latest), раздел «Freeze-immunity» в `docs/spec.md`, root README про обе платформы.
-- **W1 — Порт ядра (без UI):** `DwellEngine`, `AutoScrollEngine`, `Settings`, `Point` →
-  C# 1:1 из Swift; тесты → xUnit. Зелёные тесты = паритет поведения. Без Win32.
+### W0 — Каркас (не требует Windows-машины)
+Создать:
+```
+windows/AllyClicker.sln
+windows/AllyClicker.Core/AllyClicker.Core.csproj            (net8.0, без Win32)
+windows/AllyClicker.Core.Tests/AllyClicker.Core.Tests.csproj (net8.0, xUnit)
+windows/AllyClicker.App/AllyClicker.App.csproj              (net8.0-windows, WPF, UseWPF)
+.github/workflows/windows-ci.yml                            (windows-latest: build sln + test)
+```
+Плюс: раздел «Freeze-immunity» в `docs/spec.md` (правила из этого файла — контракт для обеих
+платформ), упоминание Windows в root README.
+**Готово, когда:** `windows-ci.yml` зелёный (пустые проекты собираются, тесты запускаются).
+
+### W1 — Порт ядра (без UI, не требует Windows-машины)
+Порт 1:1 из `macos/Sources/AllyClickerCore/` (1147 строк, 9 файлов). Соответствие:
+
+| Swift | C# | Заметки |
+|---|---|---|
+| `Geometry.swift` | `Point.cs` | `readonly record struct Point(double X, double Y)` + `DistanceTo` |
+| `Ports.swift` | `Ports.cs` | интерфейсы `IMouseInjector`, `ICursorSampler`, `IZoneMapping` |
+| `PanelItem.swift` | `PanelItem.cs` | union action/command; **стабильные строковые id** сохранить как в Swift |
+| `Settings.swift` (416) | `Settings.cs` | вложенные `Timing/Stillness/Clicks/AutoScroll/Appearance/Panel/Commands/Calibration`; **устойчивый декод** — отсутствующие поля берут дефолт (в C#: `JsonSerializer` + инициализаторы свойств); те же клампы (`intensity` 0.05–5, `audioVolume` 0–1, `iconScale` 0.5–2) |
+| `DwellEngine.swift` (353) | `DwellEngine.cs` | state-machine: `Action/Command/Zone/Effect`; swipe-debounce 15 мс, re-fire gate, двухфазный drag, idle-disarm (дефолт 0) |
+| `AutoScrollEngine.swift` | `AutoScrollEngine.cs` | формула: `raw = (base + sqrt(adj)*boost) * intensity`, кламп maxSpeed **последним** |
+| `AutoScrollController.swift` | `AutoScrollController.cs` | |
+| `DwellController.swift` (129) | `DwellController.cs` | колбэки → C# events/делегаты: `OnUIEffect`, `OnCommand`, `OnZone`, `WillFire`, `OnFired`; `ArmDefaultIfEnabled()` |
+| `SettingsStore.swift` | `SettingsStore.cs` | путь `%AppData%\AllyClicker\settings.json` |
+
+Тесты: порт `macos/Tests/AllyClickerTests/` (1053 строки, 8 файлов, **75 кейсов**) в xUnit —
+`DwellEngineTests`, `SettingsTests`, `SettingsStoreTests`, `PanelCommandTests`,
+`DwellControllerTests`, `AutoScrollEngineTests`, `AutoScrollControllerTests`, `CalibrationTests`.
+**Готово, когда:** все 75 портированных тестов зелёные (= поведенческий паритет со Swift).
+Ядро не ссылается ни на один Win32/WPF API.
 - **W2 — Freeze-safe адаптеры:** `SendInput`-инжектор (async), `GetCursorPos`-семплер на
   таймер-потоке, dwell-петля на своём потоке. + харнесс с «зависшим окном»-заглушкой.
 - **W3 — Панель:** WPF borderless topmost click-through overlay, DPI-aware; кнопки, плашка,
@@ -110,3 +163,26 @@ W0/W1 могут влиться раньше). Это держит `main` все
 - **W7 — Упаковка/подпись:** self-contained single-file `.exe` (или MSIX) + Authenticode,
   инсталлятор (Inno Setup), release-workflow.
 - **W8 — Проверка на устройстве** с head-tracker.
+
+## Definition of done по остальным фазам
+- **W2:** харнесс с «зависшим окном» доказывает, что dwell-петля и инъекция не встают;
+  ни одного синхронного вызова в чужой процесс из UI/dwell-потока.
+- **W3:** панель по спеке (кнопки, плашка, сворачивание, перетаскивание, тёмная тема),
+  click-through, DPI-aware, не воруёт фокус.
+- **W4:** над ссылкой — средний клик (новая вкладка), иначе auto-scroll; UIA-запрос
+  укладывается в 100 мс или отбрасывается.
+- **W5:** окно настроек с авто-сохранением; схема `settings.json` совместима со спекой.
+- **W6:** звук + визуальная рябь + автозапуск + иконка в трее.
+- **W7:** подписанный `.exe`/MSIX + инсталлятор + release-workflow по тегу.
+- **W8:** проверено вживую с head-tracker.
+
+## Как возобновить работу в новой сессии
+1. `git checkout feature/windows-app` (вся Windows-работа идёт здесь; `main` остаётся
+   релизным для macOS).
+2. Прочитать этот файл + `docs/context.md` (там текущий статус) + `docs/spec.md`
+   (поведенческий контракт, общий для платформ).
+3. Свериться, какая фаза открыта: `windows/` пуст → W0; проекты есть, тестов нет → W1; и т.д.
+4. Цикл проверки — см. «Среда разработки»: ядро в WSL (`dotnet test`), Windows-часть через
+   `windows-ci.yml` или локальный SDK на хосте.
+5. Эталон поведения — Swift-реализация в `macos/Sources/AllyClickerCore/` и её 75 тестов.
+   При расхождении прав Swift-вариант (он проверен вживую пользователем).
