@@ -70,7 +70,16 @@ public struct DwellEngine {
     public private(set) var dragActive: Bool = false
     private var dwellAnchor: Point? = nil
     private var dwellElapsed: TimeInterval = 0
-    private var lastZone: Zone = .desktop
+    // Swipe-reset debounce: how long the cursor has been continuously inside the
+    // panel, and whether this visit already triggered the reset.
+    private var panelZoneElapsed: TimeInterval = 0
+    private var swipeResetApplied = false
+
+    /// A brush must keep the cursor inside the panel this long to count as a
+    /// deliberate swipe. Cursor tremor parked on the panel edge flips the zone every
+    /// tick (5 ms), so it never accumulates this much — while a real brush, even a
+    /// fast one, spends far longer crossing the panel.
+    private static let swipeDebounce: TimeInterval = 0.015
     // Drag phase-2 gating: where mouseDown happened, and whether the cursor has
     // since moved far enough to allow the mouseUp phase.
     private var dragDownPoint: Point? = nil
@@ -97,9 +106,20 @@ public struct DwellEngine {
     public mutating func tick(cursor: Point, zone: Zone, dt: TimeInterval) -> [Effect] {
         var effects: [Effect] = []
 
-        // SWIPE-RESET: entering the panel from desktop clears the armed action instantly.
-        // Brushing the panel cancels with zero precision and zero waiting — the key UX insight.
-        if isPanel(zone) && !isPanel(lastZone) {
+        // SWIPE-RESET: brushing the panel clears the armed action — cancelling with
+        // zero precision and zero waiting is the key UX insight. Debounced: the
+        // cursor must stay inside the panel for `swipeDebounce` before this counts,
+        // otherwise tremor on the panel's edge (which flips the zone every tick)
+        // would cancel the armed action by accident. Once applied, it does not
+        // re-fire until the cursor genuinely leaves to the desktop.
+        if isPanel(zone) {
+            panelZoneElapsed += dt
+        } else {
+            panelZoneElapsed = 0
+            swipeResetApplied = false
+        }
+        if isPanel(zone), !swipeResetApplied, panelZoneElapsed >= Self.swipeDebounce {
+            swipeResetApplied = true
             // SAFETY: if a drag is in progress, release the held button first.
             // A stuck mouse-down would be catastrophic for a hands-free user.
             if dragActive {
@@ -115,7 +135,6 @@ public struct DwellEngine {
             awaitingMoveAfterFire = false
             resetDwell(at: cursor)
         }
-        lastZone = zone
 
         // Clear the command one-shot only after the cursor physically moves away
         // from where it fired. A command (e.g. ON/OFF) that collapses the panel

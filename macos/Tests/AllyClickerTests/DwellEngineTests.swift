@@ -29,6 +29,15 @@ final class DwellEngineTests: XCTestCase {
         effects.contains { if case .fire = $0 { return true }; return false }
     }
 
+    /// Brush the panel: the swipe-reset is debounced (the cursor must stay inside the
+    /// panel briefly), so tick a few times and return every effect produced.
+    private func brushPanel(_ zone: DwellEngine.Zone = .panel(button: nil),
+                            at cursor: Point = .zero) -> [DwellEngine.Effect] {
+        var all: [DwellEngine.Effect] = []
+        for _ in 0..<5 { all += engine.tick(cursor: cursor, zone: zone, dt: tickDt) }
+        return all
+    }
+
     // MARK: - Tests
 
     func testPanelDwellArmsAction() {
@@ -90,7 +99,7 @@ final class DwellEngineTests: XCTestCase {
 
         // Simulate cursor coming from desktop into panel
         _ = engine.tick(cursor: .zero, zone: .desktop, dt: tickDt)
-        let effects = engine.tick(cursor: .zero, zone: .panel(button: nil), dt: tickDt)
+        let effects = brushPanel()
 
         XCTAssertNil(engine.armed)
         XCTAssertTrue(effects.contains(.setArmed(nil)))
@@ -319,10 +328,27 @@ final class DwellEngineTests: XCTestCase {
         }
         XCTAssertTrue(engine.dragActive)
 
-        // Brush the panel — must release the held button immediately.
-        let e = engine.tick(cursor: .zero, zone: .panel(button: nil), dt: tickDt)
+        // Brush the panel — must release the held button.
+        let e = brushPanel()
         XCTAssertTrue(hasEffect(e, isDragUp), "Entering panel during drag must release the button")
         XCTAssertFalse(engine.dragActive)
+        XCTAssertNil(engine.armed)
+    }
+
+    func testEdgeJitterDoesNotCancelArmedAction() {
+        armAction(.right)
+        XCTAssertEqual(engine.armed, .right)
+
+        // Tremor with the cursor parked on the panel's edge: the zone flips every
+        // tick. That must NOT count as a deliberate brush.
+        for _ in 0..<40 {
+            _ = engine.tick(cursor: .zero, zone: .desktop, dt: tickDt)
+            _ = engine.tick(cursor: .zero, zone: .panel(button: nil), dt: tickDt)
+        }
+        XCTAssertEqual(engine.armed, .right, "Edge jitter must not clear the armed action")
+
+        // A real brush (cursor stays inside the panel) still cancels.
+        _ = brushPanel()
         XCTAssertNil(engine.armed)
     }
 
@@ -334,7 +360,7 @@ final class DwellEngineTests: XCTestCase {
         XCTAssertTrue(engine.dragActive)
 
         // Enter directly onto a panel BUTTON (not chrome) — must still release.
-        let e = engine.tick(cursor: .zero, zone: .panel(button: .right), dt: tickDt)
+        let e = brushPanel(.panel(button: .right))
         XCTAssertTrue(hasEffect(e, isDragUp), "Entering a panel button during drag must release too")
         XCTAssertFalse(engine.dragActive)
     }
