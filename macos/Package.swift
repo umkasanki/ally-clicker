@@ -25,6 +25,15 @@ let package = Package(
             name: "AllyClickerTests",
             dependencies: ["AllyClickerCore"],
             path: "Tests/AllyClickerTests"
+        ),
+        // Dev tool, not shipped. Prints how this reference implementation decodes a set
+        // of settings documents, so the C# port can be checked against actual behaviour
+        // rather than against someone's reading of the Swift source. Runs anywhere the
+        // core does — including Linux/WSL under docker, no Mac required.
+        .executableTarget(
+            name: "SettingsGolden",
+            dependencies: ["AllyClickerCore"],
+            path: "Sources/SettingsGolden"
         )
     ]
 )

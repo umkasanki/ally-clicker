@@ -1,0 +1,1943 @@
+[
+  {
+    "effectiveDwellMouseSeconds" : 0.195,
+    "input" : {
+
+    },
+    "name" : "defaults",
+    "note" : "Empty document — every field falls back to its default.",
+    "output" : {
+      "appearance" : {
+        "audio" : true,
+        "audioVolume" : 1,
+        "clickFeedback" : true,
+        "clickSound" : "Tink",
+        "iconScale" : 1,
+        "iconStyle" : "custom",
+        "transparency" : 255
+      },
+      "autoScroll" : {
+        "base" : 0,
+        "boost" : 3,
+        "deadZonePx" : 10,
+        "intensity" : 0.5,
+        "maxSpeedPerTick" : 160
+      },
+      "calibration" : {
+        "averageVelocity" : 0,
+        "enabled" : false,
+        "multiplier" : 76
+      },
+      "clicks" : {
+        "autoCancel" : true,
+        "defaultLeft" : true,
+        "idleDisarmSeconds" : 0
+      },
+      "commands" : {
+        "keyboard" : {
+          "mode" : "accessibilityKeyboard"
+        }
+      },
+      "panel" : {
+        "items" : [
+          "togglePanel",
+          "left",
+          "right",
+          "doubleClick",
+          "leftDrag",
+          "middle"
+        ],
+        "launchCollapsed" : false,
+        "orientation" : "vertical",
+        "positionY" : 204,
+        "width" : 50
+      },
+      "stillness" : {
+        "moveRadiusPx" : 10,
+        "sensitivity" : 1,
+        "trackerIntervalMs" : 5
+      },
+      "timing" : {
+        "autoSelectDownMs" : 320,
+        "autoSelectUpMs" : 210,
+        "dwellTimeMouseMs" : 195,
+        "dwellTimeMs" : 320
+      }
+    }
+  },
+  {
+    "effectiveDwellMouseSeconds" : 0.195,
+    "input" : {
+      "timing" : {
+        "dwellTimeMs" : 500
+      }
+    },
+    "name" : "partial-timing",
+    "note" : "Only some timing fields present; the rest keep defaults, other sections untouched.",
+    "output" : {
+      "appearance" : {
+        "audio" : true,
+        "audioVolume" : 1,
+        "clickFeedback" : true,
+        "clickSound" : "Tink",
+        "iconScale" : 1,
+        "iconStyle" : "custom",
+        "transparency" : 255
+      },
+      "autoScroll" : {
+        "base" : 0,
+        "boost" : 3,
+        "deadZonePx" : 10,
+        "intensity" : 0.5,
+        "maxSpeedPerTick" : 160
+      },
+      "calibration" : {
+        "averageVelocity" : 0,
+        "enabled" : false,
+        "multiplier" : 76
+      },
+      "clicks" : {
+        "autoCancel" : true,
+        "defaultLeft" : true,
+        "idleDisarmSeconds" : 0
+      },
+      "commands" : {
+        "keyboard" : {
+          "mode" : "accessibilityKeyboard"
+        }
+      },
+      "panel" : {
+        "items" : [
+          "togglePanel",
+          "left",
+          "right",
+          "doubleClick",
+          "leftDrag",
+          "middle"
+        ],
+        "launchCollapsed" : false,
+        "orientation" : "vertical",
+        "positionY" : 204,
+        "width" : 50
+      },
+      "stillness" : {
+        "moveRadiusPx" : 10,
+        "sensitivity" : 1,
+        "trackerIntervalMs" : 5
+      },
+      "timing" : {
+        "autoSelectDownMs" : 320,
+        "autoSelectUpMs" : 210,
+        "dwellTimeMouseMs" : 195,
+        "dwellTimeMs" : 500
+      }
+    }
+  },
+  {
+    "effectiveDwellMouseSeconds" : 0.195,
+    "input" : {
+      "brandNewSection" : {
+        "x" : 2
+      },
+      "timing" : {
+        "dwellTimeMs" : 400,
+        "somethingNew" : 1
+      }
+    },
+    "name" : "unknown-keys-ignored",
+    "note" : "Keys from a newer build are ignored rather than fatal.",
+    "output" : {
+      "appearance" : {
+        "audio" : true,
+        "audioVolume" : 1,
+        "clickFeedback" : true,
+        "clickSound" : "Tink",
+        "iconScale" : 1,
+        "iconStyle" : "custom",
+        "transparency" : 255
+      },
+      "autoScroll" : {
+        "base" : 0,
+        "boost" : 3,
+        "deadZonePx" : 10,
+        "intensity" : 0.5,
+        "maxSpeedPerTick" : 160
+      },
+      "calibration" : {
+        "averageVelocity" : 0,
+        "enabled" : false,
+        "multiplier" : 76
+      },
+      "clicks" : {
+        "autoCancel" : true,
+        "defaultLeft" : true,
+        "idleDisarmSeconds" : 0
+      },
+      "commands" : {
+        "keyboard" : {
+          "mode" : "accessibilityKeyboard"
+        }
+      },
+      "panel" : {
+        "items" : [
+          "togglePanel",
+          "left",
+          "right",
+          "doubleClick",
+          "leftDrag",
+          "middle"
+        ],
+        "launchCollapsed" : false,
+        "orientation" : "vertical",
+        "positionY" : 204,
+        "width" : 50
+      },
+      "stillness" : {
+        "moveRadiusPx" : 10,
+        "sensitivity" : 1,
+        "trackerIntervalMs" : 5
+      },
+      "timing" : {
+        "autoSelectDownMs" : 320,
+        "autoSelectUpMs" : 210,
+        "dwellTimeMouseMs" : 195,
+        "dwellTimeMs" : 400
+      }
+    }
+  },
+  {
+    "effectiveDwellMouseSeconds" : 0.195,
+    "input" : {
+      "panel" : {
+        "width" : null
+      },
+      "timing" : {
+        "dwellTimeMs" : null
+      }
+    },
+    "name" : "explicit-null-falls-back",
+    "note" : "An explicit null is treated as absent (decodeIfPresent). This is where System.Text.Json would throw instead.",
+    "output" : {
+      "appearance" : {
+        "audio" : true,
+        "audioVolume" : 1,
+        "clickFeedback" : true,
+        "clickSound" : "Tink",
+        "iconScale" : 1,
+        "iconStyle" : "custom",
+        "transparency" : 255
+      },
+      "autoScroll" : {
+        "base" : 0,
+        "boost" : 3,
+        "deadZonePx" : 10,
+        "intensity" : 0.5,
+        "maxSpeedPerTick" : 160
+      },
+      "calibration" : {
+        "averageVelocity" : 0,
+        "enabled" : false,
+        "multiplier" : 76
+      },
+      "clicks" : {
+        "autoCancel" : true,
+        "defaultLeft" : true,
+        "idleDisarmSeconds" : 0
+      },
+      "commands" : {
+        "keyboard" : {
+          "mode" : "accessibilityKeyboard"
+        }
+      },
+      "panel" : {
+        "items" : [
+          "togglePanel",
+          "left",
+          "right",
+          "doubleClick",
+          "leftDrag",
+          "middle"
+        ],
+        "launchCollapsed" : false,
+        "orientation" : "vertical",
+        "positionY" : 204,
+        "width" : 50
+      },
+      "stillness" : {
+        "moveRadiusPx" : 10,
+        "sensitivity" : 1,
+        "trackerIntervalMs" : 5
+      },
+      "timing" : {
+        "autoSelectDownMs" : 320,
+        "autoSelectUpMs" : 210,
+        "dwellTimeMouseMs" : 195,
+        "dwellTimeMs" : 320
+      }
+    }
+  },
+  {
+    "effectiveDwellMouseSeconds" : 0.195,
+    "input" : {
+      "panel" : {
+        "positionX" : null,
+        "positionY" : 300
+      }
+    },
+    "name" : "positionX-null-stays-nil",
+    "note" : "positionX is genuinely optional — null means 'dock to the right edge', not a default number.",
+    "output" : {
+      "appearance" : {
+        "audio" : true,
+        "audioVolume" : 1,
+        "clickFeedback" : true,
+        "clickSound" : "Tink",
+        "iconScale" : 1,
+        "iconStyle" : "custom",
+        "transparency" : 255
+      },
+      "autoScroll" : {
+        "base" : 0,
+        "boost" : 3,
+        "deadZonePx" : 10,
+        "intensity" : 0.5,
+        "maxSpeedPerTick" : 160
+      },
+      "calibration" : {
+        "averageVelocity" : 0,
+        "enabled" : false,
+        "multiplier" : 76
+      },
+      "clicks" : {
+        "autoCancel" : true,
+        "defaultLeft" : true,
+        "idleDisarmSeconds" : 0
+      },
+      "commands" : {
+        "keyboard" : {
+          "mode" : "accessibilityKeyboard"
+        }
+      },
+      "panel" : {
+        "items" : [
+          "togglePanel",
+          "left",
+          "right",
+          "doubleClick",
+          "leftDrag",
+          "middle"
+        ],
+        "launchCollapsed" : false,
+        "orientation" : "vertical",
+        "positionY" : 300,
+        "width" : 50
+      },
+      "stillness" : {
+        "moveRadiusPx" : 10,
+        "sensitivity" : 1,
+        "trackerIntervalMs" : 5
+      },
+      "timing" : {
+        "autoSelectDownMs" : 320,
+        "autoSelectUpMs" : 210,
+        "dwellTimeMouseMs" : 195,
+        "dwellTimeMs" : 320
+      }
+    }
+  },
+  {
+    "effectiveDwellMouseSeconds" : 0.195,
+    "input" : {
+      "panel" : {
+        "positionX" : 42,
+        "positionY" : 300
+      }
+    },
+    "name" : "positionX-set",
+    "note" : "positionX carries a value once the user has dragged the panel.",
+    "output" : {
+      "appearance" : {
+        "audio" : true,
+        "audioVolume" : 1,
+        "clickFeedback" : true,
+        "clickSound" : "Tink",
+        "iconScale" : 1,
+        "iconStyle" : "custom",
+        "transparency" : 255
+      },
+      "autoScroll" : {
+        "base" : 0,
+        "boost" : 3,
+        "deadZonePx" : 10,
+        "intensity" : 0.5,
+        "maxSpeedPerTick" : 160
+      },
+      "calibration" : {
+        "averageVelocity" : 0,
+        "enabled" : false,
+        "multiplier" : 76
+      },
+      "clicks" : {
+        "autoCancel" : true,
+        "defaultLeft" : true,
+        "idleDisarmSeconds" : 0
+      },
+      "commands" : {
+        "keyboard" : {
+          "mode" : "accessibilityKeyboard"
+        }
+      },
+      "panel" : {
+        "items" : [
+          "togglePanel",
+          "left",
+          "right",
+          "doubleClick",
+          "leftDrag",
+          "middle"
+        ],
+        "launchCollapsed" : false,
+        "orientation" : "vertical",
+        "positionX" : 42,
+        "positionY" : 300,
+        "width" : 50
+      },
+      "stillness" : {
+        "moveRadiusPx" : 10,
+        "sensitivity" : 1,
+        "trackerIntervalMs" : 5
+      },
+      "timing" : {
+        "autoSelectDownMs" : 320,
+        "autoSelectUpMs" : 210,
+        "dwellTimeMouseMs" : 195,
+        "dwellTimeMs" : 320
+      }
+    }
+  },
+  {
+    "effectiveDwellMouseSeconds" : 0.195,
+    "input" : {
+      "autoScroll" : {
+        "intensity" : 50
+      }
+    },
+    "name" : "clamp-intensity-high",
+    "note" : "Hand-edited scroll intensity above the allowed range is clamped at decode time.",
+    "output" : {
+      "appearance" : {
+        "audio" : true,
+        "audioVolume" : 1,
+        "clickFeedback" : true,
+        "clickSound" : "Tink",
+        "iconScale" : 1,
+        "iconStyle" : "custom",
+        "transparency" : 255
+      },
+      "autoScroll" : {
+        "base" : 0,
+        "boost" : 3,
+        "deadZonePx" : 10,
+        "intensity" : 5,
+        "maxSpeedPerTick" : 160
+      },
+      "calibration" : {
+        "averageVelocity" : 0,
+        "enabled" : false,
+        "multiplier" : 76
+      },
+      "clicks" : {
+        "autoCancel" : true,
+        "defaultLeft" : true,
+        "idleDisarmSeconds" : 0
+      },
+      "commands" : {
+        "keyboard" : {
+          "mode" : "accessibilityKeyboard"
+        }
+      },
+      "panel" : {
+        "items" : [
+          "togglePanel",
+          "left",
+          "right",
+          "doubleClick",
+          "leftDrag",
+          "middle"
+        ],
+        "launchCollapsed" : false,
+        "orientation" : "vertical",
+        "positionY" : 204,
+        "width" : 50
+      },
+      "stillness" : {
+        "moveRadiusPx" : 10,
+        "sensitivity" : 1,
+        "trackerIntervalMs" : 5
+      },
+      "timing" : {
+        "autoSelectDownMs" : 320,
+        "autoSelectUpMs" : 210,
+        "dwellTimeMouseMs" : 195,
+        "dwellTimeMs" : 320
+      }
+    }
+  },
+  {
+    "effectiveDwellMouseSeconds" : 0.195,
+    "input" : {
+      "autoScroll" : {
+        "intensity" : 0.001
+      }
+    },
+    "name" : "clamp-intensity-low",
+    "note" : "Below range clamps up, so scrolling can never be inverted or frozen.",
+    "output" : {
+      "appearance" : {
+        "audio" : true,
+        "audioVolume" : 1,
+        "clickFeedback" : true,
+        "clickSound" : "Tink",
+        "iconScale" : 1,
+        "iconStyle" : "custom",
+        "transparency" : 255
+      },
+      "autoScroll" : {
+        "base" : 0,
+        "boost" : 3,
+        "deadZonePx" : 10,
+        "intensity" : 0.05,
+        "maxSpeedPerTick" : 160
+      },
+      "calibration" : {
+        "averageVelocity" : 0,
+        "enabled" : false,
+        "multiplier" : 76
+      },
+      "clicks" : {
+        "autoCancel" : true,
+        "defaultLeft" : true,
+        "idleDisarmSeconds" : 0
+      },
+      "commands" : {
+        "keyboard" : {
+          "mode" : "accessibilityKeyboard"
+        }
+      },
+      "panel" : {
+        "items" : [
+          "togglePanel",
+          "left",
+          "right",
+          "doubleClick",
+          "leftDrag",
+          "middle"
+        ],
+        "launchCollapsed" : false,
+        "orientation" : "vertical",
+        "positionY" : 204,
+        "width" : 50
+      },
+      "stillness" : {
+        "moveRadiusPx" : 10,
+        "sensitivity" : 1,
+        "trackerIntervalMs" : 5
+      },
+      "timing" : {
+        "autoSelectDownMs" : 320,
+        "autoSelectUpMs" : 210,
+        "dwellTimeMouseMs" : 195,
+        "dwellTimeMs" : 320
+      }
+    }
+  },
+  {
+    "effectiveDwellMouseSeconds" : 0.195,
+    "input" : {
+      "appearance" : {
+        "audioVolume" : 7.5
+      }
+    },
+    "name" : "clamp-audio-volume",
+    "note" : "Volume clamps into 0...1.",
+    "output" : {
+      "appearance" : {
+        "audio" : true,
+        "audioVolume" : 1,
+        "clickFeedback" : true,
+        "clickSound" : "Tink",
+        "iconScale" : 1,
+        "iconStyle" : "custom",
+        "transparency" : 255
+      },
+      "autoScroll" : {
+        "base" : 0,
+        "boost" : 3,
+        "deadZonePx" : 10,
+        "intensity" : 0.5,
+        "maxSpeedPerTick" : 160
+      },
+      "calibration" : {
+        "averageVelocity" : 0,
+        "enabled" : false,
+        "multiplier" : 76
+      },
+      "clicks" : {
+        "autoCancel" : true,
+        "defaultLeft" : true,
+        "idleDisarmSeconds" : 0
+      },
+      "commands" : {
+        "keyboard" : {
+          "mode" : "accessibilityKeyboard"
+        }
+      },
+      "panel" : {
+        "items" : [
+          "togglePanel",
+          "left",
+          "right",
+          "doubleClick",
+          "leftDrag",
+          "middle"
+        ],
+        "launchCollapsed" : false,
+        "orientation" : "vertical",
+        "positionY" : 204,
+        "width" : 50
+      },
+      "stillness" : {
+        "moveRadiusPx" : 10,
+        "sensitivity" : 1,
+        "trackerIntervalMs" : 5
+      },
+      "timing" : {
+        "autoSelectDownMs" : 320,
+        "autoSelectUpMs" : 210,
+        "dwellTimeMouseMs" : 195,
+        "dwellTimeMs" : 320
+      }
+    }
+  },
+  {
+    "effectiveDwellMouseSeconds" : 0.195,
+    "input" : {
+      "appearance" : {
+        "audioVolume" : -3
+      }
+    },
+    "name" : "clamp-audio-volume-negative",
+    "note" : "Negative volume clamps to 0.",
+    "output" : {
+      "appearance" : {
+        "audio" : true,
+        "audioVolume" : 0,
+        "clickFeedback" : true,
+        "clickSound" : "Tink",
+        "iconScale" : 1,
+        "iconStyle" : "custom",
+        "transparency" : 255
+      },
+      "autoScroll" : {
+        "base" : 0,
+        "boost" : 3,
+        "deadZonePx" : 10,
+        "intensity" : 0.5,
+        "maxSpeedPerTick" : 160
+      },
+      "calibration" : {
+        "averageVelocity" : 0,
+        "enabled" : false,
+        "multiplier" : 76
+      },
+      "clicks" : {
+        "autoCancel" : true,
+        "defaultLeft" : true,
+        "idleDisarmSeconds" : 0
+      },
+      "commands" : {
+        "keyboard" : {
+          "mode" : "accessibilityKeyboard"
+        }
+      },
+      "panel" : {
+        "items" : [
+          "togglePanel",
+          "left",
+          "right",
+          "doubleClick",
+          "leftDrag",
+          "middle"
+        ],
+        "launchCollapsed" : false,
+        "orientation" : "vertical",
+        "positionY" : 204,
+        "width" : 50
+      },
+      "stillness" : {
+        "moveRadiusPx" : 10,
+        "sensitivity" : 1,
+        "trackerIntervalMs" : 5
+      },
+      "timing" : {
+        "autoSelectDownMs" : 320,
+        "autoSelectUpMs" : 210,
+        "dwellTimeMouseMs" : 195,
+        "dwellTimeMs" : 320
+      }
+    }
+  },
+  {
+    "effectiveDwellMouseSeconds" : 0.195,
+    "input" : {
+      "appearance" : {
+        "iconScale" : 10
+      }
+    },
+    "name" : "clamp-icon-scale",
+    "note" : "Icon scale clamps into 0.5...2.0.",
+    "output" : {
+      "appearance" : {
+        "audio" : true,
+        "audioVolume" : 1,
+        "clickFeedback" : true,
+        "clickSound" : "Tink",
+        "iconScale" : 2,
+        "iconStyle" : "custom",
+        "transparency" : 255
+      },
+      "autoScroll" : {
+        "base" : 0,
+        "boost" : 3,
+        "deadZonePx" : 10,
+        "intensity" : 0.5,
+        "maxSpeedPerTick" : 160
+      },
+      "calibration" : {
+        "averageVelocity" : 0,
+        "enabled" : false,
+        "multiplier" : 76
+      },
+      "clicks" : {
+        "autoCancel" : true,
+        "defaultLeft" : true,
+        "idleDisarmSeconds" : 0
+      },
+      "commands" : {
+        "keyboard" : {
+          "mode" : "accessibilityKeyboard"
+        }
+      },
+      "panel" : {
+        "items" : [
+          "togglePanel",
+          "left",
+          "right",
+          "doubleClick",
+          "leftDrag",
+          "middle"
+        ],
+        "launchCollapsed" : false,
+        "orientation" : "vertical",
+        "positionY" : 204,
+        "width" : 50
+      },
+      "stillness" : {
+        "moveRadiusPx" : 10,
+        "sensitivity" : 1,
+        "trackerIntervalMs" : 5
+      },
+      "timing" : {
+        "autoSelectDownMs" : 320,
+        "autoSelectUpMs" : 210,
+        "dwellTimeMouseMs" : 195,
+        "dwellTimeMs" : 320
+      }
+    }
+  },
+  {
+    "effectiveDwellMouseSeconds" : 0.195,
+    "input" : {
+      "appearance" : {
+        "iconScale" : 0.01
+      }
+    },
+    "name" : "clamp-icon-scale-low",
+    "note" : "Tiny icon scale clamps up rather than vanishing.",
+    "output" : {
+      "appearance" : {
+        "audio" : true,
+        "audioVolume" : 1,
+        "clickFeedback" : true,
+        "clickSound" : "Tink",
+        "iconScale" : 0.5,
+        "iconStyle" : "custom",
+        "transparency" : 255
+      },
+      "autoScroll" : {
+        "base" : 0,
+        "boost" : 3,
+        "deadZonePx" : 10,
+        "intensity" : 0.5,
+        "maxSpeedPerTick" : 160
+      },
+      "calibration" : {
+        "averageVelocity" : 0,
+        "enabled" : false,
+        "multiplier" : 76
+      },
+      "clicks" : {
+        "autoCancel" : true,
+        "defaultLeft" : true,
+        "idleDisarmSeconds" : 0
+      },
+      "commands" : {
+        "keyboard" : {
+          "mode" : "accessibilityKeyboard"
+        }
+      },
+      "panel" : {
+        "items" : [
+          "togglePanel",
+          "left",
+          "right",
+          "doubleClick",
+          "leftDrag",
+          "middle"
+        ],
+        "launchCollapsed" : false,
+        "orientation" : "vertical",
+        "positionY" : 204,
+        "width" : 50
+      },
+      "stillness" : {
+        "moveRadiusPx" : 10,
+        "sensitivity" : 1,
+        "trackerIntervalMs" : 5
+      },
+      "timing" : {
+        "autoSelectDownMs" : 320,
+        "autoSelectUpMs" : 210,
+        "dwellTimeMouseMs" : 195,
+        "dwellTimeMs" : 320
+      }
+    }
+  },
+  {
+    "effectiveDwellMouseSeconds" : 0.195,
+    "input" : {
+      "panel" : {
+        "items" : [
+          "left",
+          "totallyNewButton",
+          "right"
+        ],
+        "width" : 70
+      }
+    },
+    "name" : "panel-unknown-item-dropped",
+    "note" : "An unrecognised button id is dropped; the rest of the layout AND the geometry survive.",
+    "output" : {
+      "appearance" : {
+        "audio" : true,
+        "audioVolume" : 1,
+        "clickFeedback" : true,
+        "clickSound" : "Tink",
+        "iconScale" : 1,
+        "iconStyle" : "custom",
+        "transparency" : 255
+      },
+      "autoScroll" : {
+        "base" : 0,
+        "boost" : 3,
+        "deadZonePx" : 10,
+        "intensity" : 0.5,
+        "maxSpeedPerTick" : 160
+      },
+      "calibration" : {
+        "averageVelocity" : 0,
+        "enabled" : false,
+        "multiplier" : 76
+      },
+      "clicks" : {
+        "autoCancel" : true,
+        "defaultLeft" : true,
+        "idleDisarmSeconds" : 0
+      },
+      "commands" : {
+        "keyboard" : {
+          "mode" : "accessibilityKeyboard"
+        }
+      },
+      "panel" : {
+        "items" : [
+          "left",
+          "right"
+        ],
+        "launchCollapsed" : false,
+        "orientation" : "vertical",
+        "positionY" : 204,
+        "width" : 70
+      },
+      "stillness" : {
+        "moveRadiusPx" : 10,
+        "sensitivity" : 1,
+        "trackerIntervalMs" : 5
+      },
+      "timing" : {
+        "autoSelectDownMs" : 320,
+        "autoSelectUpMs" : 210,
+        "dwellTimeMouseMs" : 195,
+        "dwellTimeMs" : 320
+      }
+    }
+  },
+  {
+    "effectiveDwellMouseSeconds" : 0.195,
+    "input" : {
+      "panel" : {
+        "items" : [
+          "left",
+          "right",
+          "left",
+          "middle",
+          "right"
+        ]
+      }
+    },
+    "name" : "panel-duplicates-dropped",
+    "note" : "Duplicates collapse, first occurrence wins.",
+    "output" : {
+      "appearance" : {
+        "audio" : true,
+        "audioVolume" : 1,
+        "clickFeedback" : true,
+        "clickSound" : "Tink",
+        "iconScale" : 1,
+        "iconStyle" : "custom",
+        "transparency" : 255
+      },
+      "autoScroll" : {
+        "base" : 0,
+        "boost" : 3,
+        "deadZonePx" : 10,
+        "intensity" : 0.5,
+        "maxSpeedPerTick" : 160
+      },
+      "calibration" : {
+        "averageVelocity" : 0,
+        "enabled" : false,
+        "multiplier" : 76
+      },
+      "clicks" : {
+        "autoCancel" : true,
+        "defaultLeft" : true,
+        "idleDisarmSeconds" : 0
+      },
+      "commands" : {
+        "keyboard" : {
+          "mode" : "accessibilityKeyboard"
+        }
+      },
+      "panel" : {
+        "items" : [
+          "left",
+          "right",
+          "middle"
+        ],
+        "launchCollapsed" : false,
+        "orientation" : "vertical",
+        "positionY" : 204,
+        "width" : 50
+      },
+      "stillness" : {
+        "moveRadiusPx" : 10,
+        "sensitivity" : 1,
+        "trackerIntervalMs" : 5
+      },
+      "timing" : {
+        "autoSelectDownMs" : 320,
+        "autoSelectUpMs" : 210,
+        "dwellTimeMouseMs" : 195,
+        "dwellTimeMs" : 320
+      }
+    }
+  },
+  {
+    "effectiveDwellMouseSeconds" : 0.195,
+    "input" : {
+      "panel" : {
+        "items" : [
+          "togglePanel",
+          "launchKeyboard",
+          "left"
+        ]
+      }
+    },
+    "name" : "panel-keyboard-stripped",
+    "note" : "KEYBOARD is being moved to its own panel, so it is stripped wherever it appears.",
+    "output" : {
+      "appearance" : {
+        "audio" : true,
+        "audioVolume" : 1,
+        "clickFeedback" : true,
+        "clickSound" : "Tink",
+        "iconScale" : 1,
+        "iconStyle" : "custom",
+        "transparency" : 255
+      },
+      "autoScroll" : {
+        "base" : 0,
+        "boost" : 3,
+        "deadZonePx" : 10,
+        "intensity" : 0.5,
+        "maxSpeedPerTick" : 160
+      },
+      "calibration" : {
+        "averageVelocity" : 0,
+        "enabled" : false,
+        "multiplier" : 76
+      },
+      "clicks" : {
+        "autoCancel" : true,
+        "defaultLeft" : true,
+        "idleDisarmSeconds" : 0
+      },
+      "commands" : {
+        "keyboard" : {
+          "mode" : "accessibilityKeyboard"
+        }
+      },
+      "panel" : {
+        "items" : [
+          "togglePanel",
+          "left"
+        ],
+        "launchCollapsed" : false,
+        "orientation" : "vertical",
+        "positionY" : 204,
+        "width" : 50
+      },
+      "stillness" : {
+        "moveRadiusPx" : 10,
+        "sensitivity" : 1,
+        "trackerIntervalMs" : 5
+      },
+      "timing" : {
+        "autoSelectDownMs" : 320,
+        "autoSelectUpMs" : 210,
+        "dwellTimeMouseMs" : 195,
+        "dwellTimeMs" : 320
+      }
+    }
+  },
+  {
+    "effectiveDwellMouseSeconds" : 0.195,
+    "input" : {
+      "panel" : {
+        "items" : [
+          "left",
+          "right",
+          "togglePanel",
+          "middle"
+        ]
+      }
+    },
+    "name" : "panel-onoff-pinned-first",
+    "note" : "ON\/OFF is optional, but when present it is always the first button.",
+    "output" : {
+      "appearance" : {
+        "audio" : true,
+        "audioVolume" : 1,
+        "clickFeedback" : true,
+        "clickSound" : "Tink",
+        "iconScale" : 1,
+        "iconStyle" : "custom",
+        "transparency" : 255
+      },
+      "autoScroll" : {
+        "base" : 0,
+        "boost" : 3,
+        "deadZonePx" : 10,
+        "intensity" : 0.5,
+        "maxSpeedPerTick" : 160
+      },
+      "calibration" : {
+        "averageVelocity" : 0,
+        "enabled" : false,
+        "multiplier" : 76
+      },
+      "clicks" : {
+        "autoCancel" : true,
+        "defaultLeft" : true,
+        "idleDisarmSeconds" : 0
+      },
+      "commands" : {
+        "keyboard" : {
+          "mode" : "accessibilityKeyboard"
+        }
+      },
+      "panel" : {
+        "items" : [
+          "togglePanel",
+          "left",
+          "right",
+          "middle"
+        ],
+        "launchCollapsed" : false,
+        "orientation" : "vertical",
+        "positionY" : 204,
+        "width" : 50
+      },
+      "stillness" : {
+        "moveRadiusPx" : 10,
+        "sensitivity" : 1,
+        "trackerIntervalMs" : 5
+      },
+      "timing" : {
+        "autoSelectDownMs" : 320,
+        "autoSelectUpMs" : 210,
+        "dwellTimeMouseMs" : 195,
+        "dwellTimeMs" : 320
+      }
+    }
+  },
+  {
+    "effectiveDwellMouseSeconds" : 0.195,
+    "input" : {
+      "panel" : {
+        "items" : [
+
+        ]
+      }
+    },
+    "name" : "panel-empty-falls-back-to-defaults",
+    "note" : "An empty layout would leave nothing to click, so the default layout returns.",
+    "output" : {
+      "appearance" : {
+        "audio" : true,
+        "audioVolume" : 1,
+        "clickFeedback" : true,
+        "clickSound" : "Tink",
+        "iconScale" : 1,
+        "iconStyle" : "custom",
+        "transparency" : 255
+      },
+      "autoScroll" : {
+        "base" : 0,
+        "boost" : 3,
+        "deadZonePx" : 10,
+        "intensity" : 0.5,
+        "maxSpeedPerTick" : 160
+      },
+      "calibration" : {
+        "averageVelocity" : 0,
+        "enabled" : false,
+        "multiplier" : 76
+      },
+      "clicks" : {
+        "autoCancel" : true,
+        "defaultLeft" : true,
+        "idleDisarmSeconds" : 0
+      },
+      "commands" : {
+        "keyboard" : {
+          "mode" : "accessibilityKeyboard"
+        }
+      },
+      "panel" : {
+        "items" : [
+          "togglePanel",
+          "left",
+          "right",
+          "doubleClick",
+          "leftDrag",
+          "middle"
+        ],
+        "launchCollapsed" : false,
+        "orientation" : "vertical",
+        "positionY" : 204,
+        "width" : 50
+      },
+      "stillness" : {
+        "moveRadiusPx" : 10,
+        "sensitivity" : 1,
+        "trackerIntervalMs" : 5
+      },
+      "timing" : {
+        "autoSelectDownMs" : 320,
+        "autoSelectUpMs" : 210,
+        "dwellTimeMouseMs" : 195,
+        "dwellTimeMs" : 320
+      }
+    }
+  },
+  {
+    "effectiveDwellMouseSeconds" : 0.195,
+    "input" : {
+      "panel" : {
+        "items" : [
+          "nope",
+          "alsoNope"
+        ]
+      }
+    },
+    "name" : "panel-all-unknown-falls-back",
+    "note" : "Same when every id is unrecognised.",
+    "output" : {
+      "appearance" : {
+        "audio" : true,
+        "audioVolume" : 1,
+        "clickFeedback" : true,
+        "clickSound" : "Tink",
+        "iconScale" : 1,
+        "iconStyle" : "custom",
+        "transparency" : 255
+      },
+      "autoScroll" : {
+        "base" : 0,
+        "boost" : 3,
+        "deadZonePx" : 10,
+        "intensity" : 0.5,
+        "maxSpeedPerTick" : 160
+      },
+      "calibration" : {
+        "averageVelocity" : 0,
+        "enabled" : false,
+        "multiplier" : 76
+      },
+      "clicks" : {
+        "autoCancel" : true,
+        "defaultLeft" : true,
+        "idleDisarmSeconds" : 0
+      },
+      "commands" : {
+        "keyboard" : {
+          "mode" : "accessibilityKeyboard"
+        }
+      },
+      "panel" : {
+        "items" : [
+          "togglePanel",
+          "left",
+          "right",
+          "doubleClick",
+          "leftDrag",
+          "middle"
+        ],
+        "launchCollapsed" : false,
+        "orientation" : "vertical",
+        "positionY" : 204,
+        "width" : 50
+      },
+      "stillness" : {
+        "moveRadiusPx" : 10,
+        "sensitivity" : 1,
+        "trackerIntervalMs" : 5
+      },
+      "timing" : {
+        "autoSelectDownMs" : 320,
+        "autoSelectUpMs" : 210,
+        "dwellTimeMouseMs" : 195,
+        "dwellTimeMs" : 320
+      }
+    }
+  },
+  {
+    "effectiveDwellMouseSeconds" : 0.195,
+    "input" : {
+      "panel" : {
+        "width" : 60
+      }
+    },
+    "name" : "panel-items-absent-keeps-defaults",
+    "note" : "Absent items key is not the same as an empty list, but lands in the same place.",
+    "output" : {
+      "appearance" : {
+        "audio" : true,
+        "audioVolume" : 1,
+        "clickFeedback" : true,
+        "clickSound" : "Tink",
+        "iconScale" : 1,
+        "iconStyle" : "custom",
+        "transparency" : 255
+      },
+      "autoScroll" : {
+        "base" : 0,
+        "boost" : 3,
+        "deadZonePx" : 10,
+        "intensity" : 0.5,
+        "maxSpeedPerTick" : 160
+      },
+      "calibration" : {
+        "averageVelocity" : 0,
+        "enabled" : false,
+        "multiplier" : 76
+      },
+      "clicks" : {
+        "autoCancel" : true,
+        "defaultLeft" : true,
+        "idleDisarmSeconds" : 0
+      },
+      "commands" : {
+        "keyboard" : {
+          "mode" : "accessibilityKeyboard"
+        }
+      },
+      "panel" : {
+        "items" : [
+          "togglePanel",
+          "left",
+          "right",
+          "doubleClick",
+          "leftDrag",
+          "middle"
+        ],
+        "launchCollapsed" : false,
+        "orientation" : "vertical",
+        "positionY" : 204,
+        "width" : 60
+      },
+      "stillness" : {
+        "moveRadiusPx" : 10,
+        "sensitivity" : 1,
+        "trackerIntervalMs" : 5
+      },
+      "timing" : {
+        "autoSelectDownMs" : 320,
+        "autoSelectUpMs" : 210,
+        "dwellTimeMouseMs" : 195,
+        "dwellTimeMs" : 320
+      }
+    }
+  },
+  {
+    "effectiveDwellMouseSeconds" : 0.195,
+    "input" : {
+      "commands" : {
+        "keyboard" : {
+          "mode" : "customApp",
+          "path" : "\/Applications\/Some.app"
+        }
+      }
+    },
+    "name" : "keyboard-custom-app",
+    "note" : "KeyboardTarget persists as a tagged object; path only exists for the custom mode.",
+    "output" : {
+      "appearance" : {
+        "audio" : true,
+        "audioVolume" : 1,
+        "clickFeedback" : true,
+        "clickSound" : "Tink",
+        "iconScale" : 1,
+        "iconStyle" : "custom",
+        "transparency" : 255
+      },
+      "autoScroll" : {
+        "base" : 0,
+        "boost" : 3,
+        "deadZonePx" : 10,
+        "intensity" : 0.5,
+        "maxSpeedPerTick" : 160
+      },
+      "calibration" : {
+        "averageVelocity" : 0,
+        "enabled" : false,
+        "multiplier" : 76
+      },
+      "clicks" : {
+        "autoCancel" : true,
+        "defaultLeft" : true,
+        "idleDisarmSeconds" : 0
+      },
+      "commands" : {
+        "keyboard" : {
+          "mode" : "customApp",
+          "path" : "\/Applications\/Some.app"
+        }
+      },
+      "panel" : {
+        "items" : [
+          "togglePanel",
+          "left",
+          "right",
+          "doubleClick",
+          "leftDrag",
+          "middle"
+        ],
+        "launchCollapsed" : false,
+        "orientation" : "vertical",
+        "positionY" : 204,
+        "width" : 50
+      },
+      "stillness" : {
+        "moveRadiusPx" : 10,
+        "sensitivity" : 1,
+        "trackerIntervalMs" : 5
+      },
+      "timing" : {
+        "autoSelectDownMs" : 320,
+        "autoSelectUpMs" : 210,
+        "dwellTimeMouseMs" : 195,
+        "dwellTimeMs" : 320
+      }
+    }
+  },
+  {
+    "effectiveDwellMouseSeconds" : 0.195,
+    "input" : {
+      "commands" : {
+        "keyboard" : {
+          "mode" : "customApp"
+        }
+      }
+    },
+    "name" : "keyboard-custom-app-without-path",
+    "note" : "Custom mode with no path decodes to an empty path rather than throwing.",
+    "output" : {
+      "appearance" : {
+        "audio" : true,
+        "audioVolume" : 1,
+        "clickFeedback" : true,
+        "clickSound" : "Tink",
+        "iconScale" : 1,
+        "iconStyle" : "custom",
+        "transparency" : 255
+      },
+      "autoScroll" : {
+        "base" : 0,
+        "boost" : 3,
+        "deadZonePx" : 10,
+        "intensity" : 0.5,
+        "maxSpeedPerTick" : 160
+      },
+      "calibration" : {
+        "averageVelocity" : 0,
+        "enabled" : false,
+        "multiplier" : 76
+      },
+      "clicks" : {
+        "autoCancel" : true,
+        "defaultLeft" : true,
+        "idleDisarmSeconds" : 0
+      },
+      "commands" : {
+        "keyboard" : {
+          "mode" : "customApp",
+          "path" : ""
+        }
+      },
+      "panel" : {
+        "items" : [
+          "togglePanel",
+          "left",
+          "right",
+          "doubleClick",
+          "leftDrag",
+          "middle"
+        ],
+        "launchCollapsed" : false,
+        "orientation" : "vertical",
+        "positionY" : 204,
+        "width" : 50
+      },
+      "stillness" : {
+        "moveRadiusPx" : 10,
+        "sensitivity" : 1,
+        "trackerIntervalMs" : 5
+      },
+      "timing" : {
+        "autoSelectDownMs" : 320,
+        "autoSelectUpMs" : 210,
+        "dwellTimeMouseMs" : 195,
+        "dwellTimeMs" : 320
+      }
+    }
+  },
+  {
+    "effectiveDwellMouseSeconds" : 0.195,
+    "input" : {
+      "commands" : {
+        "keyboard" : {
+          "mode" : "keyboardViewer"
+        }
+      }
+    },
+    "name" : "keyboard-viewer",
+    "note" : "The other named mode.",
+    "output" : {
+      "appearance" : {
+        "audio" : true,
+        "audioVolume" : 1,
+        "clickFeedback" : true,
+        "clickSound" : "Tink",
+        "iconScale" : 1,
+        "iconStyle" : "custom",
+        "transparency" : 255
+      },
+      "autoScroll" : {
+        "base" : 0,
+        "boost" : 3,
+        "deadZonePx" : 10,
+        "intensity" : 0.5,
+        "maxSpeedPerTick" : 160
+      },
+      "calibration" : {
+        "averageVelocity" : 0,
+        "enabled" : false,
+        "multiplier" : 76
+      },
+      "clicks" : {
+        "autoCancel" : true,
+        "defaultLeft" : true,
+        "idleDisarmSeconds" : 0
+      },
+      "commands" : {
+        "keyboard" : {
+          "mode" : "keyboardViewer"
+        }
+      },
+      "panel" : {
+        "items" : [
+          "togglePanel",
+          "left",
+          "right",
+          "doubleClick",
+          "leftDrag",
+          "middle"
+        ],
+        "launchCollapsed" : false,
+        "orientation" : "vertical",
+        "positionY" : 204,
+        "width" : 50
+      },
+      "stillness" : {
+        "moveRadiusPx" : 10,
+        "sensitivity" : 1,
+        "trackerIntervalMs" : 5
+      },
+      "timing" : {
+        "autoSelectDownMs" : 320,
+        "autoSelectUpMs" : 210,
+        "dwellTimeMouseMs" : 195,
+        "dwellTimeMs" : 320
+      }
+    }
+  },
+  {
+    "effectiveDwellMouseSeconds" : 0.195,
+    "input" : {
+      "commands" : {
+        "keyboard" : {
+          "mode" : "somethingElse"
+        }
+      }
+    },
+    "name" : "keyboard-unknown-mode-falls-back",
+    "note" : "An unknown mode falls back to the safe default instead of throwing.",
+    "output" : {
+      "appearance" : {
+        "audio" : true,
+        "audioVolume" : 1,
+        "clickFeedback" : true,
+        "clickSound" : "Tink",
+        "iconScale" : 1,
+        "iconStyle" : "custom",
+        "transparency" : 255
+      },
+      "autoScroll" : {
+        "base" : 0,
+        "boost" : 3,
+        "deadZonePx" : 10,
+        "intensity" : 0.5,
+        "maxSpeedPerTick" : 160
+      },
+      "calibration" : {
+        "averageVelocity" : 0,
+        "enabled" : false,
+        "multiplier" : 76
+      },
+      "clicks" : {
+        "autoCancel" : true,
+        "defaultLeft" : true,
+        "idleDisarmSeconds" : 0
+      },
+      "commands" : {
+        "keyboard" : {
+          "mode" : "accessibilityKeyboard"
+        }
+      },
+      "panel" : {
+        "items" : [
+          "togglePanel",
+          "left",
+          "right",
+          "doubleClick",
+          "leftDrag",
+          "middle"
+        ],
+        "launchCollapsed" : false,
+        "orientation" : "vertical",
+        "positionY" : 204,
+        "width" : 50
+      },
+      "stillness" : {
+        "moveRadiusPx" : 10,
+        "sensitivity" : 1,
+        "trackerIntervalMs" : 5
+      },
+      "timing" : {
+        "autoSelectDownMs" : 320,
+        "autoSelectUpMs" : 210,
+        "dwellTimeMouseMs" : 195,
+        "dwellTimeMs" : 320
+      }
+    }
+  },
+  {
+    "effectiveDwellMouseSeconds" : 0.195,
+    "input" : {
+      "appearance" : {
+        "iconStyle" : "system"
+      }
+    },
+    "name" : "icon-style-system",
+    "note" : "Enum stored by its raw value.",
+    "output" : {
+      "appearance" : {
+        "audio" : true,
+        "audioVolume" : 1,
+        "clickFeedback" : true,
+        "clickSound" : "Tink",
+        "iconScale" : 1,
+        "iconStyle" : "system",
+        "transparency" : 255
+      },
+      "autoScroll" : {
+        "base" : 0,
+        "boost" : 3,
+        "deadZonePx" : 10,
+        "intensity" : 0.5,
+        "maxSpeedPerTick" : 160
+      },
+      "calibration" : {
+        "averageVelocity" : 0,
+        "enabled" : false,
+        "multiplier" : 76
+      },
+      "clicks" : {
+        "autoCancel" : true,
+        "defaultLeft" : true,
+        "idleDisarmSeconds" : 0
+      },
+      "commands" : {
+        "keyboard" : {
+          "mode" : "accessibilityKeyboard"
+        }
+      },
+      "panel" : {
+        "items" : [
+          "togglePanel",
+          "left",
+          "right",
+          "doubleClick",
+          "leftDrag",
+          "middle"
+        ],
+        "launchCollapsed" : false,
+        "orientation" : "vertical",
+        "positionY" : 204,
+        "width" : 50
+      },
+      "stillness" : {
+        "moveRadiusPx" : 10,
+        "sensitivity" : 1,
+        "trackerIntervalMs" : 5
+      },
+      "timing" : {
+        "autoSelectDownMs" : 320,
+        "autoSelectUpMs" : 210,
+        "dwellTimeMouseMs" : 195,
+        "dwellTimeMs" : 320
+      }
+    }
+  },
+  {
+    "effectiveDwellMouseSeconds" : 0.195,
+    "input" : {
+      "panel" : {
+        "orientation" : "horizontal"
+      }
+    },
+    "name" : "orientation-horizontal",
+    "note" : "The other panel orientation.",
+    "output" : {
+      "appearance" : {
+        "audio" : true,
+        "audioVolume" : 1,
+        "clickFeedback" : true,
+        "clickSound" : "Tink",
+        "iconScale" : 1,
+        "iconStyle" : "custom",
+        "transparency" : 255
+      },
+      "autoScroll" : {
+        "base" : 0,
+        "boost" : 3,
+        "deadZonePx" : 10,
+        "intensity" : 0.5,
+        "maxSpeedPerTick" : 160
+      },
+      "calibration" : {
+        "averageVelocity" : 0,
+        "enabled" : false,
+        "multiplier" : 76
+      },
+      "clicks" : {
+        "autoCancel" : true,
+        "defaultLeft" : true,
+        "idleDisarmSeconds" : 0
+      },
+      "commands" : {
+        "keyboard" : {
+          "mode" : "accessibilityKeyboard"
+        }
+      },
+      "panel" : {
+        "items" : [
+          "togglePanel",
+          "left",
+          "right",
+          "doubleClick",
+          "leftDrag",
+          "middle"
+        ],
+        "launchCollapsed" : false,
+        "orientation" : "horizontal",
+        "positionY" : 204,
+        "width" : 50
+      },
+      "stillness" : {
+        "moveRadiusPx" : 10,
+        "sensitivity" : 1,
+        "trackerIntervalMs" : 5
+      },
+      "timing" : {
+        "autoSelectDownMs" : 320,
+        "autoSelectUpMs" : 210,
+        "dwellTimeMouseMs" : 195,
+        "dwellTimeMs" : 320
+      }
+    }
+  },
+  {
+    "effectiveDwellMouseSeconds" : 0.195,
+    "input" : {
+      "clicks" : {
+        "idleDisarmSeconds" : 120
+      }
+    },
+    "name" : "legacy-idle-disarm",
+    "note" : "Upgrades from before idleDisarmSeconds defaulted to 0 keep the old value — a real case from the user's own file.",
+    "output" : {
+      "appearance" : {
+        "audio" : true,
+        "audioVolume" : 1,
+        "clickFeedback" : true,
+        "clickSound" : "Tink",
+        "iconScale" : 1,
+        "iconStyle" : "custom",
+        "transparency" : 255
+      },
+      "autoScroll" : {
+        "base" : 0,
+        "boost" : 3,
+        "deadZonePx" : 10,
+        "intensity" : 0.5,
+        "maxSpeedPerTick" : 160
+      },
+      "calibration" : {
+        "averageVelocity" : 0,
+        "enabled" : false,
+        "multiplier" : 76
+      },
+      "clicks" : {
+        "autoCancel" : true,
+        "defaultLeft" : true,
+        "idleDisarmSeconds" : 120
+      },
+      "commands" : {
+        "keyboard" : {
+          "mode" : "accessibilityKeyboard"
+        }
+      },
+      "panel" : {
+        "items" : [
+          "togglePanel",
+          "left",
+          "right",
+          "doubleClick",
+          "leftDrag",
+          "middle"
+        ],
+        "launchCollapsed" : false,
+        "orientation" : "vertical",
+        "positionY" : 204,
+        "width" : 50
+      },
+      "stillness" : {
+        "moveRadiusPx" : 10,
+        "sensitivity" : 1,
+        "trackerIntervalMs" : 5
+      },
+      "timing" : {
+        "autoSelectDownMs" : 320,
+        "autoSelectUpMs" : 210,
+        "dwellTimeMouseMs" : 195,
+        "dwellTimeMs" : 320
+      }
+    }
+  },
+  {
+    "effectiveDwellMouseSeconds" : 0.001,
+    "input" : {
+      "calibration" : {
+        "averageVelocity" : 400,
+        "enabled" : true,
+        "multiplier" : 76
+      },
+      "stillness" : {
+        "sensitivity" : 1
+      }
+    },
+    "name" : "calibration-enabled",
+    "note" : "Adaptive dwell: the computed value replaces the manual one, so effectiveDwellMouseSeconds changes.",
+    "output" : {
+      "appearance" : {
+        "audio" : true,
+        "audioVolume" : 1,
+        "clickFeedback" : true,
+        "clickSound" : "Tink",
+        "iconScale" : 1,
+        "iconStyle" : "custom",
+        "transparency" : 255
+      },
+      "autoScroll" : {
+        "base" : 0,
+        "boost" : 3,
+        "deadZonePx" : 10,
+        "intensity" : 0.5,
+        "maxSpeedPerTick" : 160
+      },
+      "calibration" : {
+        "averageVelocity" : 400,
+        "enabled" : true,
+        "multiplier" : 76
+      },
+      "clicks" : {
+        "autoCancel" : true,
+        "defaultLeft" : true,
+        "idleDisarmSeconds" : 0
+      },
+      "commands" : {
+        "keyboard" : {
+          "mode" : "accessibilityKeyboard"
+        }
+      },
+      "panel" : {
+        "items" : [
+          "togglePanel",
+          "left",
+          "right",
+          "doubleClick",
+          "leftDrag",
+          "middle"
+        ],
+        "launchCollapsed" : false,
+        "orientation" : "vertical",
+        "positionY" : 204,
+        "width" : 50
+      },
+      "stillness" : {
+        "moveRadiusPx" : 10,
+        "sensitivity" : 1,
+        "trackerIntervalMs" : 5
+      },
+      "timing" : {
+        "autoSelectDownMs" : 320,
+        "autoSelectUpMs" : 210,
+        "dwellTimeMouseMs" : 195,
+        "dwellTimeMs" : 320
+      }
+    }
+  },
+  {
+    "effectiveDwellMouseSeconds" : 0.195,
+    "input" : {
+      "calibration" : {
+        "averageVelocity" : 0,
+        "enabled" : true
+      }
+    },
+    "name" : "calibration-enabled-but-unmeasured",
+    "note" : "Enabled with no measurement falls back to the manual dwell.",
+    "output" : {
+      "appearance" : {
+        "audio" : true,
+        "audioVolume" : 1,
+        "clickFeedback" : true,
+        "clickSound" : "Tink",
+        "iconScale" : 1,
+        "iconStyle" : "custom",
+        "transparency" : 255
+      },
+      "autoScroll" : {
+        "base" : 0,
+        "boost" : 3,
+        "deadZonePx" : 10,
+        "intensity" : 0.5,
+        "maxSpeedPerTick" : 160
+      },
+      "calibration" : {
+        "averageVelocity" : 0,
+        "enabled" : true,
+        "multiplier" : 76
+      },
+      "clicks" : {
+        "autoCancel" : true,
+        "defaultLeft" : true,
+        "idleDisarmSeconds" : 0
+      },
+      "commands" : {
+        "keyboard" : {
+          "mode" : "accessibilityKeyboard"
+        }
+      },
+      "panel" : {
+        "items" : [
+          "togglePanel",
+          "left",
+          "right",
+          "doubleClick",
+          "leftDrag",
+          "middle"
+        ],
+        "launchCollapsed" : false,
+        "orientation" : "vertical",
+        "positionY" : 204,
+        "width" : 50
+      },
+      "stillness" : {
+        "moveRadiusPx" : 10,
+        "sensitivity" : 1,
+        "trackerIntervalMs" : 5
+      },
+      "timing" : {
+        "autoSelectDownMs" : 320,
+        "autoSelectUpMs" : 210,
+        "dwellTimeMouseMs" : 195,
+        "dwellTimeMs" : 320
+      }
+    }
+  }
+]
