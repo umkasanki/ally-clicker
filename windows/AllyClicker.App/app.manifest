@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+  <assemblyIdentity version="1.0.0.0" name="AllyClicker.App" />
+
+  <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+    <application>
+      <!-- Windows 10 / 11 -->
+      <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}" />
+    </application>
+  </compatibility>
+
+  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
+    <security>
+      <requestedPrivileges xmlns="urn:schemas-microsoft-com:asm.v3">
+        <!-- uiAccess MUST become "true" before release — see docs/spec.md §3.6.
+             Without it UIPI silently drops our SendInput whenever an elevated
+             window has focus (MSDN: the failure shows up in neither the return
+             value nor GetLastError), so the user simply cannot click a UAC prompt
+             or any app running as admin.
+
+             It stays "false" here because Windows REFUSES TO LAUNCH a uiAccess
+             app that is not Authenticode-signed and installed under Program Files.
+             Flipping it early would break every dev run and CI job. W7 turns it on
+             together with signing and the installer. -->
+        <requestedExecutionLevel level="asInvoker" uiAccess="false" />
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+
+  <application xmlns="urn:schemas-microsoft-com:asm.v3">
+    <windowsSettings>
+      <!-- Risk #1 in docs/windows-plan.md: the engine reasons in points (as on
+           macOS) while GetCursorPos returns physical pixels. Per-monitor V2 makes
+           the process DPI-aware per screen, so ScreenGeometry can do that
+           conversion honestly instead of fighting the system's own scaling.
+           Without this, `sensitivity` / `moveRadiusPx` would behave differently
+           from the Mac build on any non-100% display. -->
+      <dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2</dpiAwareness>
+      <dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">true</dpiAware>
+    </windowsSettings>
+  </application>
+
+</assembly>

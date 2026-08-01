@@ -8,9 +8,38 @@
 ## Статус проекта
 
 **Текущая фаза:** macOS-версия в рабочем состоянии, релиз **v0.1.6** (Homebrew tap + .dmg).
-Репо реструктурирован в монорепо (`macos/` + будущий `windows/`).
-**Последнее действие:** выпущен v0.1.6; Windows-версия (C#/.NET) стартует в ветке
-`feature/windows-app` — план в `docs/windows-plan.md`.
+Репо реструктурирован в монорепо (`macos/` + `windows/`).
+**Последнее действие:** в ветке `feature/windows-app` собран каркас W0 —
+`windows/` solution из трёх проектов + `windows-ci.yml`. Дальше W1 (порт ядра).
+План — в `docs/windows-plan.md`.
+
+### 🪟 W0 — каркас Windows СДЕЛАН (2026-08-01, ветка `feature/windows-app`)
+Создано: `windows/AllyClicker.sln` (Core / Core.Tests / App), `Directory.Build.props`,
+`AllyClicker.Core.slnf`, `app.manifest` с `PerMonitorV2`, `.github/workflows/windows-ci.yml`
+(две джобы: полный solution на `windows-latest` + core-only на `ubuntu-latest`).
+Засеян `Point.cs` + 4 теста — первая строка таблицы порта, чтобы зелёный CI был осмысленным.
+Проверено по исходнику: `Point` в Swift-ядре нигде не мутируется → `readonly record struct`
+в C# безопасен.
+
+**По итогам ревью W0 — новое обязательное требование (`docs/spec.md` §3.6):**
+на Windows UIPI **молча** глотает `SendInput`, когда в фокусе окно, запущенное от
+администратора (MSDN: ошибка не видна ни в return value, ни в `GetLastError`). Лечится
+только `uiAccess="true"`, а тот требует подписи Authenticode **и** установки в `Program
+Files`. Значит: сертификат из «желательно» переехал в **блокирующие** (закупать заранее),
+портабельный single-file `.exe` как формат раздачи отменяется. В манифесте пока
+`uiAccess="false"` с комментарием — иначе не запустить ни локально, ни в CI; переключение
+в W7.
+
+**Среда (выяснено фактически 2026-08-01):**
+- В WSL поставлен **`dotnet-sdk-8.0` из apt** (8.0.129). Restore к nuget.org работает,
+  `dotnet test` проходит. Локальный цикл ядра: `dotnet test windows/AllyClicker.Core.slnf`.
+- ⚠️ **Ubuntu-сборка SDK не содержит `Microsoft.NET.Sdk.WindowsDesktop`** (source-build
+  вырезает Windows-компоненты). WPF-проект на WSL нельзя даже *прочитать* — `dotnet sln add`
+  на нём падает, `EnableWindowsTargeting` не спасает. Отсюда `.slnf` для локальной работы и
+  правило: **всё, что трогает `AllyClicker.App`, проверяется только в CI.** Если понадобится
+  локальная сборка App — ставить SDK от Microsoft (`dotnet-install.sh`), не из apt.
+- Swift в WSL сейчас **не установлен**; ядро macOS гоняется через docker
+  (`docker run --rm -v "$PWD/macos":/pkg -w /pkg swift:6.0 swift test`).
 
 ### ✅ Закрыто (сессия 2026-07-14)
 - **Звук на старте драга** (`c8eb48d`) — собрано, установлено, подтверждено на слух.

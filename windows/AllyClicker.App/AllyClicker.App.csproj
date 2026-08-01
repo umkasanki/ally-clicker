@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The WPF app: panel, overlays, settings window, and the Win32 adapters
+       (SendInput / GetCursorPos / UI Automation). Windows-only by construction.
+
+       Hand-written rather than `dotnet new wpf` — the WPF template ships only with
+       the Windows SDK, so it cannot be generated from the WSL dev box. -->
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AllyClicker.Core\AllyClicker.Core.csproj" />
+  </ItemGroup>
+
+</Project>

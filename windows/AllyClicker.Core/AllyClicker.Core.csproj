@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The pure, platform-independent core: dwell state machine, auto-scroll maths,
+       settings model, persistence, port interfaces.
+
+       Hard rule (docs/windows-plan.md, W1): this project must never reference a
+       Win32, WPF or WinForms API. It targets plain net8.0 precisely so that any
+       such reference fails to compile — the Linux CI job is what enforces it.
+       The Swift twin is macos/Sources/AllyClickerCore/. -->
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+
+</Project>

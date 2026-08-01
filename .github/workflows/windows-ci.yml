@@ -1,0 +1,61 @@
+name: Windows CI
+
+# Source of truth for the Windows app. The WPF project cannot be built on the WSL
+# dev box at all (the Ubuntu-packaged SDK ships no Microsoft.NET.Sdk.WindowsDesktop),
+# so anything touching AllyClicker.App is verified here and nowhere else.
+
+on:
+  push:
+    branches: [main, feature/windows-app]
+    paths:
+      - 'windows/**'
+      - '.github/workflows/windows-ci.yml'
+  pull_request:
+    paths:
+      - 'windows/**'
+      - '.github/workflows/windows-ci.yml'
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: windows
+
+jobs:
+  windows:
+    name: Build solution + test (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: .NET version
+        run: dotnet --info
+
+      - name: Restore
+        run: dotnet restore AllyClicker.sln
+
+      - name: Build (all three projects, including WPF)
+        run: dotnet build AllyClicker.sln --configuration Release --no-restore
+
+      - name: Test core
+        run: dotnet test AllyClicker.Core.Tests/AllyClicker.Core.Tests.csproj --configuration Release --no-build --verbosity normal
+
+  core-linux:
+    name: Core builds off Windows (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # Guards the WSL dev loop: the core and its tests must keep building without
+      # any Windows SDK, mirroring how macos/ keeps AllyClickerCore Linux-testable.
+      # If someone gives the core a net8.0-windows dependency, this job is what
+      # notices — before the local `dotnet test` loop silently stops working.
+      - name: Build + test core only
+        run: dotnet test AllyClicker.Core.slnf --configuration Release --verbosity normal

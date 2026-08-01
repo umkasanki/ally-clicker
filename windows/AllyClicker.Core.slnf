@@ -1,0 +1,9 @@
+{
+  "solution": {
+    "path": "AllyClicker.sln",
+    "projects": [
+      "AllyClicker.Core\\AllyClicker.Core.csproj",
+      "AllyClicker.Core.Tests\\AllyClicker.Core.Tests.csproj"
+    ]
+  }
+}

@@ -1,0 +1,29 @@
+<Project>
+
+  <!-- Settings shared by every project under windows/. -->
+
+  <!-- Chain to a parent props file if one ever appears higher up the tree, so this
+       file extends it instead of silently shadowing it. The path goes into a property
+       first: MSBuild's condition parser cannot handle the nested quotes that inlining
+       the function call would produce. -->
+  <PropertyGroup>
+    <ParentDirectoryBuildProps>$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))</ParentDirectoryBuildProps>
+  </PropertyGroup>
+  <Import Project="$(ParentDirectoryBuildProps)" Condition="'$(ParentDirectoryBuildProps)' != ''" />
+
+  <PropertyGroup>
+    <LangVersion>12.0</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <!-- Allows restoring Windows targeting packs on a non-Windows host.
+         NB this only helps on the Microsoft-distributed SDK. The Ubuntu-packaged
+         one (apt dotnet-sdk-8.0, source-build) ships no Microsoft.NET.Sdk.WindowsDesktop
+         at all, so under WSL the App project cannot even be evaluated, let alone
+         built — hence AllyClicker.Core.slnf for the local loop, and Windows CI as
+         the source of truth for the app. Kept because it costs nothing and makes
+         the solution work on an MS-built SDK. -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+
+</Project>
