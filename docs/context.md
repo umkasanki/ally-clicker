@@ -13,7 +13,12 @@
 `windows/` solution из трёх проектов + `windows-ci.yml`. Дальше W1 (порт ядра).
 План — в `docs/windows-plan.md`.
 
-### 🪟 W0 — каркас Windows СДЕЛАН (2026-08-01, ветка `feature/windows-app`)
+### 🪟 W0 — каркас Windows ЗАКРЫТ (2026-08-01, ветка `feature/windows-app`)
+**CI зелёный** (run 30693414883): `AllyClicker.App` собирается на `windows-latest`,
+тесты 4/4 и на Windows, и на Linux. Критерий готовности W0 выполнен.
+**Следующий шаг — W1:** порт ядра из `macos/Sources/AllyClickerCore/` (9 файлов, 1147 строк)
+и 75 тестов в xUnit. Локальный цикл: `dotnet test windows/AllyClicker.Core.slnf`.
+
 Создано: `windows/AllyClicker.sln` (Core / Core.Tests / App), `Directory.Build.props`,
 `AllyClicker.Core.slnf`, `app.manifest` с `PerMonitorV2`, `.github/workflows/windows-ci.yml`
 (две джобы: полный solution на `windows-latest` + core-only на `ubuntu-latest`).
