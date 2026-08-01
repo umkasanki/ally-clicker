@@ -9,16 +9,49 @@
 
 **Текущая фаза:** macOS-версия в рабочем состоянии, релиз **v0.1.6** (Homebrew tap + .dmg).
 Репо реструктурирован в монорепо (`macos/` + `windows/`).
-**Последнее действие:** в ветке `feature/windows-app` собран каркас W0 —
-`windows/` solution из трёх проектов + `windows-ci.yml`. Дальше W1 (порт ядра).
-План — в `docs/windows-plan.md`.
+**Последнее действие:** в ветке `feature/windows-app` закрыт W0 (каркас + CI) и
+идёт W1 — портированы представление (`Point`/`ClickAction`/`Zone`/`Effect`/`PanelItem`/
+`Ports`) и `Settings` с golden-харнессом. **66 тестов зелёные.** Дальше — `DwellEngine`.
+План и все решения — в `docs/windows-plan.md`.
+
+### 🪟 W1 — идёт (2026-08-01). Сделано: представление + Settings
+Локальный цикл: `dotnet test windows/AllyClicker.Core.slnf` (Мак не нужен).
+Эталон запускается здесь же: `docker run --rm -v "$PWD/macos":/pkg -w /pkg swift:6.0 swift test`
+→ 75 тестов. Образ `swift:6.0` закэширован локально.
+
+**Форма зафиксирована — закрытые иерархии `record`-ов** для `Zone`/`Effect`/`PanelItem`
+(приватный конструктор базы = исчерпывающий `switch`, как у Swift-энума). Решающий
+аргумент — равенство по значению: портируемые тесты сравнивают целые списки эффектов.
+Переименования: `Action`→`ClickAction` (конфликт с `System.Action`), `Command`→`PanelCommand`,
+`Panel`→`PanelSettings` (конфликт с `Zone.Panel`), `ZoneMapping`→`IZoneMapper`.
+
+**Главная методика — дифференциальная сверка, а не ручной перенос ассертов.**
+`macos/Sources/SettingsGolden` (dev-цель, в приложение не входит) печатает, как эталон
+декодирует 28 документов; вывод закоммичен фикстурой, C#-тесты сверяются структурно.
+Перегенерация:
+```
+docker run --rm -v "$PWD/macos":/pkg -w /pkg swift:6.0 swift run SettingsGolden \
+  > windows/AllyClicker.Core.Tests/Fixtures/settings-golden.json
+```
+Проверено мутациями, что набор умеет краснеть. Для `DwellEngine` тот же подход
+масштабируется лучше всего: снять со Swift трассу эффектов на скриптованной
+последовательности тиков и сверять покадрово.
+
+**Две ловушки, стоившие правок (обе задокументированы в плане):**
+1. Swift трактует явный `null` как отсутствующий ключ, `System.Text.Json` — бросает
+   исключение. Файл с одним `null` уронил бы приложение на старте. Отсюда рукописный
+   декодер `Json.cs` с семантикой `decodeIfPresent`.
+2. `IReadOnlyList` **не** делает данные неизменяемыми — только прячет мутирующие методы.
+   `DefaultItems` приводился обратно к массиву и был доступен на запись (статический,
+   общий на процесс). Иммутабельность обеспечивает владение хранилищем: `Array.AsReadOnly`
+   + копия во входе `Items` + обёртка на выходе `Normalize`.
+
+⚠️ Не покрыто фикстурой: поведение при **неверном типе** значения (`"width": "abc"`) —
+Swift бросает `typeMismatch`, порт повторяет по прочтению исходника, но не прибито.
 
 ### 🪟 W0 — каркас Windows ЗАКРЫТ (2026-08-01, ветка `feature/windows-app`)
 **CI зелёный** (run 30693414883): `AllyClicker.App` собирается на `windows-latest`,
 тесты 4/4 и на Windows, и на Linux. Критерий готовности W0 выполнен.
-**Следующий шаг — W1:** порт ядра из `macos/Sources/AllyClickerCore/` (9 файлов, 1147 строк)
-и 75 тестов в xUnit. Локальный цикл: `dotnet test windows/AllyClicker.Core.slnf`.
-
 Создано: `windows/AllyClicker.sln` (Core / Core.Tests / App), `Directory.Build.props`,
 `AllyClicker.Core.slnf`, `app.manifest` с `PerMonitorV2`, `.github/workflows/windows-ci.yml`
 (две джобы: полный solution на `windows-latest` + core-only на `ubuntu-latest`).
