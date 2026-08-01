@@ -49,6 +49,9 @@ docker run --rm -v "$PWD/macos":/pkg -w /pkg swift:6.0 swift run SettingsGolden 
 ⚠️ Не покрыто фикстурой: поведение при **неверном типе** значения (`"width": "abc"`) —
 Swift бросает `typeMismatch`, порт повторяет по прочтению исходника, но не прибито.
 
+**➡️ Начать следующую сессию с:** `docs/windows-plan.md` → «Как возобновить работу»
+(там состояние, первые команды, план по `DwellEngine` и один открытый вопрос).
+
 ### 🪟 W0 — каркас Windows ЗАКРЫТ (2026-08-01, ветка `feature/windows-app`)
 **CI зелёный** (run 30693414883): `AllyClicker.App` собирается на `windows-latest`,
 тесты 4/4 и на Windows, и на Linux. Критерий готовности W0 выполнен.
