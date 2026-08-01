@@ -355,14 +355,34 @@ public sealed record PanelSettings
     /// <summary>Start with only the ON/OFF button showing.</summary>
     public bool LaunchCollapsed { get; init; } = false;
 
-    public IReadOnlyList<PanelItem> Items { get; init; } = DefaultItems;
+    private readonly IReadOnlyList<PanelItem> _items = DefaultItems;
+
+    /// <summary>Ordered buttons shown on the panel.</summary>
+    /// <remarks>
+    /// Copied on the way in. IReadOnlyList only hides the mutating members — it does not
+    /// remove them, so a caller holding the original array or list could still write
+    /// through it and change a panel that has already been handed to the engine. Owning
+    /// the storage is what makes this record's immutability real rather than advertised,
+    /// and that immutability is what keeps a settings-window edit out of the running
+    /// engine until Apply.
+    /// </remarks>
+    public IReadOnlyList<PanelItem> Items
+    {
+        get => _items;
+        init => _items = Array.AsReadOnly(value.ToArray());
+    }
 
     /// <summary>
     /// Confirmed default layout, top to bottom: ON/OFF, LEFT, RIGHT, DOUBLE, DRAG,
     /// MIDDLE. KEYBOARD is deliberately absent — it moves to its own panel, and
     /// <see cref="Normalize"/> strips it from any layout.
     /// </summary>
-    public static readonly IReadOnlyList<PanelItem> DefaultItems = new PanelItem[]
+    /// <remarks>
+    /// Read-only for real: this instance is shared by every PanelSettings that does not
+    /// override it, so a single write through it would change the default layout for the
+    /// whole process.
+    /// </remarks>
+    public static readonly IReadOnlyList<PanelItem> DefaultItems = Array.AsReadOnly(new PanelItem[]
     {
         new PanelItem.Command(PanelCommand.TogglePanel),
         new PanelItem.Action(ClickAction.Left),
@@ -370,7 +390,7 @@ public sealed record PanelSettings
         new PanelItem.Action(ClickAction.DoubleClick),
         new PanelItem.Action(ClickAction.LeftDrag),
         new PanelItem.Action(ClickAction.Middle),
-    };
+    });
 
     internal static PanelSettings FromJson(JsonElement e)
     {
@@ -424,7 +444,9 @@ public sealed record PanelSettings
             result.Insert(0, onOff);
         }
 
-        return result;
+        // Wrapped, not returned bare: the panel editor calls this directly, and a List
+        // handed back would be writable by whoever receives it.
+        return result.AsReadOnly();
     }
 
     internal void Write(Utf8JsonWriter w)
