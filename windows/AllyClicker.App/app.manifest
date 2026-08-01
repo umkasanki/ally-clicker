@@ -20,8 +20,12 @@
 
              It stays "false" here because Windows REFUSES TO LAUNCH a uiAccess
              app that is not Authenticode-signed and installed under Program Files.
-             Flipping it early would break every dev run and CI job. W7 turns it on
-             together with signing and the installer. -->
+             Flipping it early would break every dev run and CI job.
+
+             Spike W2b answers the open question — whether a self-signed root, the
+             same trick the macOS build already uses, satisfies the requirement. If
+             it does, no certificate purchase is needed except for public release.
+             W7 turns this on for real, together with signing and the installer. -->
         <requestedExecutionLevel level="asInvoker" uiAccess="false" />
       </requestedPrivileges>
     </security>
