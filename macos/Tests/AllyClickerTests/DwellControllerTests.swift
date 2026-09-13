@@ -13,7 +13,16 @@ final class MockMapper: ZoneMapping {
 }
 
 final class MockButtons: ButtonStateReading {
-    var isLeftPressed = false
+    var held: Set<MouseButtonKind> = []
+    var isLeftPressed: Bool {
+        get { held.contains(.left) }
+        set { if newValue { held.insert(.left) } else { held.remove(.left) } }
+    }
+    func isPressed(_ button: MouseButtonKind) -> Bool { held.contains(button) }
+}
+
+final class MockPermission: PermissionReading {
+    var canInjectEvents = true
 }
 
 final class MockInjector: MouseInjecting {
@@ -165,6 +174,64 @@ final class DwellControllerTests: XCTestCase {
         cursor.location = Point(x: 140, y: 100)
         controller.advance(dt: dt)
         XCTAssertEqual(injector.drags, [Point(x: 140, y: 100)], "and movement is reported once")
+    }
+
+    // MARK: - Without the right to inject
+
+    /// Lose the Accessibility grant and every posted event is accepted and does
+    /// nothing. Arming an action would then promise a click that can never
+    /// happen, and the user would sit waiting for it with nothing to look at.
+    /// The armed action is given up instead, which the panel already shows.
+    func testLosingThePermissionGivesUpTheArmedAction() {
+        let permission = MockPermission()
+        controller = DwellController(settings: Settings(), sampler: cursor, mapper: mapper,
+                                     injector: injector, permission: permission)
+        var armedSeen: [DwellEngine.Action?] = []
+        var refusals = 0
+        controller.onUIEffect = { if case .setArmed(let a) = $0 { armedSeen.append(a) } }
+        controller.onInjectionRefused = { refusals += 1 }
+
+        arm(.left)
+        XCTAssertEqual(controller.armed, .left)
+
+        permission.canInjectEvents = false
+        controller.advance(dt: dt)
+
+        XCTAssertNil(controller.armed, "nothing stays armed that cannot fire")
+        XCTAssertEqual(refusals, 1)
+        XCTAssertEqual(armedSeen.last, DwellEngine.Action?.none)
+    }
+
+    /// And nothing fires while it is missing, however long the cursor rests.
+    func testNothingFiresWithoutThePermission() {
+        let permission = MockPermission()
+        controller = DwellController(settings: Settings(), sampler: cursor, mapper: mapper,
+                                     injector: injector, permission: permission)
+        arm(.left)
+        permission.canInjectEvents = false
+
+        mapper.zone = .desktop
+        cursor.location = Point(x: 500, y: 400)
+        for _ in 0..<(Int(Settings().timing.dwellTimeMouseSeconds / dt) + 20) {
+            controller.advance(dt: dt)
+        }
+        XCTAssertTrue(injector.clicks.isEmpty)
+    }
+
+    /// The refusal is announced once, not on every tick: two hundred a second
+    /// would be a stutter in whatever the app shows.
+    func testTheRefusalIsAnnouncedOnce() {
+        let permission = MockPermission()
+        controller = DwellController(settings: Settings(), sampler: cursor, mapper: mapper,
+                                     injector: injector, permission: permission)
+        var refusals = 0
+        controller.onInjectionRefused = { refusals += 1 }
+
+        arm(.left)
+        permission.canInjectEvents = false
+        for _ in 0..<50 { controller.advance(dt: dt) }
+
+        XCTAssertEqual(refusals, 1)
     }
 
     func testNoFireWhenNothingArmed() {

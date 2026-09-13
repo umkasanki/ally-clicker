@@ -32,8 +32,39 @@ public protocol MouseInjecting {
 /// action changing, a swipe across the panel, teardown. This port covers the one
 /// it cannot: the button state disagreeing with what we believe.
 public protocol ButtonStateReading {
-    /// True while the left button is down, whoever put it down.
-    var isLeftPressed: Bool { get }
+    /// True while that button is down, whoever put it down.
+    func isPressed(_ button: MouseButtonKind) -> Bool
+}
+
+public extension ButtonStateReading {
+    /// The only button anything holds today. Named because most callers mean
+    /// exactly this one, and a future right-button drag should not have to
+    /// invent its own check — it asks the same port with a different argument.
+    var isLeftPressed: Bool { isPressed(.left) }
+}
+
+/// The three buttons a mouse event can carry. Deliberately not
+/// `DwellEngine.Action`: an action is something this application performs, and
+/// a button is something the world reports.
+public enum MouseButtonKind: CaseIterable {
+    case left, right, middle
+}
+
+/// Whether this application is allowed to inject events at all.
+///
+/// macOS adapter: `AXIsProcessTrusted()`. Without the Accessibility grant every
+/// `CGEvent.post` is accepted and silently does nothing — the application goes
+/// on believing it clicked while the user sits in front of a machine that does
+/// not respond, with nothing anywhere saying why. The grant can be lost long
+/// after launch: a system update, a re-signed build, someone tidying the list.
+///
+/// `DwellClick` treats this as a fact to re-read rather than a condition at
+/// start-up: a timer calls `refreshState` on a schedule, and its click path
+/// begins by switching dwell clicking **off** when the grant has gone
+/// (`DCClickMachine.performEvent`). Off is a state the user can see; pretending
+/// to click is not.
+public protocol PermissionReading {
+    var canInjectEvents: Bool { get }
 }
 
 /// Reports the current global cursor location.

@@ -9,6 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var controller: DwellController!
     private var runner: DwellRunner!
     private let injector = CGMouseInjector()
+    private let permission = AXPermission()
     private var autoScroller: AutoScroller!
     private let sound = SoundPlayer()
     private let clickFeedback = ClickFeedback()
@@ -82,7 +83,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             sampler: CursorSampler(),
             mapper: panel,
             injector: injector,
-            buttons: CGButtonState()
+            buttons: CGButtonState(),
+            permission: permission
         )
 
         rebuildAutoScroller()
@@ -152,13 +154,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         panel.onMoveEnded = { [weak self] in
             self?.controller.armDefaultIfEnabled()   // Left resumes as the resting state
-            self?.runner.start()
         }
         panel.setArmed(controller.armed)
         panel.show()
         if settings.panel.launchCollapsed { panel.startCollapsed() }
 
         runner = DwellRunner(controller: controller, intervalMs: settings.stillness.trackerIntervalMs)
+        // The one place that decides whether dwelling runs, and it decides by
+        // looking rather than by remembering. Both modes own the cursor while
+        // they last; neither has to remember to give it back.
+        runner.isSuspended = { [weak self] in
+            guard let self else { return true }
+            return self.autoScroller?.isActive == true || self.panel.isMoving
+        }
         runner.start()
     }
 
@@ -177,7 +185,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         autoScroller.onExit = { [weak self] in
             self?.controller.armDefaultIfEnabled()   // Left resumes after MIDDLE's one-shot
-            self?.runner.start()
         }
     }
 
@@ -241,21 +248,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// Pause dwelling and enter auto-scroll from the given anchor point.
+    /// Enter auto-scroll from the given anchor point. Dwelling stops for as long
+    /// as the scroller is active — not because anything switched it off, but
+    /// because `runner.isSuspended` asks the scroller every tick.
     private func enterAutoScroll(at point: Point) {
-        runner.stop()             // no dwell clicks while scrolling
         controller.clearArmed()   // MIDDLE consumed
         lastArmed = nil
-        autoScroller.start(at: point)   // resumes runner via onExit
+        autoScroller.start(at: point)
     }
 
-    /// Pause dwelling and let the panel follow the cursor until dropped.
+    /// Let the panel follow the cursor until dropped. Dwelling stops for as long
+    /// as the panel is moving, by the same question.
     private func enterMoveMode() {
-        runner.stop()             // no clicks while repositioning
         controller.clearArmed()  // clear engine armed (also clears pill via onUIEffect)
         lastArmed = nil
         dragArmedClearedAt = nil
-        panel.beginMove()         // resumes via onMoveEnded
+        panel.beginMove()
     }
 
     // MARK: - Accessibility permission

@@ -27,6 +27,9 @@ public final class DwellController {
     /// `nil` when the app has no way to ask the system — then we believe our own
     /// state, which is what this class did before the port existed.
     private let buttons: ButtonStateReading?
+    /// `nil` when the app cannot ask — then injection is assumed to work, which
+    /// is what this class did before the port existed.
+    private let permission: PermissionReading?
 
     /// Called for UI-facing effects the app must render (armed highlight, countdown).
     public var onUIEffect: ((DwellEngine.Effect) -> Void)?
@@ -51,12 +54,14 @@ public final class DwellController {
                 sampler: CursorSampling,
                 mapper: ZoneMapping,
                 injector: MouseInjecting,
-                buttons: ButtonStateReading? = nil) {
+                buttons: ButtonStateReading? = nil,
+                permission: PermissionReading? = nil) {
         self.engine = DwellEngine(settings: settings)
         self.sampler = sampler
         self.mapper = mapper
         self.injector = injector
         self.buttons = buttons
+        self.permission = permission
     }
 
     /// Currently armed action (for the app to query, e.g. on launch).
@@ -100,8 +105,27 @@ public final class DwellController {
     /// to put the UI back; there is nothing to inject, because nothing is held.
     public var onDragLost: (() -> Void)?
 
+    /// Called when the right to inject events is found to be missing, with the
+    /// armed action that was given up. The app shows it; there is nothing to
+    /// inject, because injection is exactly what is not available.
+    public var onInjectionRefused: (() -> Void)?
+
     /// Advance one tick. The app calls this from a timer every trackerIntervalMs.
     public func advance(dt: TimeInterval) {
+        // Are we allowed to act at all? Without the grant every event we post is
+        // accepted and does nothing, and dwelling on a button would arm an
+        // action that can never fire — the user waiting for a click that the
+        // application believes it made. Giving up the armed action says so in
+        // the only language the panel has.
+        if let permission, !permission.canInjectEvents {
+            if engine.armed != nil {
+                engine.clearArmed()
+                onUIEffect?(.setArmed(nil))
+                onInjectionRefused?()
+            }
+            return
+        }
+
         // Before anything else: does the world still agree that we are dragging?
         //
         // Everything downstream of a held button assumes it is really held. If
