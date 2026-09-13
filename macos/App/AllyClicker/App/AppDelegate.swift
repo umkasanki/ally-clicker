@@ -40,6 +40,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // and shows its own "Open System Settings" dialog. The panel still appears;
         // clicks just won't inject until access is granted.
         requestAccessibilityIfNeeded()
+        releaseStrandedButton()
         startDwelling()
 
         statusBar = StatusBarController(onOpenSettings: { [weak self] in
@@ -48,6 +49,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.applySettings(edited)
             }
         })
+    }
+
+    /// A button left down by a previous run — we crashed, or were killed under a
+    /// held drag — is still down now, and nothing else will ever release it. For a
+    /// user whose only input is a head tracker that means every movement drags
+    /// something, with no way out but a helper.
+    ///
+    /// The macOS SmartNav does exactly this and no more: `mouseSetup()` calls
+    /// `mouseReset()`, which calls `SCRUT_ReleaseAllMouseButtons()`. A physical
+    /// button genuinely held at the instant this application launches would be
+    /// released too; at launch that is not a real situation, and the failure it
+    /// prevents is one the user cannot recover from alone.
+    private func releaseStrandedButton() {
+        guard CGButtonState().isLeftPressed else { return }
+        injector.mouseUp(at: CursorSampler().location)
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -65,7 +81,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             settings: settings,
             sampler: CursorSampler(),
             mapper: panel,
-            injector: injector
+            injector: injector,
+            buttons: CGButtonState()
         )
 
         rebuildAutoScroller()

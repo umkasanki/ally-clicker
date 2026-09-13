@@ -20,6 +20,22 @@ public protocol MouseInjecting {
     func mouseUp(at point: Point)
 }
 
+/// Reports which mouse buttons the system currently considers held down — by
+/// anyone, including another application's synthetic press.
+///
+/// macOS adapter: `CGEventSource.buttonState(.combinedSessionState, …)`.
+///
+/// Why this exists: a synthetic `mouseDown` whose matching `mouseUp` never
+/// arrives leaves the button held for good, and for a user whose only input is
+/// a head tracker that means every movement drags something, with no way to
+/// stop it. The engine's own safety nets cover the cases it can see — the armed
+/// action changing, a swipe across the panel, teardown. This port covers the one
+/// it cannot: the button state disagreeing with what we believe.
+public protocol ButtonStateReading {
+    /// True while the left button is down, whoever put it down.
+    var isLeftPressed: Bool { get }
+}
+
 /// Reports the current global cursor location.
 /// macOS adapter: NSEvent.mouseLocation, sampled on a timer.
 public protocol CursorSampling {

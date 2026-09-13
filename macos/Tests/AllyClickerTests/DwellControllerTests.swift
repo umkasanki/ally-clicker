@@ -12,6 +12,10 @@ final class MockMapper: ZoneMapping {
     func zone(at point: Point) -> DwellEngine.Zone { zone }
 }
 
+final class MockButtons: ButtonStateReading {
+    var isLeftPressed = false
+}
+
 final class MockInjector: MouseInjecting {
     var clicks: [(DwellEngine.Action, Point)] = []
     var downs: [Point] = []
@@ -90,6 +94,77 @@ final class DwellControllerTests: XCTestCase {
         for _ in 0..<upTicks { controller.advance(dt: dt) }
         XCTAssertEqual(injector.ups.count, 1)
         XCTAssertEqual(injector.ups.first, Point(x: 400, y: 400))
+    }
+
+    // MARK: - The button state disagreeing with us
+
+    /// A `mouseUp` can be swallowed — the application under it dies, a modal
+    /// takes the events, the system drops it. Then the button is not down, but
+    /// we think it is: we go on streaming drag events at nothing, and the drag
+    /// never finishes. For a user whose only input is a head tracker that is not
+    /// a glitch, it is the end of the session.
+    func testADragEndsWhenTheButtonTurnsOutNotToBeHeld() {
+        let buttons = MockButtons()
+        controller = DwellController(settings: Settings(), sampler: cursor, mapper: mapper,
+                                     injector: injector, buttons: buttons)
+        var lost = 0
+        controller.onDragLost = { lost += 1 }
+
+        arm(.leftDrag)
+        mapper.zone = .desktop
+        cursor.location = Point(x: 100, y: 100)
+        buttons.isLeftPressed = true          // the press lands
+        for _ in 0..<(Int(Settings().timing.autoSelectDownSeconds / dt) + 5) {
+            controller.advance(dt: dt)
+        }
+        XCTAssertEqual(injector.downs.count, 1)
+
+        // The up never reaches the system, and the button comes back up anyway.
+        buttons.isLeftPressed = false
+        injector.drags.removeAll()
+        cursor.location = Point(x: 300, y: 300)
+        controller.advance(dt: dt)
+
+        XCTAssertEqual(lost, 1, "the drag is given up")
+        XCTAssertTrue(injector.drags.isEmpty, "and nothing more is sent at a button nobody holds")
+        XCTAssertTrue(injector.ups.isEmpty, "no release either: there is nothing to release")
+    }
+
+    /// Nothing is asked and nothing is given up when the application has no way
+    /// to read the button state — the behaviour every other test here relies on.
+    func testWithoutAButtonReaderTheDragIsBelieved() {
+        arm(.leftDrag)
+        mapper.zone = .desktop
+        cursor.location = Point(x: 100, y: 100)
+        for _ in 0..<(Int(Settings().timing.autoSelectDownSeconds / dt) + 5) {
+            controller.advance(dt: dt)
+        }
+        XCTAssertEqual(injector.downs.count, 1)
+
+        cursor.location = Point(x: 300, y: 300)
+        controller.advance(dt: dt)
+        XCTAssertFalse(injector.drags.isEmpty)
+    }
+
+    /// A drag to where the cursor already is tells an application nothing. At a
+    /// five-millisecond tick that would be two hundred identical events a second,
+    /// sent into whatever else is moving the cursor.
+    func testAStillCursorSendsNoDragEvents() {
+        arm(.leftDrag)
+        mapper.zone = .desktop
+        cursor.location = Point(x: 100, y: 100)
+        for _ in 0..<(Int(Settings().timing.autoSelectDownSeconds / dt) + 5) {
+            controller.advance(dt: dt)
+        }
+        XCTAssertEqual(injector.downs.count, 1)
+
+        injector.drags.removeAll()
+        for _ in 0..<20 { controller.advance(dt: dt) }
+        XCTAssertTrue(injector.drags.isEmpty, "the head is still; there is nothing to report")
+
+        cursor.location = Point(x: 140, y: 100)
+        controller.advance(dt: dt)
+        XCTAssertEqual(injector.drags, [Point(x: 140, y: 100)], "and movement is reported once")
     }
 
     func testNoFireWhenNothingArmed() {

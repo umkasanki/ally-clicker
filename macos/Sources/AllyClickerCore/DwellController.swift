@@ -24,6 +24,9 @@ public final class DwellController {
     private let sampler: CursorSampling
     private let mapper: ZoneMapping
     private let injector: MouseInjecting
+    /// `nil` when the app has no way to ask the system — then we believe our own
+    /// state, which is what this class did before the port existed.
+    private let buttons: ButtonStateReading?
 
     /// Called for UI-facing effects the app must render (armed highlight, countdown).
     public var onUIEffect: ((DwellEngine.Effect) -> Void)?
@@ -47,11 +50,13 @@ public final class DwellController {
     public init(settings: Settings,
                 sampler: CursorSampling,
                 mapper: ZoneMapping,
-                injector: MouseInjecting) {
+                injector: MouseInjecting,
+                buttons: ButtonStateReading? = nil) {
         self.engine = DwellEngine(settings: settings)
         self.sampler = sampler
         self.mapper = mapper
         self.injector = injector
+        self.buttons = buttons
     }
 
     /// Currently armed action (for the app to query, e.g. on launch).
@@ -90,8 +95,26 @@ public final class DwellController {
         releaseHeldButton()
     }
 
+    /// Called when a drag we believed was in progress turns out not to be —
+    /// the button is no longer down and we did not release it. The app uses it
+    /// to put the UI back; there is nothing to inject, because nothing is held.
+    public var onDragLost: (() -> Void)?
+
     /// Advance one tick. The app calls this from a timer every trackerIntervalMs.
     public func advance(dt: TimeInterval) {
+        // Before anything else: does the world still agree that we are dragging?
+        //
+        // Everything downstream of a held button assumes it is really held. If
+        // our `mouseUp` was swallowed — the target application died under it, a
+        // modal panel took the events, the system dropped it — we would go on
+        // streaming drag events at a button nobody is pressing, and the armed
+        // action would never come back. Cheap to ask, and it is the only check
+        // here that can contradict us.
+        if engine.dragActive, let buttons, !buttons.isLeftPressed {
+            engine.forceReleaseDrag()
+            onDragLost?()
+        }
+
         let cursor = sampler.location
         let zone = mapper.zone(at: cursor)
         onZone?(zone)

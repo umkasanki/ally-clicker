@@ -68,6 +68,12 @@ public struct DwellEngine {
     /// True between a drag's mouseDown and mouseUp. Exposed so the app can show
     /// a "dragging" indicator and so callers can reason about a held button.
     public private(set) var dragActive: Bool = false
+    /// Where the last drag event we emitted put the cursor. A drag to a point
+    /// the cursor is already at tells an application nothing, and at a 5 ms tick
+    /// that is most of them: the head is still, the position is unchanged, and
+    /// we would send two hundred identical events a second into whatever is
+    /// also moving the cursor. Only movement is worth reporting.
+    private var lastDragPoint: Point? = nil
     private var dwellAnchor: Point? = nil
     private var dwellElapsed: TimeInterval = 0
     // Swipe-reset debounce: how long the cursor has been continuously inside the
@@ -126,6 +132,7 @@ public struct DwellEngine {
                 dragActive = false
                 dragDownPoint = nil
                 dragHasMoved = false
+                lastDragPoint = nil
                 effects.append(.dragMouseUp(at: cursor))
             }
             if armed != nil {
@@ -210,6 +217,7 @@ public struct DwellEngine {
                 dragActive = false
                 dragDownPoint = nil
                 dragHasMoved = false
+                lastDragPoint = nil
                 effects.append(.dragMouseUp(at: cursor))
             }
 
@@ -254,13 +262,17 @@ public struct DwellEngine {
                 effects.append(.dragMouseDown(at: cursor))
                 dragActive = true
                 dragDownPoint = cursor
+                lastDragPoint = cursor
                 dragHasMoved = false
                 resetDwell(at: cursor)
             }
         } else {
             // Phase 2: stream the drag so apps see a real selection/move — the OS
             // won't turn head-tracker motion into leftMouseDragged on its own.
-            effects.append(.dragMouseMoved(at: cursor))
+            if lastDragPoint != cursor {
+                effects.append(.dragMouseMoved(at: cursor))
+                lastDragPoint = cursor
+            }
             // Require the cursor to move away from the start point first, otherwise a
             // still cursor would release immediately (zero-length drag).
             if let down = dragDownPoint, !dragHasMoved,
@@ -273,6 +285,7 @@ public struct DwellEngine {
                 dragActive = false
                 dragDownPoint = nil
                 dragHasMoved = false
+                lastDragPoint = nil
                 markFired(at: cursor)
                 resetDwell(at: cursor)
                 applyPostActionRevert(after: .leftDrag, into: &effects)
@@ -334,6 +347,7 @@ public struct DwellEngine {
         dragActive = false
         dragDownPoint = nil
         dragHasMoved = false
+        lastDragPoint = nil
         return true
     }
 
