@@ -57,6 +57,14 @@ final class PanelViewController: ZoneMapping {
     /// The app persists it so the panel reappears in place next launch.
     var onPositionChanged: ((_ x: Int, _ y: Int) -> Void)? = nil
 
+    /// Watches for displays being rearranged, so a panel left off the edge comes
+    /// back without waiting for a restart.
+    private var screenObserver: NSObjectProtocol?
+    /// Plugging a monitor in changes the screen list in several steps — a display
+    /// appears, then another goes — and acting on each would make the panel hop.
+    /// This settles first.
+    private var rescueWork: DispatchWorkItem?
+
     init(settings: Settings) {
         width = CGFloat(settings.panel.width)
         buttonSize = width  // square buttons
@@ -95,6 +103,30 @@ final class PanelViewController: ZoneMapping {
         // Notify persistence when the move-handle finishes a drag.
         buttons.forEach { $0.onMoved = { [weak self] in self?.reportPosition() } }
         layout()
+        observeScreenChanges()
+    }
+
+    deinit {
+        rescueWork?.cancel()
+        if let screenObserver { NotificationCenter.default.removeObserver(screenObserver) }
+    }
+
+    /// The displays were rearranged: a monitor plugged in or taken away, or a
+    /// resolution changed. Either can leave the panel outside every screen.
+    private func observeScreenChanges() {
+        screenObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification,
+            object: nil, queue: .main
+        ) { [weak self] _ in
+            self?.scheduleRescue()
+        }
+    }
+
+    private func scheduleRescue() {
+        rescueWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in self?.rescueIfOffScreen() }
+        rescueWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: work)
     }
 
     func show() {
@@ -278,16 +310,36 @@ final class PanelViewController: ZoneMapping {
     /// default depends on orientation — horizontal docks TOP-CENTER, vertical docks
     /// to the RIGHT edge at the configured Y offset from the top.
     static func defaultOrigin(settings: Settings, horizontal: Bool,
-                              panelW: CGFloat, panelH: CGFloat, screenFrame: NSRect) -> CGPoint {
-        if let px = settings.panel.positionX {
-            return CGPoint(x: screenFrame.minX + CGFloat(px),
-                           y: screenFrame.maxY - CGFloat(settings.panel.positionY) - panelH)
-        }
-        if horizontal {
-            return CGPoint(x: screenFrame.midX - panelW / 2, y: screenFrame.maxY - panelH)
-        }
-        return CGPoint(x: screenFrame.maxX - panelW,
-                       y: screenFrame.maxY - CGFloat(settings.panel.positionY) - panelH)
+                              panelW: CGFloat, panelH: CGFloat, screenFrame: NSRect,
+                              visibleFrames: [NSRect]? = nil) -> CGPoint {
+        // The rule itself lives in the core, where it is unit-tested without a
+        // screen; this is only the conversion at the AppKit boundary.
+        let visible = (visibleFrames ?? NSScreen.screens.map(\.visibleFrame)).map(Self.rect)
+        let p = PanelPlacement.origin(savedX: settings.panel.positionX,
+                                      savedY: settings.panel.positionY,
+                                      horizontal: horizontal,
+                                      panelW: Double(panelW), panelH: Double(panelH),
+                                      screenFrame: Self.rect(screenFrame),
+                                      visibleFrames: visible)
+        return CGPoint(x: p.x, y: p.y)
+    }
+
+    private static func rect(_ r: NSRect) -> Rect {
+        Rect(x: Double(r.minX), y: Double(r.minY),
+             width: Double(r.width), height: Double(r.height))
+    }
+
+    /// Put the panel back on screen if it is not on one. Safe to call at any time.
+    func rescueIfOffScreen() {
+        let frame = window.frame
+        let visible = NSScreen.screens.map(\.visibleFrame).map(Self.rect)
+        guard !PanelPlacement.fits(Self.rect(frame), in: visible) else { return }
+        let origin = PanelPlacement.rescueOrigin(horizontal: isHorizontal,
+                                                 panelW: Double(frame.width),
+                                                 panelH: Double(frame.height),
+                                                 screenFrame: Self.rect(Self.primaryScreenFrame()))
+        window.setFrameOrigin(CGPoint(x: origin.x, y: origin.y))
+        reportPosition()   // so the next launch starts from somewhere sane
     }
 
     static func clampToScreen(_ frame: NSRect) -> NSRect {
