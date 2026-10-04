@@ -77,11 +77,17 @@ final class AutoScroller {
         }
     }
 
+    /// Ends auto-scroll. `onExit` fires only if a scroll was actually running:
+    /// the app re-arms its default action there, and stopping an idle scroller is
+    /// not an exit from anything. Settings changes rebuild the scroller and call
+    /// this every time, so without the guard every value touched in Settings
+    /// armed Left behind the user's back.
     func stop() {
+        let wasRunning = timer != nil
         timer?.cancel()
         timer = nil
         controller.deactivate()
         anchor.hide()
-        onExit?()
+        if wasRunning { onExit?() }
     }
 }
