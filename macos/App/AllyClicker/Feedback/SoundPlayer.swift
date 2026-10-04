@@ -73,24 +73,92 @@ final class SoundPlayer {
     /// The arming-sound entry that means silence.
     static let silentArmSound = "None"
 
-    /// Resolve an arming sound. Always a macOS system sound — the click's own
-    /// family (`Tink`, `Tap`, `Tock`) is deliberately not offered here, because
-    /// two clicks in a row read as one event.
+    /// Resolve an arming sound. The list offered in Settings leaves out the
+    /// click's own family (`Tink`, `Tap`, `Tock`), because two clicks in a row
+    /// read as one event — but a sound the user added themselves is their call.
     static func makeArmSound(_ name: String) -> NSSound? {
         guard name != silentArmSound else { return nil }
-        return NSSound(named: NSSound.Name(name))
+        return resolve(name)
     }
 
-    /// Custom click sounds bundled in Resources/Sounds, beyond the macOS built-ins.
+    /// Resolve a click sound. Same lookup as arming: the two cues differ in which
+    /// names Settings offers, not in where a name is looked up.
+    static func makeClickSound(_ name: String) -> NSSound? { resolve(name) }
+
+    /// Sounds shipped in Resources/Sounds, beyond the macOS built-ins.
     static let bundledClickSounds = ["Tock", "Tap", "Press", "Tick", "Select"]
 
-    /// Resolve a click-sound name: a bundled `.wav` if we ship one, else a macOS
-    /// system sound. Used by the player and by the settings preview.
-    static func makeClickSound(_ name: String) -> NSSound? {
+    // MARK: - The user's own sounds
+
+    /// Where sounds the user adds are kept. Outside the bundle so they survive a
+    /// reinstall, and outside the repository so nobody has to wonder what licence
+    /// a file in it carries — the sounds that prompted this feature came from a
+    /// commercial keyboard whose licence forbids redistributing its parts.
+    static var userSoundsDirectory: URL {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("AllyClicker/Sounds", isDirectory: true)
+    }
+
+    /// What NSSound can actually open. OGG and FLAC are not on the list, and a
+    /// name in the picker that plays nothing is worse than no name at all.
+    static let playableExtensions = ["wav", "aiff", "aif", "mp3", "m4a", "caf"]
+
+    /// Names of the user's own sounds, alphabetically. Read fresh rather than
+    /// cached: the folder is theirs to change behind our back.
+    static func userSoundNames() -> [String] {
+        let files = (try? FileManager.default.contentsOfDirectory(
+            at: userSoundsDirectory, includingPropertiesForKeys: nil)) ?? []
+        return files
+            .filter { playableExtensions.contains($0.pathExtension.lowercased()) }
+            .map { $0.deletingPathExtension().lastPathComponent }
+            .sorted { $0.localizedStandardCompare($1) == .orderedAscending }
+    }
+
+    private static func userSoundURL(_ name: String) -> URL? {
+        for ext in playableExtensions {
+            let url = userSoundsDirectory.appendingPathComponent(name).appendingPathExtension(ext)
+            if FileManager.default.fileExists(atPath: url.path) { return url }
+        }
+        return nil
+    }
+
+    /// The user's own file first, then one we ship, then a macOS system sound.
+    ///
+    /// A name that resolves to nothing stays silent and keeps its place in the
+    /// setting: delete the file and the cue goes quiet, put it back and it
+    /// returns. Quietly substituting another sound would hide the loss.
+    private static func resolve(_ name: String) -> NSSound? {
+        if let url = userSoundURL(name) {
+            return NSSound(contentsOf: url, byReference: false)
+        }
         if bundledClickSounds.contains(name),
            let url = Bundle.main.url(forResource: name, withExtension: "wav", subdirectory: "Sounds") {
             return NSSound(contentsOf: url, byReference: false)
         }
         return NSSound(named: NSSound.Name(name))
+    }
+
+    /// Copy a chosen file into the user's sounds folder and return the name it
+    /// landed under. Copied rather than referenced, so the setting keeps working
+    /// after the original is moved or deleted.
+    ///
+    /// A name that would shadow one of ours gets a number appended: one entry in
+    /// the picker must never mean two different sounds.
+    static func importUserSound(from source: URL) throws -> String {
+        let dir = userSoundsDirectory
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let ext = source.pathExtension
+        let base = source.deletingPathExtension().lastPathComponent
+        var name = base
+        var n = 2
+        while bundledClickSounds.contains(name)
+                || name == silentArmSound
+                || userSoundURL(name) != nil {
+            name = "\(base) \(n)"
+            n += 1
+        }
+        try FileManager.default.copyItem(
+            at: source, to: dir.appendingPathComponent(name).appendingPathExtension(ext))
+        return name
     }
 }

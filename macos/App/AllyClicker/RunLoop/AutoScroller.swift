@@ -15,9 +15,9 @@ final class AutoScroller {
     private let dwellSeconds: TimeInterval
     private let tick = 0.016
 
-    // Exit = same gesture as a normal dwell-click: you scroll by MOVING the cursor
-    // ("водишь курсором"); when you stop moving (frame-to-frame stillness within
-    // stillRadius) for the dwell time, a left click fires and scroll ends.
+    // Exit = same gesture as a normal dwell-click: you scroll by MOVING the cursor;
+    // when you stop moving (frame-to-frame stillness within stillRadius) for the
+    // dwell time, a left click fires and scroll ends.
     private var lastCursor: Point = .zero
     private var stillElapsed: TimeInterval = 0
     private var hasScrolled = false   // arm exit only after actually scrolling once

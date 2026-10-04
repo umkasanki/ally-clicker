@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import UniformTypeIdentifiers
 import AllyClickerCore
 
 struct SettingsView: View {
@@ -8,12 +9,18 @@ struct SettingsView: View {
     // Curated short macOS system sounds for the click cue.
     // The three bundled first: picked for this job and trimmed for it. The
     // macOS built-ins stay as a fallback.
-    private let clickSounds = ["Press", "Tick", "Select", "Tock", "Tap",
-                               "Tink", "Pop", "Morse", "Bottle", "Purr"]
+    private let builtInClickSounds = ["Press", "Tick", "Select", "Tock", "Tap",
+                                      "Tink", "Pop", "Morse", "Bottle", "Purr"]
     // No "Tink", "Tap" or "Tock" here: those are the click's own family, and
     // arming is supposed to sound like a different event, not a quieter click.
-    private let armSounds = ["Purr", "Bottle", "Blow", "Morse", "Frog", "Pop",
-                             SoundPlayer.silentArmSound]
+    private let builtInArmSounds = ["Purr", "Bottle", "Blow", "Morse", "Frog", "Pop",
+                                    SoundPlayer.silentArmSound]
+
+    // The user's own sounds come after ours in both lists, so the familiar
+    // entries never move when a file is added or removed.
+    private var clickSounds: [String] { builtInClickSounds + userSounds }
+    private var armSounds: [String] { builtInArmSounds + userSounds }
+    @State private var userSounds: [String] = SoundPlayer.userSoundNames()
     @State private var soundPreview: NSSound?   // retained so the preview finishes playing
 
     // Int(ms) binding shown/edited in seconds.
@@ -171,8 +178,53 @@ struct SettingsView: View {
             }
             .buttonStyle(.borderless)
             .help("Preview")
+            Button { addSound(into: selection, preview: preview) } label: {
+                Image(systemName: "plus.circle")
+            }
+            .buttonStyle(.borderless)
+            .help("Add a sound file of your own")
+            Button { NSWorkspace.shared.open(SoundPlayer.userSoundsDirectory) } label: {
+                Image(systemName: "folder")
+            }
+            .buttonStyle(.borderless)
+            .help("Open the folder holding your own sounds")
             Spacer()
         }
+    }
+
+    /// Let the user pick an audio file, copy it in, and select it straight away —
+    /// adding a sound you then have to find in a list is two steps where one will
+    /// do, and this list is aimed at with a head tracker.
+    private func addSound(into selection: Binding<String>, preview: @escaping (String) -> Void) {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = SoundPlayer.playableExtensions
+            .compactMap { UTType(filenameExtension: $0) }
+        panel.allowsMultipleSelection = false
+        panel.prompt = "Add"
+        panel.message = "Pick a sound file. It is copied into AllyClicker, so moving the original later is safe."
+        guard panel.runModal() == .OK, let source = panel.url else { return }
+        // Refuse here rather than let a silent name into the list: NSSound opens
+        // WAV, AIFF, MP3, M4A and CAF, and nothing else.
+        guard NSSound(contentsOf: source, byReference: false) != nil else {
+            report("That file cannot be played",
+                   "AllyClicker can use WAV, AIFF, MP3, M4A and CAF. OGG and FLAC are not supported by macOS here.")
+            return
+        }
+        do {
+            let name = try SoundPlayer.importUserSound(from: source)
+            userSounds = SoundPlayer.userSoundNames()
+            selection.wrappedValue = name
+            preview(name)
+        } catch {
+            report("Could not add the sound", error.localizedDescription)
+        }
+    }
+
+    private func report(_ title: String, _ detail: String) {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = detail
+        alert.runModal()
     }
 
     private func previewArmSound(_ name: String) {
