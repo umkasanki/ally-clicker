@@ -34,8 +34,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         BackgroundCursor.enable()   // allow cursor changes while never-active
         settings = settingsStore.load()
         sound.enabled = settings.appearance.audio
-        sound.volume = Float(settings.appearance.audioVolume)
+        sound.volume = SoundPlayer.level(settings.appearance.audioVolume)
         sound.clickSoundName = settings.appearance.clickSound
+        sound.armSoundName   = settings.appearance.armSound
+        sound.armVolume      = SoundPlayer.level(settings.appearance.armVolume)
         clickFeedback.enabled = settings.appearance.clickFeedback
         // Request Accessibility if missing: the system adds AllyClicker to the list
         // and shows its own "Open System Settings" dialog. The panel still appears;
@@ -219,8 +221,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settings = edited
         settingsStore.save(edited)
         sound.enabled = edited.appearance.audio
-        sound.volume = Float(edited.appearance.audioVolume)
+        sound.volume = SoundPlayer.level(edited.appearance.audioVolume)
         sound.clickSoundName = edited.appearance.clickSound
+        sound.armSoundName   = edited.appearance.armSound
+        sound.armVolume      = SoundPlayer.level(edited.appearance.armVolume)
         clickFeedback.enabled = edited.appearance.clickFeedback
         controller.updateSettings(edited)   // engine reads these each tick
         rebuildAutoScroller()               // captures config/dwell at build time

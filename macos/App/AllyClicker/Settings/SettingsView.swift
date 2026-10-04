@@ -7,6 +7,10 @@ struct SettingsView: View {
 
     // Curated short macOS system sounds for the click cue.
     private let clickSounds = ["Tock", "Tap", "Tink", "Pop", "Morse", "Bottle", "Purr"]
+    // No "Tink", "Tap" or "Tock" here: those are the click's own family, and
+    // arming is supposed to sound like a different event, not a quieter click.
+    private let armSounds = ["Purr", "Bottle", "Blow", "Morse", "Frog", "Pop",
+                             SoundPlayer.silentArmSound]
     @State private var soundPreview: NSSound?   // retained so the preview finishes playing
 
     // Int(ms) binding shown/edited in seconds.
@@ -29,7 +33,7 @@ struct SettingsView: View {
                 set: { b.wrappedValue = $0 / 100 })
     }
 
-    private enum Tab { case behavior, panel, feedback, about }
+    private enum Tab { case behavior, panel, effects, about }
     @State private var tab: Tab = .behavior
 
     var body: some View {
@@ -41,9 +45,9 @@ struct SettingsView: View {
                 PanelEditorView(model: model)
                     .tabItem { Label("Panel", systemImage: "square.grid.3x1.below.line.grid.1x2") }
                     .tag(Tab.panel)
-                feedbackTab
-                    .tabItem { Label("Feedback", systemImage: "dot.radiowaves.left.and.right") }
-                    .tag(Tab.feedback)
+                effectsTab
+                    .tabItem { Label("Effects", systemImage: "wand.and.sparkles") }
+                    .tag(Tab.effects)
                 AboutView()
                     .tabItem { Label("About", systemImage: "info.circle") }
                     .tag(Tab.about)
@@ -111,20 +115,32 @@ struct SettingsView: View {
         }
     }
 
-    private var feedbackTab: some View {
+    private var effectsTab: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                section("Feedback", intro: "Confirmation cues when a click or drag fires — helpful when you can't feel the mouse button.") {
+                section("Sound", intro: "Confirmation cues you can hear — helpful when you can't feel the mouse button.") {
                     toggleRow("Sound feedback", $model.settings.appearance.audio,
                               help: "Play a short sound when you arm a panel button and when a click fires.")
+                }
+                section("Click sound", intro: "Played when a click or drag fires.") {
+                    soundRow("Sound", selection: $model.settings.appearance.clickSound,
+                             options: clickSounds, preview: previewClickSound)
                     ValueControl(title: "Volume", value: percent01($model.settings.appearance.audioVolume),
                                  range: 0...100, step: 5, unit: "%",
-                                 help: "Loudness of the feedback sounds.")
-                        .disabled(!model.settings.appearance.audio)
-                        .opacity(model.settings.appearance.audio ? 1 : 0.5)
-                    clickSoundRow
-                        .disabled(!model.settings.appearance.audio)
-                        .opacity(model.settings.appearance.audio ? 1 : 0.5)
+                                 help: "Loudness of the click sound.")
+                }
+                .disabled(!model.settings.appearance.audio)
+                .opacity(model.settings.appearance.audio ? 1 : 0.5)
+                section("Arming sound", intro: "Played when the dwell lands on a panel button, a moment before the click. It is the second cue of the pair, so it belongs under the click rather than beside it — \"None\" turns it off.") {
+                    soundRow("Sound", selection: $model.settings.appearance.armSound,
+                             options: armSounds, preview: previewArmSound)
+                    ValueControl(title: "Volume", value: percent01($model.settings.appearance.armVolume),
+                                 range: 0...100, step: 5, unit: "%",
+                                 help: "Loudness of the arming sound.")
+                }
+                .disabled(!model.settings.appearance.audio)
+                .opacity(model.settings.appearance.audio ? 1 : 0.5)
+                section("Visual feedback", intro: "A cue you can see, independent of the sounds above.") {
                     toggleRow("Visual click feedback", $model.settings.appearance.clickFeedback,
                               help: "Show a brief ripple at the cursor when a click or drag fires.")
                 }
@@ -133,31 +149,39 @@ struct SettingsView: View {
         }
     }
 
-    private var clickSoundRow: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            HStack(spacing: 12) {
-                Text("Click sound").font(.system(size: 15)).frame(width: 175, alignment: .leading)
-                Picker("", selection: $model.settings.appearance.clickSound) {
-                    ForEach(clickSounds, id: \.self) { Text($0).tag($0) }
-                }
-                .labelsHidden()
-                .frame(width: 150)
-                .onChange(of: model.settings.appearance.clickSound) { _, name in previewClickSound(name) }
-                Button { previewClickSound(model.settings.appearance.clickSound) } label: {
-                    Image(systemName: "play.circle")
-                }
-                .buttonStyle(.borderless)
-                .help("Preview")
-                Spacer()
+    /// One "pick a sound, hear it" row — the same control for the click and for
+    /// arming, so the two groups cannot drift apart in looks or behaviour.
+    private func soundRow(_ title: String,
+                          selection: Binding<String>,
+                          options: [String],
+                          preview: @escaping (String) -> Void) -> some View {
+        HStack(spacing: 12) {
+            Text(title).font(.system(size: 15)).frame(width: 175, alignment: .leading)
+            Picker("", selection: selection) {
+                ForEach(options, id: \.self) { Text($0).tag($0) }
             }
-            Text("System sound played when a click fires.")
-                .font(.system(size: 13)).foregroundStyle(.secondary)
+            .labelsHidden()
+            .frame(width: 150)
+            .onChange(of: selection.wrappedValue) { _, name in preview(name) }
+            Button { preview(selection.wrappedValue) } label: {
+                Image(systemName: "play.circle")
+            }
+            .buttonStyle(.borderless)
+            .help("Preview")
+            Spacer()
         }
+    }
+
+    private func previewArmSound(_ name: String) {
+        let s = SoundPlayer.makeArmSound(name)
+        s?.volume = SoundPlayer.level(model.settings.appearance.armVolume)
+        soundPreview = s
+        s?.play()
     }
 
     private func previewClickSound(_ name: String) {
         let s = SoundPlayer.makeClickSound(name)
-        s?.volume = Float(model.settings.appearance.audioVolume)
+        s?.volume = SoundPlayer.level(model.settings.appearance.audioVolume)
         soundPreview = s
         s?.play()
     }

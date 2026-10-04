@@ -189,6 +189,17 @@ extension Settings {
         public var audioVolume: Double = 1.0
         /// Name of the macOS system sound played on click (e.g. "Tink", "Pop").
         public var clickSound: String = "Tink"
+        /// Sound played when a panel button is armed — the confirmation that the
+        /// dwell landed on the button you meant. `"None"` plays nothing.
+        ///
+        /// Kept apart from `clickSound`, and meant to be a different kind of
+        /// sound: arming happens moments before the click, and if the two sound
+        /// alike they stop being two events.
+        public var armSound: String = "Purr"
+        /// Loudness of the arming sound, 0.0–1.0, independent of `audioVolume`.
+        /// The confirmation belongs well under the click — audible, not
+        /// attention-taking — and one shared volume could not say that.
+        public var armVolume: Double = 0.25
         /// Show a brief expanding ripple at the cursor when a click/drag fires.
         public var clickFeedback: Bool = true
         /// Panel opacity 0–255 (255 = fully opaque).
@@ -208,6 +219,9 @@ extension Settings {
             let rawVol    = try c.decodeIfPresent(Double.self, forKey: .audioVolume) ?? d.audioVolume
             audioVolume   = min(max(rawVol, 0), 1)
             clickSound    = try c.decodeIfPresent(String.self, forKey: .clickSound) ?? d.clickSound
+            armSound      = try c.decodeIfPresent(String.self, forKey: .armSound)   ?? d.armSound
+            let rawArmVol = try c.decodeIfPresent(Double.self, forKey: .armVolume)  ?? d.armVolume
+            armVolume     = min(max(rawArmVol, 0), 1)
             clickFeedback = try c.decodeIfPresent(Bool.self, forKey: .clickFeedback) ?? d.clickFeedback
             transparency  = try c.decodeIfPresent(Int.self,  forKey: .transparency)  ?? d.transparency
             iconStyle    = try c.decodeIfPresent(IconStyle.self, forKey: .iconStyle) ?? d.iconStyle
