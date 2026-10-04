@@ -6,7 +6,10 @@ struct SettingsView: View {
     @ObservedObject var model: SettingsModel
 
     // Curated short macOS system sounds for the click cue.
-    private let clickSounds = ["Tock", "Tap", "Tink", "Pop", "Morse", "Bottle", "Purr"]
+    // The three bundled first: picked for this job and trimmed for it. The
+    // macOS built-ins stay as a fallback.
+    private let clickSounds = ["Press", "Tick", "Select", "Tock", "Tap",
+                               "Tink", "Pop", "Morse", "Bottle", "Purr"]
     // No "Tink", "Tap" or "Tock" here: those are the click's own family, and
     // arming is supposed to sound like a different event, not a quieter click.
     private let armSounds = ["Purr", "Bottle", "Blow", "Morse", "Frog", "Pop",

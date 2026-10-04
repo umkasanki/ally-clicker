@@ -82,7 +82,7 @@ final class SoundPlayer {
     }
 
     /// Custom click sounds bundled in Resources/Sounds, beyond the macOS built-ins.
-    static let bundledClickSounds = ["Tock", "Tap"]
+    static let bundledClickSounds = ["Tock", "Tap", "Press", "Tick", "Select"]
 
     /// Resolve a click-sound name: a bundled `.wav` if we ship one, else a macOS
     /// system sound. Used by the player and by the settings preview.
