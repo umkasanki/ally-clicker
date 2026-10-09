@@ -9,12 +9,14 @@ struct SettingsView: View {
     // Curated short macOS system sounds for the click cue.
     // The three bundled first: picked for this job and trimmed for it. The
     // macOS built-ins stay as a fallback.
-    private let builtInClickSounds = ["Press", "Tick", "Select", "Tock", "Tap",
+    private let builtInClickSounds = ["Press", "Tick", "Select", "Tap", "Tock",
+                                      "Blip", "Snap", "Knock", "Pluck", "Soft", "Thud",
                                       "Tink", "Pop", "Morse", "Bottle", "Purr"]
     // No "Tink", "Tap" or "Tock" here: those are the click's own family, and
     // arming is supposed to sound like a different event, not a quieter click.
-    private let builtInArmSounds = ["Purr", "Bottle", "Blow", "Morse", "Frog", "Pop",
-                                    SoundPlayer.silentArmSound]
+    private let builtInArmSounds = ["Soft", "Tap", "Blip", "Tock", "Snap", "Knock",
+                                    "Pluck", "Thud", "Purr", "Bottle", "Blow", "Morse",
+                                    "Frog", "Pop", SoundPlayer.silentArmSound]
 
     // The user's own sounds come after ours in both lists, so the familiar
     // entries never move when a file is added or removed.

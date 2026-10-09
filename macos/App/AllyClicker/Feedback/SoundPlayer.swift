@@ -86,7 +86,8 @@ final class SoundPlayer {
     static func makeClickSound(_ name: String) -> NSSound? { resolve(name) }
 
     /// Sounds shipped in Resources/Sounds, beyond the macOS built-ins.
-    static let bundledClickSounds = ["Tock", "Tap", "Press", "Tick", "Select"]
+    static let bundledClickSounds = ["Press", "Tick", "Select", "Tap", "Tock",
+                                     "Blip", "Snap", "Knock", "Pluck", "Soft", "Thud"]
 
     // MARK: - The user's own sounds
 
