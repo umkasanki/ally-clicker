@@ -25,6 +25,19 @@ swiftc -framework AppKit \
 
 cp App/Info.plist "$APP/Contents/Info.plist"
 
+# Version from the nearest v* tag, so a local build reads like a release: v0.2.0
+# four commits on gives "0.2.0 (4)", the tag itself "0.2.0 (0)". Only the bundle's
+# copy is stamped. Without git or tags (a tagless CI checkout) App/Info.plist
+# stands as it is.
+if DESC=$(git describe --tags --match 'v[0-9]*' 2>/dev/null); then
+    TAG="${DESC%-*-g*}"
+    AHEAD=0
+    [ "$TAG" != "$DESC" ] && AHEAD="${DESC#"$TAG"-}" && AHEAD="${AHEAD%%-*}"
+    /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${TAG#v}" \
+                            -c "Set :CFBundleVersion $AHEAD" "$APP/Contents/Info.plist"
+    echo "  version ${TAG#v} ($AHEAD)"
+fi
+
 # Bundle resources (icons etc.)
 mkdir -p "$APP/Contents/Resources"
 cp -R App/AllyClicker/Resources/ "$APP/Contents/Resources/"
