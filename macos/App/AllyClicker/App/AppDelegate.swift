@@ -199,7 +199,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         var edited = edited
         // The settings window holds a snapshot taken when it opened; if the user
         // dragged the panel meanwhile, that snapshot's position is stale. Keep the
-        // live position so Apply never yanks the panel back to where it was.
+        // live position so saving never yanks the panel back to where it was.
         edited.panel.positionX = settings.panel.positionX
         edited.panel.positionY = settings.panel.positionY
 

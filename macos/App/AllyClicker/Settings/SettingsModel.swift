@@ -10,7 +10,7 @@ final class SettingsModel: ObservableObject {
     @Published var settings: AllyClickerCore.Settings
 
     /// Launch-at-login is a system registration (SMAppService), applied immediately
-    /// on toggle — not part of the Apply/Cancel working copy.
+    /// on toggle — not part of the auto-saved settings snapshot.
     @Published var launchAtLogin: Bool {
         didSet {
             guard launchAtLogin != oldValue else { return }
@@ -80,7 +80,7 @@ final class SettingsModel: ObservableObject {
     func isOnPanel(_ item: PanelItem) -> Bool { settings.panel.items.contains(item) }
 
     /// A button may be turned off unless it's the last one still on (an empty panel
-    /// would snap back to defaults on Apply).
+    /// would snap back to defaults when saved).
     func canRemove(_ item: PanelItem) -> Bool { settings.panel.items.count > 1 }
 
     func setOnPanel(_ item: PanelItem, _ on: Bool) {

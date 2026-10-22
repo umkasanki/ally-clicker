@@ -147,7 +147,7 @@ final class PanelViewController: ZoneMapping {
 
     /// Rebuild the panel's buttons/size/orientation/transparency from edited
     /// settings, in place (same instance + window, so the DwellController's mapper
-    /// reference stays valid). Called on Apply when any of those changed.
+    /// reference stays valid). Called on save when any of those changed.
     /// If the user has never positioned the panel (positionX == nil), it re-docks to
     /// the orientation's default spot; otherwise it keeps its current top-left corner.
     func rebuild(with settings: Settings) {
