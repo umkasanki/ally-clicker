@@ -87,7 +87,7 @@ panel follows the cursor until you hold still to drop it. The position is rememb
 ### Smart Middle and auto-scroll
 
 <p align="center">
-  <img src="docs/images/autoscroll.png" width="560" alt="Auto-scroll: a red anchor dot on a long page, the cursor moved below it">
+  <img src="docs/images/autoscroll.gif" width="420" alt="Auto-scroll: arm Middle, stop on the page to drop the red anchor, sit just past it to scroll at reading pace, then move far away to fast-forward to the end">
 </p>
 
 The Middle action decides by what is under the cursor:
