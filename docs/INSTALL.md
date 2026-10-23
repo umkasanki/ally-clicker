@@ -158,8 +158,10 @@ To update, download the newer `.dmg` and drag the new app over the old one,
 replacing it. The permission you granted is kept, because it is tied to the
 signing certificate rather than to that particular copy of the file.
 
-To remove, drag AllyClicker from Applications to the Trash. Its settings live in
-`~/Library/Preferences/com.allyclicker.app.plist` if you want those gone too.
+To remove, drag AllyClicker from Applications to the Trash. Its settings and any
+sounds you added live in `~/Library/Application Support/AllyClicker/`, and the
+Settings window's position in `~/Library/Preferences/com.allyclicker.app.plist`,
+if you want those gone too.
 
 ---
 
@@ -189,7 +191,9 @@ ever clicked.
 ## When something is still wrong
 
 **"AllyClicker is damaged and can't be opened."** The same quarantine mark,
-phrased differently by macOS. Step 4 above fixes it, or the Terminal command.
+phrased differently by macOS. This dialog does not always leave an **Open Anyway**
+button behind, so the Terminal command is the dependable fix here; step 4 above
+works when the button is there.
 
 **The panel appears but nothing clicks.** Accessibility permission is missing or
 was lost. Check the list above; if AllyClicker is in it and switched on, switch

@@ -189,7 +189,7 @@ Apple, and a browser marks everything it downloads, so the refusal is expected
 rather than a fault. Allow it in **System Settings → Privacy & Security →
 Open Anyway**, then open the app again. Where to find that, and what each
 dialog says, is spelled out in the
-[installation guide](docs/INSTALL.md#method-2--the-dmg).
+[installation guide](docs/INSTALL.md#method-2--the-dmg-file).
 
 <details>
 <summary><b>Build from source</b></summary>

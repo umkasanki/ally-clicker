@@ -13,7 +13,9 @@
 #   brew tap umkasanki/tap
 #   brew trust umkasanki/tap        # third-party taps must be trusted once
 #   brew install --cask allyclicker
-#   xattr -dr com.apple.quarantine /Applications/AllyClicker.app  # self-signed
+#
+# The live cask is Casks/allyclicker.rb in umkasanki/homebrew-tap; the release
+# workflow bumps its version and sha256 only, so change anything else in both.
 cask "allyclicker" do
   version "0.1.0"
   sha256 "REPLACE_WITH_DMG_SHA256"   # from `shasum -a 256` printed by make-dmg.sh
@@ -23,13 +25,26 @@ cask "allyclicker" do
   desc "Dwell-click accessibility tool for head-tracker and pointer-only users"
   homepage "https://github.com/umkasanki/ally-clicker"
 
+  depends_on macos: :sonoma
+
   app "AllyClicker.app"
+
+  # Self-signed, not notarized: without this Gatekeeper refuses the first launch,
+  # and for a dwell-clicker that refusal is a trap — the tool you need in order to
+  # click is the one you cannot start without clicking.
+  postflight_steps do
+    run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{appdir}}/AllyClicker.app"]
+  end
+
+  uninstall quit: "com.allyclicker.app"
+
+  zap trash: [
+    "~/Library/Application Support/AllyClicker",
+    "~/Library/Preferences/com.allyclicker.app.plist",
+  ]
 
   caveats <<~EOS
     AllyClicker needs Accessibility permission to inject clicks:
       System Settings → Privacy & Security → Accessibility → enable AllyClicker
-
-    It is not notarized. Clear the quarantine flag once so macOS lets it launch:
-      xattr -dr com.apple.quarantine "/Applications/AllyClicker.app"
   EOS
 end
