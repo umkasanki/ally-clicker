@@ -187,7 +187,8 @@ open it, and drag AllyClicker into Applications.
 **macOS will refuse the first launch.** The app is signed by me rather than by
 Apple, and a browser marks everything it downloads, so the refusal is expected
 rather than a fault. Allow it in **System Settings → Privacy & Security →
-Open Anyway**, then open the app again. Step by step, with pictures, in the
+Open Anyway**, then open the app again. Where to find that, and what each
+dialog says, is spelled out in the
 [installation guide](docs/INSTALL.md#method-2--the-dmg).
 
 <details>

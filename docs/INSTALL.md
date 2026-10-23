@@ -99,24 +99,43 @@ way works and the result is exactly the same application.
 **1. Download.** Open the [latest release](https://github.com/umkasanki/ally-clicker/releases/latest)
 and download `AllyClicker-<version>.dmg`.
 
-**2. Install.** Double-click the downloaded file. A window opens with
-AllyClicker in it. Drag AllyClicker onto the Applications folder shown beside
-it.
+**2. Install.** Double-click the downloaded file. A window opens showing two
+things side by side: the AllyClicker application on the left, and a shortcut to
+your Applications folder on the right. Drag the application onto that folder and
+let go. The copy takes a second or two.
 
-![The disk image window, with the app being dragged to Applications](images/install-dmg-drag.png)
+Then close the window and eject the disk image — it appears in the Finder
+sidebar under *Locations* with an eject symbol next to it. The application now
+lives in Applications and the image is no longer needed.
 
 **3. Try to open it — and expect to be refused.** Open your Applications folder
-and double-click AllyClicker. macOS will show a dialog saying it cannot verify
-that the app is free of malware. This is expected. Click **Done** (there is no
-"Open" button in it on current macOS).
+and double-click AllyClicker.
 
-![macOS refusing the first launch](images/install-blocked.png)
+A dialog appears saying that macOS **cannot verify that the application is free
+of malware**, and suggesting that you move it to the Bin. It does not offer to
+open it: on current macOS the buttons are only *Move to Bin* and *Done*
+(in Russian, «Переместить в Корзину» and «Готово»).
 
-**4. Allow it.** Open **System Settings → Privacy & Security**, scroll down to
-the **Security** section. There is a line saying AllyClicker was blocked, with
-a button **Open Anyway**. Press it, and confirm with your password or Touch ID.
+**Press Done.** Do not move it to the Bin. Nothing is wrong with the
+application — macOS is saying that it has not been given Apple's blessing, which
+costs money this project has not spent. The next step tells macOS to allow it
+anyway.
 
-![The Open Anyway button in Privacy and Security](images/install-open-anyway.png)
+**4. Allow it.** Open **System Settings** (the gear icon in the Dock, or the
+Apple menu → System Settings), choose **Privacy & Security** in the sidebar —
+it is roughly two thirds of the way down the list — and scroll the right-hand
+pane almost to the bottom, past App Management and Full Disk Access, to the
+section headed **Security**.
+
+There you will find a line of text saying that *"AllyClicker" was blocked to
+protect your Mac*, and beside it a button **Open Anyway**
+(«Всё равно открыть»). The line only appears for about an hour after the
+refusal; if it is not there, go back and double-click the application once more,
+then return.
+
+Press **Open Anyway**. macOS asks for your account password or Touch ID — the
+same one you log in with — and then asks once more whether you are sure, with a
+button **Open**. Confirm.
 
 **5. Open the app again.** It starts normally, and will keep starting normally
 from now on.
@@ -149,13 +168,18 @@ To remove, drag AllyClicker from Applications to the Trash. Its settings live in
 AllyClicker clicks for you, and macOS does not let an application click on
 behalf of a person unless you say so explicitly.
 
-1. Open **System Settings → Privacy & Security → Accessibility**.
-2. Find **AllyClicker** in the list and switch it on.
-3. If it is not in the list, press **+**, choose AllyClicker in Applications,
-   then switch it on.
-4. Quit AllyClicker and start it again. Permissions are read at launch.
-
-![AllyClicker enabled in the Accessibility list](images/install-accessibility.png)
+1. Open **System Settings → Privacy & Security**, and in the right-hand pane
+   choose **Accessibility** (it is near the top of that pane, under the heading
+   of the same name).
+2. A list of applications appears, each with a switch. Find **AllyClicker** and
+   turn its switch on. macOS asks for your password or Touch ID.
+3. If AllyClicker is not in the list at all, press the **+** button underneath
+   it, find AllyClicker in your Applications folder, choose **Open**, and then
+   turn on the switch that appears.
+4. **Quit AllyClicker and start it again.** This step is easy to miss and
+   nothing works without it: the application reads its permissions once, when it
+   starts, so a permission granted to a running application has no effect until
+   the next launch.
 
 Without this the panel appears and the dwell highlight works, but nothing is
 ever clicked.
