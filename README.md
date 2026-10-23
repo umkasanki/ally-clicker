@@ -162,38 +162,33 @@ there as soon as you log in.
 
 ## Install
 
-### Homebrew
+**[Full installation guide →](docs/INSTALL.md)** — what Homebrew is and how to
+get it, what to do when macOS blocks the app, and how to grant the permission
+it needs.
 
-AllyClicker is distributed through a personal tap:
+### Homebrew — recommended
 
 ```bash
 brew tap umkasanki/tap
-brew trust umkasanki/tap          # third-party taps must be trusted once
+brew trust umkasanki/tap          # third-party taps are trusted once
 brew install --cask allyclicker
 ```
 
-The app is self-signed (not notarized), so clear the quarantine flag once, then
-grant Accessibility:
+Nothing stands in the way: Homebrew clears the quarantine mark as it installs.
+Then allow the app to click — System Settings → Privacy & Security →
+Accessibility → enable **AllyClicker**.
 
-```bash
-xattr -dr com.apple.quarantine /Applications/AllyClicker.app
-```
-System Settings → Privacy & Security → Accessibility → enable AllyClicker.
+### .dmg — if you cannot use Homebrew
 
-### .dmg (no Homebrew)
+Download `AllyClicker-<version>.dmg` from the
+[latest release](https://github.com/umkasanki/ally-clicker/releases/latest),
+open it, and drag AllyClicker into Applications.
 
-1. Open the [latest release](https://github.com/umkasanki/ally-clicker/releases/latest)
-   and download **`AllyClicker-<version>.dmg`**.
-2. Double-click the `.dmg`, then **drag AllyClicker into the Applications folder**.
-3. First launch (the app is self-signed, not notarized, so macOS asks to confirm):
-   - **right-click** `AllyClicker` in Applications → **Open** → **Open** in the dialog; or
-   - if it's still blocked, run once in Terminal:
-     ```bash
-     xattr -dr com.apple.quarantine /Applications/AllyClicker.app
-     ```
-4. Grant Accessibility: **System Settings → Privacy & Security → Accessibility → enable AllyClicker**, then relaunch.
-
-To update, download the newer `.dmg` and drag over the old app (replace).
+**macOS will refuse the first launch.** The app is signed by me rather than by
+Apple, and a browser marks everything it downloads, so the refusal is expected
+rather than a fault. Allow it in **System Settings → Privacy & Security →
+Open Anyway**, then open the app again. Step by step, with pictures, in the
+[installation guide](docs/INSTALL.md#method-2--the-dmg).
 
 <details>
 <summary><b>Build from source</b></summary>
@@ -221,12 +216,10 @@ The pure core builds and tests cross-platform via SwiftPM: `swift test`.
 - **Accessibility permission** (required to inject clicks):
   System Settings → Privacy & Security → Accessibility → enable AllyClicker.
 
-### Operating the login screen
-
-AllyClicker runs per-user and cannot appear on the macOS **login window**. To enter
-your password hands-free there, use the built-in macOS features that *do* run
-pre-login: **Pointer Control → Dwell** and the **Accessibility Keyboard**
-(System Settings → Accessibility).
+AllyClicker runs as part of your session and cannot appear on the macOS **login
+window**; macOS has its own dwell clicking and on-screen keyboard that do, and
+the [installation guide](docs/INSTALL.md#operating-the-login-screen) says where
+to find them.
 
 ---
 
