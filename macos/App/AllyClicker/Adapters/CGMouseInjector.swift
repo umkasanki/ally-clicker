@@ -21,9 +21,47 @@ struct CGMouseInjector: MouseInjecting {
         }
     }
 
-    func mouseDown(at point: Point)    { post(.leftMouseDown,    at: cgPoint(point)) }
-    func mouseDragged(at point: Point) { post(.leftMouseDragged, at: cgPoint(point)) }
-    func mouseUp(at point: Point)      { post(.leftMouseUp,      at: cgPoint(point)) }
+    // Drag events (DRAG action) carry what a real mouse carries, because many apps
+    // track a drag far more strictly than the WindowServer does when it resizes a
+    // window. The screenshot UI's selection handles (screencaptureui) lit up on
+    // hover but would not move: the drag events had a zero delta, a click count of
+    // 0, and — posted with no source to the session tap — left the system thinking
+    // the button was up. So drag events now get:
+    //   • a source that tracks HID state, posted at the HID tap, so the button is
+    //     really held for the system (NSEvent.pressedMouseButtons, tracking loops);
+    //   • clickState = 1 on down, dragged and up;
+    //   • the per-event delta from the previous drag point.
+    private static let dragSource = CGEventSource(stateID: .hidSystemState)
+    private static var lastDragPoint: CGPoint?
+
+    func mouseDown(at point: Point) {
+        let p = cgPoint(point)
+        Self.lastDragPoint = p
+        postDrag(.leftMouseDown, at: p, delta: .zero)
+    }
+
+    func mouseDragged(at point: Point) {
+        let p = cgPoint(point)
+        let last = Self.lastDragPoint ?? p
+        Self.lastDragPoint = p
+        postDrag(.leftMouseDragged, at: p, delta: CGPoint(x: p.x - last.x, y: p.y - last.y))
+    }
+
+    func mouseUp(at point: Point) {
+        Self.lastDragPoint = nil
+        postDrag(.leftMouseUp, at: cgPoint(point), delta: .zero)
+    }
+
+    private func postDrag(_ type: CGEventType, at p: CGPoint, delta: CGPoint) {
+        guard let event = CGEvent(mouseEventSource: Self.dragSource, mouseType: type,
+                                  mouseCursorPosition: p, mouseButton: .left) else { return }
+        event.setIntegerValueField(.mouseEventClickState, value: 1)
+        if type == .leftMouseDragged {
+            event.setIntegerValueField(.mouseEventDeltaX, value: Int64(delta.x.rounded()))
+            event.setIntegerValueField(.mouseEventDeltaY, value: Int64(delta.y.rounded()))
+        }
+        event.post(tap: .cghidEventTap)
+    }
 
     /// Post a pixel-precise scroll. dy = vertical, dx = horizontal (screen sense;
     /// sign may need flipping for natural scrolling — verified on-device).
