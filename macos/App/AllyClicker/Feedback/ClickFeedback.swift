@@ -14,7 +14,7 @@ final class ClickFeedback {
         window = NSPanel(contentRect: NSRect(x: 0, y: 0, width: size, height: size),
                          styleMask: [.borderless, .nonactivatingPanel],
                          backing: .buffered, defer: false)
-        window.level = .statusBar
+        window.level = PanelWindow.overlayLevel   // above the panel and AllyKeyboard
         window.backgroundColor = .clear
         window.isOpaque = false
         window.hasShadow = false
