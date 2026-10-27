@@ -95,13 +95,19 @@ The Middle action decides by what is under the cursor:
 - **Over a link** — middle-clicks it (open in a new tab).
 - **Over empty page area** — starts **auto-scroll**: a red anchor drops where you
   stopped, and the page scrolls in the direction you move away from it — farther =
-  faster, back toward the anchor to slow down. Tunable **intensity**. Hold the cursor
-  still and the scroll ends where you stopped, without clicking — unless you turn
-  **Click when scrolling ends** on.
-- **Scroll exit delay** adds up to 2 s to the stillness that ends the scroll, so a
-  moment's pause while reading doesn't stop it (0 by default: the exit is as quick
-  as a click). **Pause after scrolling** then gives you time to move away before
-  anything can click.
+  faster, back toward the anchor to slow down. Tunable **intensity**.
+
+**Ending the scroll.** Hold the cursor still — or move it onto the panel — and the
+scroll ends where you stopped, without clicking. Three settings shape that moment:
+
+- **Scroll exit delay** (0–2 s, default 0) — extra stillness on top of the AutoMouse
+  Delay before the scroll ends, so a moment's pause while reading doesn't stop it.
+  At 0 the exit is as quick as a click.
+- **Pause after scrolling** (default 0.5 s) — once the scroll has ended, nothing can
+  click for this long, so you have time to move away from whatever is under the
+  cursor.
+- **Click when scrolling ends** (off by default) — also left-click where you stopped,
+  the way it used to work.
 
 ### Idle-disarm
 
