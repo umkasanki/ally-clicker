@@ -169,6 +169,14 @@ extension Settings {
         /// full of links that click opens whatever happens to be underneath — landing
         /// in a task instead of stopping on the board you were reading.
         public var clickOnExit: Bool = false
+        /// Extra stillness, on top of the AutoMouse Delay, before auto-scroll ends.
+        /// 0 keeps the exit as quick as a click. Reading, you can stop for a moment
+        /// without meaning to stop scrolling, and 0.2 s is shorter than that moment.
+        public var exitDelayMs: Int = 0
+
+        public static let exitDelayRangeMs = 0...2000
+
+        public var exitDelaySeconds: TimeInterval { Double(exitDelayMs) / 1000 }
 
         public init() {}
 
@@ -183,6 +191,9 @@ extension Settings {
             let rawIntensity = try c.decodeIfPresent(Double.self, forKey: .intensity) ?? d.intensity
             intensity = min(max(rawIntensity, 0.05), 5.0)
             clickOnExit = try c.decodeIfPresent(Bool.self, forKey: .clickOnExit) ?? d.clickOnExit
+            let rawExitDelay = try c.decodeIfPresent(Int.self, forKey: .exitDelayMs) ?? d.exitDelayMs
+            exitDelayMs = min(max(rawExitDelay, Self.exitDelayRangeMs.lowerBound),
+                              Self.exitDelayRangeMs.upperBound)
         }
     }
 }

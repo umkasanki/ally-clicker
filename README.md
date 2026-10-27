@@ -95,8 +95,13 @@ The Middle action decides by what is under the cursor:
 - **Over a link** — middle-clicks it (open in a new tab).
 - **Over empty page area** — starts **auto-scroll**: a red anchor drops where you
   stopped, and the page scrolls in the direction you move away from it — farther =
-  faster, back toward the anchor to slow down. Tunable **intensity**. Stop moving and
-  a left click fires there, ending the scroll.
+  faster, back toward the anchor to slow down. Tunable **intensity**. Hold the cursor
+  still and the scroll ends where you stopped, without clicking — unless you turn
+  **Click when scrolling ends** on.
+- **Scroll exit delay** adds up to 2 s to the stillness that ends the scroll, so a
+  moment's pause while reading doesn't stop it (0 by default: the exit is as quick
+  as a click). **Pause after scrolling** then gives you time to move away before
+  anything can click.
 
 ### Idle-disarm
 
@@ -129,7 +134,8 @@ Opened from the menu-bar icon. Changes apply live and are saved automatically;
     <td><b>Behavior</b> — dwell timings in 0.01 s steps: AutoMouse Delay (screen dwell),
       panel-button dwell, Drag press / release · Default to Left Click, Automatic Cancel
       · idle-disarm (minutes; 0 = never) · cursor precision: jitter tolerance + move
-      threshold (tune out head-tracker tremor) · auto-scroll intensity · launch at login.</td>
+      threshold (tune out head-tracker tremor) · auto-scroll: intensity, scroll exit delay,
+      pause after scrolling, click when scrolling ends · launch at login.</td>
     <td><b>Panel</b> — orientation, vertical or horizontal · button editor: toggle each
       button on/off and reorder the active ones. ON/OFF is pinned first but can be
       removed (Settings stays reachable from the menu bar) · icon style

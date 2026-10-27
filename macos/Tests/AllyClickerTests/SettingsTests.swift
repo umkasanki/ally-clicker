@@ -195,4 +195,36 @@ final class SettingsTests: XCTestCase {
         XCTAssertFalse(decoded.clickOnExit)
         XCTAssertEqual(decoded.intensity, 0.5, accuracy: 0.0001)
     }
+
+    /// 0 by default: the exit stays as quick as it was before the setting existed.
+    func testScrollExitDelayIsZeroByDefault() {
+        XCTAssertEqual(Settings.AutoScroll().exitDelayMs, 0)
+    }
+
+    /// Settings saved before the key existed come back with no extra delay.
+    func testSettingsSavedBeforeTheKeyHaveNoScrollExitDelay() throws {
+        let json = #"{"deadZonePx":10,"base":0,"boost":3,"maxSpeedPerTick":160,"intensity":0.5}"#
+        let decoded = try JSONDecoder().decode(Settings.AutoScroll.self, from: Data(json.utf8))
+        XCTAssertEqual(decoded.exitDelayMs, 0)
+    }
+
+    /// A hand-edited value outside 0–2 s is pulled back into range rather than
+    /// trapping the user in scroll mode, or going negative.
+    func testScrollExitDelayIsClampedToTwoSeconds() throws {
+        func decode(_ ms: Int) throws -> Int {
+            let json = #"{"intensity":0.5,"exitDelayMs":\#(ms)}"#
+            return try JSONDecoder().decode(Settings.AutoScroll.self, from: Data(json.utf8)).exitDelayMs
+        }
+        XCTAssertEqual(try decode(60_000), 2000)
+        XCTAssertEqual(try decode(-500), 0)
+        XCTAssertEqual(try decode(800), 800)
+    }
+
+    /// The value survives a save and a load.
+    func testScrollExitDelayRoundTrips() throws {
+        var s = Settings.AutoScroll()
+        s.exitDelayMs = 1200
+        let back = try JSONDecoder().decode(Settings.AutoScroll.self, from: JSONEncoder().encode(s))
+        XCTAssertEqual(back.exitDelayMs, 1200)
+    }
 }
