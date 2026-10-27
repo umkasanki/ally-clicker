@@ -105,10 +105,15 @@ struct SettingsView: View {
                                      range: 0.10...1.50, step: 0.01, unit: "s", decimals: 2,
                                      help: "Dwell at the end point before Drag releases the mouse button.")
                     }
-                    section("Scroll & Links", intro: "The MIDDLE action does two things depending on where the cursor is. Over a link: opens it in a new tab (middle click). Over empty page area: starts auto-scroll — an anchor drops where you stopped, and the page scrolls in the direction you move the cursor away from it, the farther out the faster. Move back toward the anchor to slow down. To stop, hold the cursor still anywhere — a left click fires and scrolling ends.") {
+                    section("Scroll & Links", intro: "The MIDDLE action does two things depending on where the cursor is. Over a link: opens it in a new tab (middle click). Over empty page area: starts auto-scroll — an anchor drops where you stopped, and the page scrolls in the direction you move the cursor away from it, the farther out the faster. Move back toward the anchor to slow down. To stop, hold the cursor still anywhere — scrolling ends where you stopped, without clicking.") {
                         ValueControl(title: "Intensity", value: $model.settings.autoScroll.intensity,
                                      range: 0.25...3.0, step: 0.25, unit: "×", decimals: 2,
                                      help: "Scroll speed multiplier. Lower = slower and easier to control; higher = faster.")
+                        ValueControl(title: "Pause after scrolling", value: seconds($model.settings.timing.modeExitGraceMs),
+                                     range: 0.0...3.0, step: 0.1, unit: "s", decimals: 1,
+                                     help: "Quiet time once scrolling ends, before any click can fire. You stop moving in order to stop scrolling, so this is the time you have to move away before the cursor counts as resting on a target.")
+                        toggleRow("Click when scrolling ends", $model.settings.autoScroll.clickOnExit,
+                                  help: "Also left-click where the cursor stopped. Off by default: on a page full of links, stopping would open whatever is under the cursor instead of simply ending the scroll.")
                     }
                     section("Cursor precision", intro: "How steady the cursor must be to count as \"holding still\". These apply to every action above — raise them if head-tracker tremor triggers actions too early or ends drags by accident.") {
                         ValueControl(title: "Jitter tolerance", value: asDouble($model.settings.stillness.sensitivity),

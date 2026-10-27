@@ -13,11 +13,13 @@ final class AutoScroller {
 
     private let stillRadius: Double
     private let dwellSeconds: TimeInterval
+    private let clickOnExit: Bool
     private let tick = 0.016
 
     // Exit = same gesture as a normal dwell-click: you scroll by MOVING the cursor;
     // when you stop moving (frame-to-frame stillness within stillRadius) for the
-    // dwell time, a left click fires and scroll ends.
+    // dwell time, scrolling ends. Whether that also clicks is a setting, off by
+    // default — see Settings.AutoScroll.clickOnExit.
     private var lastCursor: Point = .zero
     private var stillElapsed: TimeInterval = 0
     private var hasScrolled = false   // arm exit only after actually scrolling once
@@ -34,6 +36,7 @@ final class AutoScroller {
         self.controller = AutoScrollController(config: config)
         self.stillRadius = stillRadius
         self.dwellSeconds = dwellSeconds
+        self.clickOnExit = config.clickOnExit
         self.injector = injector
     }
 
@@ -64,9 +67,12 @@ final class AutoScroller {
         }
         lastCursor = cursor
 
-        // Stopped after scrolling → left click here + exit (like a normal dwell).
+        // Stopped after scrolling → exit. The click is optional and off by default,
+        // because holding still is how you *leave* the mode, not how you pick a target.
+        // Nothing fires straight afterwards either: armDefaultIfEnabled() sets
+        // awaitingMoveAfterFire, so the next dwell needs a real move first.
         if hasScrolled, stillElapsed >= dwellSeconds {
-            injector.click(.left, at: cursor)
+            if clickOnExit { injector.click(.left, at: cursor) }
             stop()
             return
         }

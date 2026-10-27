@@ -82,7 +82,7 @@ public final class DwellController {
     /// Hand control back after a takeover mode (auto-scroll, panel move): re-arm the
     /// default action so Left resumes being the resting state, and tell the UI.
     public func armDefaultIfEnabled() {
-        if let action = engine.armDefaultIfEnabled() {
+        if let action = engine.armDefaultIfEnabled(at: sampler.location) {
             onUIEffect?(.setArmed(action))
         }
     }

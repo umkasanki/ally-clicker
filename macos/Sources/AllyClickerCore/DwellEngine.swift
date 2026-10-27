@@ -75,6 +75,8 @@ public struct DwellEngine {
     /// also moving the cursor. Only movement is worth reporting.
     private var lastDragPoint: Point? = nil
     private var dwellAnchor: Point? = nil
+    /// Counts down after a takeover mode ends; nothing fires while it runs.
+    private var modeExitGrace: TimeInterval = 0
     private var dwellElapsed: TimeInterval = 0
     // Swipe-reset debounce: how long the cursor has been continuously inside the
     // panel, and whether this visit already triggered the reset.
@@ -228,6 +230,20 @@ public struct DwellEngine {
                 break
             }
 
+            // MODE-EXIT GRACE: a takeover mode just handed control back. Nothing
+            // fires until this runs out, however still the cursor is, because the
+            // user stopped in order to END THE MODE — not to pick what is under the
+            // pointer. Measured 2026-10-27: without it the click landed ~200 ms
+            // after the scroll stopped, which is not enough time to move away.
+            if modeExitGrace > 0 {
+                modeExitGrace -= dt
+                // Start the dwell from scratch when the grace ends. Without this the
+                // stillness banks up while the grace runs and the click lands the
+                // instant it expires — the delay would exist but buy nothing.
+                if modeExitGrace <= 0 { resetDwell(at: cursor) }
+                break
+            }
+
             // RE-FIRE GATE: after a fire, require the cursor to move to a NEW target
             // before anything fires again. Matches PNC's "fires on each cursor STOP" —
             // a parked cursor must not machine-gun clicks. Applies to every mode.
@@ -328,13 +344,23 @@ public struct DwellEngine {
     /// the resting state the user expects to come back to — every other action is a
     /// one-shot. Returns the newly armed action, or nil if the option is off.
     @discardableResult
-    public mutating func armDefaultIfEnabled() -> Action? {
+    /// `parkedAt` is where the cursor actually is as the mode ends.
+    ///
+    /// It used to take `dwellAnchor`, and that was wrong in the one case the guard
+    /// exists for. Auto-scroll works by moving the cursor *far away* from the
+    /// anchor — the distance is the scroll speed — so "has it really moved since?"
+    /// was already true the instant scrolling stopped. The guard lifted itself, the
+    /// dwell counted the stillness the user was holding in order to stop, and a
+    /// click landed on whatever happened to be under the cursor. Measured
+    /// 2026-10-27 on a dashboard: stopping the scroll opened a task.
+    public mutating func armDefaultIfEnabled(at parkedAt: Point) -> Action? {
         guard settings.clicks.defaultLeft else { return nil }
         armed = .left
         // The cursor is parked wherever the mode ended; require a real move before
         // this fresh arm can fire, so it can't click on the spot.
         awaitingMoveAfterFire = true
-        lastFirePoint = dwellAnchor
+        lastFirePoint = parkedAt
+        modeExitGrace = settings.timing.modeExitGraceSeconds
         return armed
     }
 

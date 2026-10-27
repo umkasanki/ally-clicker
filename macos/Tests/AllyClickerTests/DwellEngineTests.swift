@@ -167,7 +167,7 @@ final class DwellEngineTests: XCTestCase {
         engine.clearArmed()
         XCTAssertNil(engine.armed)
 
-        engine.armDefaultIfEnabled()
+        engine.armDefaultIfEnabled(at: .zero)
         XCTAssertEqual(engine.armed, .left, "Left resumes after a takeover mode ends")
     }
 
@@ -176,8 +176,71 @@ final class DwellEngineTests: XCTestCase {
         settings.clicks.defaultLeft = false
         engine = DwellEngine(settings: settings)
 
-        engine.armDefaultIfEnabled()
+        engine.armDefaultIfEnabled(at: .zero)
         XCTAssertNil(engine.armed, "Without Default-to-Left nothing is auto-armed")
+    }
+
+    func testEndingAModeDoesNotClickWhereItEnded() {
+        // Auto-scroll parks the cursor far from the dwell anchor — that distance is
+        // the scroll speed. Handing control back used to take the anchor as the last
+        // fire point, so the move test passed at once and the dwell fired on the spot
+        // the user had merely stopped over. Point-N-Click does not do that.
+        armAction(.middle)
+        engine.clearArmed()
+
+        let parked = Point(x: 900, y: 600)   // far from the anchor armAction left
+        engine.armDefaultIfEnabled(at: parked)
+        XCTAssertEqual(engine.armed, .left)
+
+        // Budget covers the mode-exit grace as well as the dwell, or the second
+        // half of this test would be measuring the grace rather than the gate.
+        let ticks = Int((engine.settings.timing.modeExitGraceSeconds
+                         + engine.settings.timing.dwellTimeMouseSeconds) / tickDt) + 50
+        var fired = false
+        for _ in 0..<ticks {
+            if hasFire(engine.tick(cursor: parked, zone: .desktop, dt: tickDt)) { fired = true }
+        }
+        XCTAssertFalse(fired, "stopping in order to end a mode must not click there")
+
+        // A real move must re-enable it, or we have traded one fault for another.
+        let moved = Point(x: 960, y: 600)
+        var firedAfterMove = false
+        for _ in 0..<ticks {
+            if hasFire(engine.tick(cursor: moved, zone: .desktop, dt: tickDt)) { firedAfterMove = true }
+        }
+        XCTAssertTrue(firedAfterMove, "after a real move the dwell works normally again")
+    }
+
+    func testNothingFiresDuringTheGraceAfterAModeEnds() {
+        // Fixed numbers, not the settings under test: an earlier version of this
+        // ticked `grace / tickDt` times, which is zero ticks when the grace is zero —
+        // it passed with the feature removed and proved nothing.
+        var settings = Settings()
+        settings.timing.modeExitGraceMs = 500
+        settings.timing.dwellTimeMouseMs = 200
+        engine = DwellEngine(settings: settings)
+
+        armAction(.middle)
+        engine.clearArmed()
+        engine.armDefaultIfEnabled(at: Point(x: 900, y: 600))
+
+        // Move away at once, so the re-fire gate is satisfied and the grace is the
+        // only thing left holding the click back.
+        let target = Point(x: 980, y: 600)
+        var firedAt: TimeInterval? = nil
+        var elapsed: TimeInterval = 0
+        for _ in 0..<2000 {
+            guard firedAt == nil else { break }
+            elapsed += tickDt
+            if hasFire(engine.tick(cursor: target, zone: .desktop, dt: tickDt)) { firedAt = elapsed }
+        }
+
+        XCTAssertNotNil(firedAt, "a click must still be possible once the grace is over")
+        // 0.5 s of grace and then a fresh 0.2 s dwell. Under 0.6 s means the grace
+        // was skipped — which is what used to happen: the click came at 0.2 s, too
+        // soon to move the cursor off a link.
+        XCTAssertGreaterThan(firedAt ?? 0, 0.6, "the grace was skipped")
+        XCTAssertLessThan(firedAt ?? 0, 1.2, "the grace must end, not block forever")
     }
 
     // MARK: - Idle disarm

@@ -177,4 +177,22 @@ final class SettingsTests: XCTestCase {
             XCTAssertEqual(decoded.commands.keyboard, target)
         }
     }
+
+    /// Point-N-Click does not click when its scroll stops. Ours did, and on a page
+    /// full of links holding still to stop opened whatever was under the cursor —
+    /// landing in a task instead of stopping on the board. Measured against PNC on
+    /// 2026-10-27 and matched to it, the same standard as the defaults above.
+    func testScrollExitDoesNotClickByDefault() {
+        XCTAssertFalse(Settings.AutoScroll().clickOnExit)
+    }
+
+    /// Settings saved before the key existed decode without it. They must not come
+    /// back with the click switched on, which is what a plain `decode` would do if
+    /// the default ever flipped.
+    func testSettingsSavedBeforeTheKeyKeepTheClickOff() throws {
+        let json = #"{"deadZonePx":10,"base":0,"boost":3,"maxSpeedPerTick":160,"intensity":0.5}"#
+        let decoded = try JSONDecoder().decode(Settings.AutoScroll.self, from: Data(json.utf8))
+        XCTAssertFalse(decoded.clickOnExit)
+        XCTAssertEqual(decoded.intensity, 0.5, accuracy: 0.0001)
+    }
 }

@@ -62,11 +62,17 @@ extension Settings {
         public var autoSelectDownMs: Int = 320
         /// DRAG phase 2: how long to dwell at the end point before mouseUp (ms).
         public var autoSelectUpMs: Int = 210
+        /// Quiet time after a takeover mode (auto-scroll, panel move) hands control
+        /// back, during which no dwell can fire. Without it the re-armed Left goes
+        /// off one AutoMouse Delay after you stop — around 200 ms, far too fast to
+        /// call off, so ending a scroll kept opening whatever was underneath.
+        public var modeExitGraceMs: Int = 500
 
         public var dwellTimeSeconds: TimeInterval { Double(dwellTimeMs) / 1000 }
         public var dwellTimeMouseSeconds: TimeInterval { Double(dwellTimeMouseMs) / 1000 }
         public var autoSelectDownSeconds: TimeInterval { Double(autoSelectDownMs) / 1000 }
         public var autoSelectUpSeconds: TimeInterval { Double(autoSelectUpMs) / 1000 }
+        public var modeExitGraceSeconds: TimeInterval { Double(modeExitGraceMs) / 1000 }
 
         public init() {}
 
@@ -77,6 +83,7 @@ extension Settings {
             dwellTimeMouseMs = try c.decodeIfPresent(Int.self, forKey: .dwellTimeMouseMs) ?? d.dwellTimeMouseMs
             autoSelectDownMs = try c.decodeIfPresent(Int.self, forKey: .autoSelectDownMs) ?? d.autoSelectDownMs
             autoSelectUpMs   = try c.decodeIfPresent(Int.self, forKey: .autoSelectUpMs)   ?? d.autoSelectUpMs
+            modeExitGraceMs  = try c.decodeIfPresent(Int.self, forKey: .modeExitGraceMs)  ?? d.modeExitGraceMs
         }
     }
 }
@@ -157,6 +164,11 @@ extension Settings {
         /// User-facing speed multiplier applied to the final scroll delta.
         /// <1 slower (for less precise users), >1 faster. 0.5 is a comfortable default.
         public var intensity: Double = 0.5
+        /// Whether ending auto-scroll also left-clicks where the cursor stopped.
+        /// Off: you hold the cursor still in order to *stop scrolling*, and on a page
+        /// full of links that click opens whatever happens to be underneath — landing
+        /// in a task instead of stopping on the board you were reading.
+        public var clickOnExit: Bool = false
 
         public init() {}
 
@@ -170,6 +182,7 @@ extension Settings {
             // Guard against a bad/hand-edited value inverting or exploding scroll.
             let rawIntensity = try c.decodeIfPresent(Double.self, forKey: .intensity) ?? d.intensity
             intensity = min(max(rawIntensity, 0.05), 5.0)
+            clickOnExit = try c.decodeIfPresent(Bool.self, forKey: .clickOnExit) ?? d.clickOnExit
         }
     }
 }
