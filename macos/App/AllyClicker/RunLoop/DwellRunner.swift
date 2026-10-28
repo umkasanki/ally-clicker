@@ -1,7 +1,9 @@
 import Foundation
 import AllyClickerCore
 
-// Drives DwellController.advance(dt:) on a fixed cadence (trackerIntervalMs).
+// Drives DwellController.advance(dt:) on a fixed cadence (trackerIntervalMs),
+// passing the time that really passed between ticks (see TickClock) — a tick the
+// system delivered late must not make every dwell longer.
 // Single-threaded on the main queue — matches DwellController's threading contract
 // (onUIEffect runs inline and touches AppKit).
 
@@ -9,6 +11,7 @@ final class DwellRunner {
     private let controller: DwellController
     private let intervalMs: Int
     private var timer: DispatchSourceTimer?
+    private var clock: TickClock
 
     /// Asked on every tick: is something else in charge of the cursor right now?
     ///
@@ -29,17 +32,20 @@ final class DwellRunner {
     init(controller: DwellController, intervalMs: Int) {
         self.controller = controller
         self.intervalMs = max(1, intervalMs)
+        self.clock = TickClock(nominal: Double(self.intervalMs) / 1000.0)
     }
 
     func start() {
         guard timer == nil else { return }   // idempotent — never run two timers
-        let dt = Double(intervalMs) / 1000.0
+        clock.reset()
         let t = DispatchSource.makeTimerSource(queue: .main)
         t.schedule(deadline: .now(), repeating: .milliseconds(intervalMs), leeway: .milliseconds(1))
         t.setEventHandler { [weak self] in
             guard let self else { return }
-            if self.isSuspended?() == true { return }
-            self.controller.advance(dt: dt)
+            // While a mode has the cursor, forget the clock: the time it held
+            // the cursor is not time this loop spent watching it.
+            if self.isSuspended?() == true { self.clock.reset(); return }
+            self.controller.advance(dt: self.clock.step(now: ProcessInfo.processInfo.systemUptime))
         }
         t.resume()
         timer = t

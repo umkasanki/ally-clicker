@@ -15,7 +15,7 @@ final class AutoScroller {
     private let dwellSeconds: TimeInterval
     private let clickOnExit: Bool
     private let exitDelay: TimeInterval
-    private let tick = 0.016
+    private var clock = TickClock(nominal: 0.016)
 
     // Exit = same gesture as a normal dwell-click: you scroll by MOVING the cursor;
     // when you stop moving (frame-to-frame stillness within stillRadius) for the
@@ -49,6 +49,7 @@ final class AutoScroller {
         lastCursor = point
         stillElapsed = 0
         hasScrolled = false
+        clock.reset()
 
         let t = DispatchSource.makeTimerSource(queue: .main)
         t.schedule(deadline: .now(), repeating: .milliseconds(16))  // ~60fps
@@ -61,9 +62,11 @@ final class AutoScroller {
         let cursor = ScreenGeometry.toTopLeft(NSEvent.mouseLocation)
         if shouldExit?(cursor) == true { stop(); return }
 
-        // Stillness = stopped moving the cursor (same threshold as dwell-click).
+        // Stillness = stopped moving the cursor (same threshold as dwell-click),
+        // counted in the time that really passed, as the dwell loop counts it.
+        let dt = clock.step(now: ProcessInfo.processInfo.systemUptime)
         if cursor.distance(to: lastCursor) <= stillRadius {
-            stillElapsed += tick
+            stillElapsed += dt
         } else {
             stillElapsed = 0
         }
