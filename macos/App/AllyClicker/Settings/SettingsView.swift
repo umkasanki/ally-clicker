@@ -115,13 +115,16 @@ struct SettingsView: View {
                         ValueControl(title: "Pause after scrolling", value: seconds($model.settings.timing.modeExitGraceMs),
                                      range: 0.0...3.0, step: 0.1, unit: "s", decimals: 1,
                                      help: "Quiet time once scrolling ends, before any click can fire. You stop moving in order to stop scrolling, so this is the time you have to move away before the cursor counts as resting on a target.")
+                        ValueControl(title: "Scroll jitter tolerance", value: asDouble($model.settings.autoScroll.stillRadiusPx),
+                                     range: 1...10, step: 1, unit: "pt",
+                                     help: "How far the cursor may move in one frame (1/60 s) and still count as stopped, to end scrolling. Lower = scrolling ends only when you really stop; higher = it ends more easily, even while you move slowly. Separate from Jitter tolerance, which is for clicks.")
                         toggleRow("Click when scrolling ends", $model.settings.autoScroll.clickOnExit,
                                   help: "Also left-click where the cursor stopped. Off by default: on a page full of links, stopping would open whatever is under the cursor instead of simply ending the scroll.")
                     }
-                    section("Cursor precision", intro: "How steady the cursor must be to count as \"holding still\". These apply to every action above — raise them if head-tracker tremor triggers actions too early or ends drags by accident.") {
+                    section("Cursor precision", intro: "How steady the cursor must be to count as \"holding still\" for clicks, panel buttons and drags. Scrolling has its own Scroll jitter tolerance, above. Raise them if head-tracker tremor keeps restarting the countdown or ends drags by accident.") {
                         ValueControl(title: "Jitter tolerance", value: asDouble($model.settings.stillness.sensitivity),
                                      range: 1...10, step: 1,
-                                     help: "How much cursor tremor still counts as holding still. Higher = more forgiving for shaky control.")
+                                     help: "How far the cursor may wander from where it stopped and still count as holding still, for clicks, panel buttons and drags. Higher = quicker, more forgiving clicks; too high, and a slow approach clicks before it reaches a small target.")
                         ValueControl(title: "Move threshold", value: asDouble($model.settings.stillness.moveRadiusPx),
                                      range: 4...30, step: 1, unit: "pt",
                                      help: "Minimum movement (points) counted as a real move — resets timers and ends a drag's first phase.")

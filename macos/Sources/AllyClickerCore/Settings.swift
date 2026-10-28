@@ -36,6 +36,18 @@ public struct Settings: Codable, Equatable {
         panel       = try c.decodeIfPresent(Panel.self,       forKey: .panel)       ?? d.panel
         commands    = try c.decodeIfPresent(Commands.self,    forKey: .commands)    ?? d.commands
         calibration = try c.decodeIfPresent(Calibration.self, forKey: .calibration) ?? d.calibration
+        // The scroll's stop tolerance used to be the click's Jitter tolerance.
+        // Settings saved before it had a key of its own keep scrolling as they did;
+        // with no scroll section at all there is nothing to keep, and defaults stand.
+        if let probe = try c.decodeIfPresent(ScrollStillRadiusProbe.self, forKey: .autoScroll),
+           probe.stillRadiusPx == nil {
+            autoScroll.stillRadiusPx = AutoScroll.clampStillRadius(stillness.sensitivity)
+        }
+    }
+
+    /// Reads only whether `autoScroll.stillRadiusPx` was saved at all.
+    private struct ScrollStillRadiusProbe: Decodable {
+        var stillRadiusPx: Int?
     }
 
     /// Effective desktop auto-click dwell time (seconds).
@@ -173,8 +185,19 @@ extension Settings {
         /// 0 keeps the exit as quick as a click. Reading, you can stop for a moment
         /// without meaning to stop scrolling, and 0.2 s is shorter than that moment.
         public var exitDelayMs: Int = 0
+        /// How far the cursor may move between two frames (pt, ~16 ms apart) and
+        /// still count as stopped, for ending auto-scroll. Its own setting, apart
+        /// from the click's Jitter tolerance: measured frame to frame it is a speed —
+        /// 5 pt a frame is ~300 pt/s, and slow reading already counts as stopped —
+        /// while a click wants a looser radius around one point.
+        public var stillRadiusPx: Int = 3
 
         public static let exitDelayRangeMs = 0...2000
+        public static let stillRadiusRangePx = 1...10
+
+        public static func clampStillRadius(_ px: Int) -> Int {
+            min(max(px, stillRadiusRangePx.lowerBound), stillRadiusRangePx.upperBound)
+        }
 
         public var exitDelaySeconds: TimeInterval { Double(exitDelayMs) / 1000 }
 
@@ -194,6 +217,8 @@ extension Settings {
             let rawExitDelay = try c.decodeIfPresent(Int.self, forKey: .exitDelayMs) ?? d.exitDelayMs
             exitDelayMs = min(max(rawExitDelay, Self.exitDelayRangeMs.lowerBound),
                               Self.exitDelayRangeMs.upperBound)
+            stillRadiusPx = Self.clampStillRadius(
+                try c.decodeIfPresent(Int.self, forKey: .stillRadiusPx) ?? d.stillRadiusPx)
         }
     }
 }

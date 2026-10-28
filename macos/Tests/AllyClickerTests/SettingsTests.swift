@@ -227,4 +227,39 @@ final class SettingsTests: XCTestCase {
         let back = try JSONDecoder().decode(Settings.AutoScroll.self, from: JSONEncoder().encode(s))
         XCTAssertEqual(back.exitDelayMs, 1200)
     }
+
+    /// A fresh install ends a scroll at 3 pt a frame (~190 pt/s).
+    func testScrollJitterToleranceIsThreeByDefault() {
+        XCTAssertEqual(Settings.AutoScroll().stillRadiusPx, 3)
+    }
+
+    /// Settings saved before the key existed keep scrolling exactly as they did:
+    /// the scroll takes the click's Jitter tolerance it used to share.
+    func testSettingsSavedBeforeTheKeyTakeTheClickTolerance() throws {
+        let json = #"{"stillness":{"sensitivity":5},"autoScroll":{"intensity":0.5}}"#
+        let s = try JSONDecoder().decode(Settings.self, from: Data(json.utf8))
+        XCTAssertEqual(s.autoScroll.stillRadiusPx, 5)
+    }
+
+    /// Once saved, the two tolerances are independent.
+    func testScrollJitterToleranceIsIndependentOfTheClickOne() throws {
+        let json = #"{"stillness":{"sensitivity":8},"autoScroll":{"stillRadiusPx":3}}"#
+        let s = try JSONDecoder().decode(Settings.self, from: Data(json.utf8))
+        XCTAssertEqual(s.stillness.sensitivity, 8)
+        XCTAssertEqual(s.autoScroll.stillRadiusPx, 3)
+        let back = try JSONDecoder().decode(Settings.self, from: JSONEncoder().encode(s))
+        XCTAssertEqual(back, s)
+    }
+
+    /// A hand-edited value is pulled into 1–10: 0 would never end a scroll,
+    /// a huge one would end it mid-movement.
+    func testScrollJitterToleranceIsClamped() throws {
+        func decode(_ px: Int) throws -> Int {
+            let json = #"{"stillRadiusPx":\#(px)}"#
+            return try JSONDecoder().decode(Settings.AutoScroll.self, from: Data(json.utf8)).stillRadiusPx
+        }
+        XCTAssertEqual(try decode(0), 1)
+        XCTAssertEqual(try decode(50), 10)
+        XCTAssertEqual(try decode(4), 4)
+    }
 }

@@ -358,7 +358,7 @@ AllyClicker — инструмент доступности для пользо�
    ```
 
 5. Зигзагообразное движение курсора — скролл продолжается (курсор не останавливается → AutoMouse Delay не срабатывает)
-6. **Выход из Auto-Scroll.** Курсор стоит неподвижно (сдвиг за кадр ≤ Jitter tolerance)
+6. **Выход из Auto-Scroll.** Курсор стоит неподвижно (сдвиг за кадр ≤ Scroll jitter tolerance, `autoScroll.stillRadiusPx`)
    дольше, чем `AutoMouse Delay + Scroll exit delay`, — или заходит на панель.
    Выход возможен только после того, как прокрутка хоть раз сработала.
    - **Scroll exit delay** (`autoScroll.exitDelayMs`, 0–2000 мс, по умолчанию 0) —

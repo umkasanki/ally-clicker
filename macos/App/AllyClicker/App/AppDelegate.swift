@@ -177,7 +177,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         autoScroller?.stop()   // never orphan a running scroll timer / stranded anchor
         autoScroller = AutoScroller(
             config: settings.autoScroll,
-            stillRadius: Double(settings.stillness.sensitivity),
+            stillRadius: Double(settings.autoScroll.stillRadiusPx),
             dwellSeconds: settings.effectiveDwellMouseSeconds,
             injector: injector)
         autoScroller.shouldExit = { [weak self] cursor in

@@ -62,7 +62,7 @@ final class AutoScroller {
         let cursor = ScreenGeometry.toTopLeft(NSEvent.mouseLocation)
         if shouldExit?(cursor) == true { stop(); return }
 
-        // Stillness = stopped moving the cursor (same threshold as dwell-click),
+        // Stillness = stopped moving the cursor (Scroll jitter tolerance, per frame),
         // counted in the time that really passed, as the dwell loop counts it.
         let dt = clock.step(now: ProcessInfo.processInfo.systemUptime)
         if cursor.distance(to: lastCursor) <= stillRadius {
