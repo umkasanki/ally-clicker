@@ -109,6 +109,9 @@ struct SettingsView: View {
                         ValueControl(title: "Intensity", value: $model.settings.autoScroll.intensity,
                                      range: 0.25...3.0, step: 0.25, unit: "×", decimals: 2,
                                      help: "Scroll speed multiplier. Lower = slower and easier to control; higher = faster.")
+                        ValueControl(title: "Acceleration", value: $model.settings.autoScroll.accelerationExponent,
+                                     range: 0.5...2.0, step: 0.1, decimals: 1,
+                                     help: "How much faster scrolling gets the farther you move from the anchor. 0.5 = gentle (the original); higher = slow and precise near the anchor, much faster far out — for long pages.")
                         ValueControl(title: "Scroll exit delay", value: seconds($model.settings.autoScroll.exitDelayMs),
                                      range: 0.0...2.0, step: 0.1, unit: "s", decimals: 1,
                                      help: "Extra time the cursor must stay still, on top of the AutoMouse Delay, before scrolling ends. Raise it if a moment's pause while reading stops the scroll. 0 = end as quickly as a click.")

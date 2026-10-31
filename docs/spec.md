@@ -357,6 +357,12 @@ AllyClicker — инструмент доступности для пользо�
    event?.post(tap: .cgSessionEventTap)
    ```
 
+   Speed per axis per tick: `(base + boost × √ref × (d / ref)^a) × Intensity`, where `d` is the
+   distance beyond the dead zone and `ref` = 40 px. **Acceleration** (`autoScroll.accelerationExponent`,
+   0.5–2.0, default 0.5) is `a`: 0.5 is the plain square-root ramp; higher is slower near the
+   anchor and much faster far out (the same speed at `ref` for every value). Intensity stays a
+   flat multiplier on top.
+
 5. Зигзагообразное движение курсора — скролл продолжается (курсор не останавливается → AutoMouse Delay не срабатывает)
 6. **Выход из Auto-Scroll.** Курсор стоит неподвижно (сдвиг за кадр ≤ Scroll jitter tolerance, `autoScroll.stillRadiusPx`)
    дольше, чем `AutoMouse Delay + Scroll exit delay`, — или заходит на панель.

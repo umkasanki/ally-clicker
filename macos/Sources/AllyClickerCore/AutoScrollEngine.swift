@@ -8,6 +8,10 @@ import Foundation
 //
 //   speed = base + sqrt(distance - deadZone) * boost   (clamped to maxSpeedPerTick)
 //
+// The square root is generalised to a power (Acceleration): the ramp is
+// normalised at accelerationReferencePx, so 0.5 is exactly the formula above and
+// a higher power is slower near the anchor and faster far from it.
+//
 // Each axis is computed independently, so diagonal scrolling works naturally.
 // This engine is sign-agnostic about scroll direction in the screen sense — it
 // returns a delta whose sign follows the cursor offset (cursor below/right of the
@@ -31,7 +35,9 @@ public struct AutoScrollEngine {
         let distance = abs(offset)
         guard distance > config.deadZonePx else { return 0 }
         let adjusted = distance - config.deadZonePx
-        let raw = (config.base + adjusted.squareRoot() * config.boost) * config.intensity
+        let ref = Settings.AutoScroll.accelerationReferencePx
+        let ramp = ref.squareRoot() * pow(adjusted / ref, config.accelerationExponent)
+        let raw = (config.base + ramp * config.boost) * config.intensity
         // Clamp LAST so maxSpeedPerTick always bounds the final delta, whatever
         // the intensity multiplier is (prevents runaway scroll).
         let speed = min(raw, config.maxSpeedPerTick)

@@ -171,6 +171,11 @@ extension Settings {
         public var base: Double = 0
         /// Multiplier on sqrt(distance beyond dead zone) — controls ramp-up.
         public var boost: Double = 3
+        /// How steeply speed grows with distance from the anchor: the power the
+        /// distance is raised to. 0.5 is the plain square root (the original ramp);
+        /// higher keeps the start near the anchor slow and makes far out much faster,
+        /// so a long page can be crossed without moving the head far.
+        public var accelerationExponent: Double = 0.5
         /// Maximum scroll delta per tick (px), to cap runaway speed.
         public var maxSpeedPerTick: Double = 160
         /// User-facing speed multiplier applied to the final scroll delta.
@@ -193,6 +198,10 @@ extension Settings {
         public var stillRadiusPx: Int = 3
 
         public static let exitDelayRangeMs = 0...2000
+        public static let accelerationRange = 0.5...2.0
+        /// Distance beyond the dead zone (px) where every Acceleration scrolls at the
+        /// same speed: nearer is slower with a steeper ramp, farther is faster.
+        public static let accelerationReferencePx = 40.0
         public static let stillRadiusRangePx = 1...10
 
         public static func clampStillRadius(_ px: Int) -> Int {
@@ -209,6 +218,10 @@ extension Settings {
             deadZonePx      = try c.decodeIfPresent(Double.self, forKey: .deadZonePx)      ?? d.deadZonePx
             base            = try c.decodeIfPresent(Double.self, forKey: .base)            ?? d.base
             boost           = try c.decodeIfPresent(Double.self, forKey: .boost)           ?? d.boost
+            let rawAcceleration = try c.decodeIfPresent(Double.self, forKey: .accelerationExponent)
+                ?? d.accelerationExponent
+            accelerationExponent = min(max(rawAcceleration, Self.accelerationRange.lowerBound),
+                                       Self.accelerationRange.upperBound)
             maxSpeedPerTick = try c.decodeIfPresent(Double.self, forKey: .maxSpeedPerTick) ?? d.maxSpeedPerTick
             // Guard against a bad/hand-edited value inverting or exploding scroll.
             let rawIntensity = try c.decodeIfPresent(Double.self, forKey: .intensity) ?? d.intensity

@@ -62,4 +62,32 @@ final class AutoScrollEngineTests: XCTestCase {
         XCTAssertGreaterThan(d.dx, 0)
         XCTAssertGreaterThan(d.dy, 0)
     }
+
+    func testDefaultAccelerationIsTheSquareRootRamp() {
+        // 0.5 must reproduce the original formula exactly: base + sqrt(d - dead) * boost.
+        let cfg = Settings.AutoScroll()
+        let d = AutoScrollEngine(config: cfg).delta(anchor: anchor, cursor: Point(x: 500, y: 600)).dy
+        let expected = (cfg.base + (100 - cfg.deadZonePx).squareRoot() * cfg.boost) * cfg.intensity
+        XCTAssertEqual(d, expected, accuracy: 0.0001)
+    }
+
+    func testSteeperAccelerationIsSlowerNearAndFasterFar() {
+        var gentle = Settings.AutoScroll(); gentle.intensity = 1
+        var steep = gentle; steep.accelerationExponent = 1.5
+        func dy(_ cfg: Settings.AutoScroll, _ offset: Double) -> Double {
+            AutoScrollEngine(config: cfg).delta(anchor: anchor, cursor: Point(x: 500, y: 500 + offset)).dy
+        }
+        XCTAssertLessThan(dy(steep, 25), dy(gentle, 25), "near the anchor: slower, more precise")
+        XCTAssertGreaterThan(dy(steep, 300), dy(gentle, 300), "far out: faster")
+        let atReference = 10 + Settings.AutoScroll.accelerationReferencePx
+        XCTAssertEqual(dy(steep, atReference), dy(gentle, atReference), accuracy: 0.0001)
+    }
+
+    func testAccelerationIsClampedWhenDecoded() throws {
+        let json = #"{"accelerationExponent": 9}"#.data(using: .utf8)!
+        let cfg = try JSONDecoder().decode(Settings.AutoScroll.self, from: json)
+        XCTAssertEqual(cfg.accelerationExponent, Settings.AutoScroll.accelerationRange.upperBound)
+        let old = try JSONDecoder().decode(Settings.AutoScroll.self, from: "{}".data(using: .utf8)!)
+        XCTAssertEqual(old.accelerationExponent, 0.5, "settings saved before Acceleration keep the old ramp")
+    }
 }

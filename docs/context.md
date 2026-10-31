@@ -5,6 +5,17 @@
 
 ---
 
+## Scroll Acceleration (2026-10-31) — released in v0.2.7
+
+The user asked for a "dynamic" scroll intensity (static/dynamic mode, speed from the
+vertical/horizontal ratio). Chosen instead: keep the mechanics, add **Acceleration**
+(`autoScroll.accelerationExponent`, 0.5–2.0, default 0.5 = the original √ ramp). The ramp is
+normalised at 40 px past the dead zone, so higher values are slower near the anchor and faster
+far out. The ratio idea was dropped: it divides by ~0 when moving straight down, jitters, and
+horizontal offset already scrolls sideways. 113 tests green.
+
+---
+
 ## 🔴 ТЕКУЩАЯ ЗАДАЧА (2026-10-27, передача в новый чат) — клики тормозят
 
 Прошлый чат стал слишком длинным (в Claude тормозило поле ввода) и закрыт
