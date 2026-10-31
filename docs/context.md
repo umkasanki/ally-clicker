@@ -16,10 +16,10 @@ horizontal offset already scrolls sideways. 113 tests green.
 
 ---
 
-## 🔴 ТЕКУЩАЯ ЗАДАЧА (2026-10-27, передача в новый чат) — клики тормозят
+## ✅ Resolved in v0.2.6 (2026-10-27/28) — late clicks
 
-Прошлый чат стал слишком длинным (в Claude тормозило поле ввода) и закрыт
-пользователем; работа продолжается отсюда. **Начни с этого раздела.**
+The previous chat grew too long (the Claude input field lagged) and was closed
+by the user; work continued from here.
 
 ### Сессия 2026-10-28 (~00:25 PDT) — допуск вернули, разделили на два
 
@@ -144,9 +144,9 @@ horizontal offset already scrolls sideways. 113 tests green.
 
 ## Статус проекта
 
-**Текущая фаза:** macOS-версия в рабочем состоянии, релиз **v0.2.6** (Homebrew tap + .dmg),
-установлен у пользователя через Homebrew. Ветка одна — `main`, Windows-порт отменён.
-**Последнее действие:** защита ресурсов + отдельный допуск для прокрутки, релиз v0.2.6.
+**Current phase:** the macOS version works, release **v0.2.7** (Homebrew tap + .dmg),
+installed for the user via Homebrew. One branch — `main`; the Windows port is cancelled.
+**Last action:** scroll Acceleration (`autoScroll.accelerationExponent`), release v0.2.7.
 
 ### Релизы после v0.2.0
 
@@ -158,6 +158,7 @@ horizontal offset already scrolls sideways. 113 tests green.
 | v0.2.4 | Остановка прокрутки не кликает (`clickOnExit`, выкл.) + Pause after scrolling (`modeExitGraceMs`, 500 мс) |
 | v0.2.5 | Scroll exit delay (`autoScroll.exitDelayMs`, 0–2 с, по умолчанию 0) |
 | v0.2.6 | App Nap выкл. + время по часам (`TickClock`); Scroll jitter tolerance (`autoScroll.stillRadiusPx`) отдельно от Jitter tolerance кликов |
+| v0.2.7 | Scroll Acceleration (`autoScroll.accelerationExponent`, 0.5–2.0, default 0.5 = original √ ramp) |
 
 ### ✅ Сессия 2026-10-27 — выход из прокрутки перестал быть ловушкой
 

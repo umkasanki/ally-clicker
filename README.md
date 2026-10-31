@@ -140,7 +140,7 @@ Opened from the menu-bar icon. Changes apply live and are saved automatically;
     <td><b>Behavior</b> — dwell timings in 0.01 s steps: AutoMouse Delay (screen dwell),
       panel-button dwell, Drag press / release · Default to Left Click, Automatic Cancel
       · idle-disarm (minutes; 0 = never) · cursor precision: jitter tolerance (clicks) + move
-      threshold (tune out head-tracker tremor) · auto-scroll: intensity, scroll exit delay,
+      threshold (tune out head-tracker tremor) · auto-scroll: intensity, acceleration, scroll exit delay,
       pause after scrolling, scroll jitter tolerance, click when scrolling ends · launch at login.</td>
     <td><b>Panel</b> — orientation, vertical or horizontal · button editor: toggle each
       button on/off and reorder the active ones. ON/OFF is pinned first but can be
