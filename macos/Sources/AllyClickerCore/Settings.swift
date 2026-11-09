@@ -271,6 +271,10 @@ extension Settings {
         /// Icon size multiplier relative to each button's default glyph size.
         /// 1.0 = default; user-tunable in 5% steps.
         public var iconScale: Double = 1.0
+        /// Leave the panel and its overlays (anchor dot, click ripple) out of
+        /// screenshots and screen recordings; they stay on screen. Off, they can
+        /// be photographed.
+        public var hideFromCapture: Bool = true
 
         public init() {}
 
@@ -290,6 +294,7 @@ extension Settings {
             // Guard against a hand-edited value shrinking icons to nothing or huge.
             let rawScale = try c.decodeIfPresent(Double.self, forKey: .iconScale) ?? d.iconScale
             iconScale = min(max(rawScale, 0.5), 2.0)
+            hideFromCapture = try c.decodeIfPresent(Bool.self, forKey: .hideFromCapture) ?? d.hideFromCapture
         }
     }
 }

@@ -13,6 +13,7 @@ final class AnchorIndicator {
                          styleMask: [.borderless, .nonactivatingPanel],
                          backing: .buffered, defer: false)
         window.level = PanelWindow.overlayLevel   // above the panel and AllyKeyboard
+        window.sharingType = PanelWindow.captureSharing
         window.backgroundColor = .clear
         window.isOpaque = false
         window.hasShadow = false

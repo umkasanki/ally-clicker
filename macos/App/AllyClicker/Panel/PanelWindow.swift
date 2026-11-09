@@ -4,6 +4,21 @@ import AppKit
 // .nonactivatingPanel → dwelling on it never steals focus from the app underneath.
 
 final class PanelWindow: NSPanel {
+    /// How the app's panels take part in screen capture. `.none` leaves them out
+    /// of every screenshot and recording — ⌘⇧3/4/5, QuickTime, screen sharing —
+    /// while they stay on screen. Set from Settings; every panel takes it when
+    /// made (the anchor dot and the click ripple too). The Settings window is an
+    /// NSWindow, not a panel, and is never hidden.
+    static private(set) var captureSharing: NSWindow.SharingType = .none
+
+    /// Apply the setting to the panels open now and to those made later.
+    static func setHiddenFromCapture(_ hidden: Bool) {
+        captureSharing = hidden ? .none : .readOnly
+        for window in NSApp.windows where window is NSPanel {
+            window.sharingType = captureSharing
+        }
+    }
+
     init(contentRect: NSRect) {
         super.init(contentRect: contentRect,
                    styleMask: [.borderless, .nonactivatingPanel],
@@ -18,6 +33,7 @@ final class PanelWindow: NSPanel {
         // Immunity to "click wallpaper to reveal desktop" / Show Desktop comes
         // from .stationary below, not from the level.
         level = PanelWindow.controlLevel
+        sharingType = PanelWindow.captureSharing
         hidesOnDeactivate = false
         isMovableByWindowBackground = false
         // Force native dark appearance — semantic colors (windowBackgroundColor,

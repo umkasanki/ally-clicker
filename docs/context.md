@@ -5,6 +5,20 @@
 
 ---
 
+## Hide from screenshots (2026-11-09) — not released yet
+
+Settings > Appearance > Screenshots: "Hide from screenshots and screen recordings"
+(`appearance.hideFromCapture`, default on). The panel, the scroll anchor dot and the
+click ripple get `sharingType = .none` (`PanelWindow.setHiddenFromCapture`), so every
+capture shows what is under them while they stay on screen; the Settings window is
+never hidden. Verified on the Mac with a real `screencapture`. AllyKeyboard got the same
+setting the same day. Also: `build-app.sh` now asks `swift build --show-bin-path` for the
+core module and library — Swift 6.4 defaults to the `swiftbuild` system, which lays out
+`.build` differently, and the old fixed paths broke the build. 114 tests green; local
+build installed in `/Applications`.
+
+---
+
 ## Scroll Acceleration (2026-10-31) — released in v0.2.7
 
 The user asked for a "dynamic" scroll intensity (static/dynamic mode, speed from the
@@ -146,7 +160,7 @@ by the user; work continued from here.
 
 **Current phase:** the macOS version works, release **v0.2.7** (Homebrew tap + .dmg),
 installed for the user via Homebrew. One branch — `main`; the Windows port is cancelled.
-**Last action:** scroll Acceleration (`autoScroll.accelerationExponent`), release v0.2.7.
+**Last action:** hide from screenshots (`appearance.hideFromCapture`) and a build-script fix for Swift 6.4; not released yet.
 
 ### Релизы после v0.2.0
 

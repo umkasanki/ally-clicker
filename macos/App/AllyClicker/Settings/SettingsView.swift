@@ -170,6 +170,11 @@ struct SettingsView: View {
                     toggleRow("Visual click feedback", $model.settings.appearance.clickFeedback,
                               help: "Show a brief ripple at the cursor when a click or drag fires.")
                 }
+                section("Screenshots", intro: "The panel stays on screen either way.") {
+                    toggleRow("Hide from screenshots and screen recordings",
+                              $model.settings.appearance.hideFromCapture,
+                              help: "Leaves the panel, the scroll anchor and the click ripple out of every capture, screen sharing included. Turn it off to photograph them.")
+                }
             }
             .padding(20)
         }

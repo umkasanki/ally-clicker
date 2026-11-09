@@ -34,6 +34,17 @@ final class SettingsTests: XCTestCase {
         XCTAssertEqual(decoded.stillness.sensitivity, 4)
     }
 
+    func testHideFromCaptureDefaultsOnAndSurvivesOlderFiles() throws {
+        XCTAssertTrue(Settings().appearance.hideFromCapture)
+        let old = try Settings.load(from: #"{"appearance":{"clickFeedback":false}}"#.data(using: .utf8)!)
+        XCTAssertTrue(old.appearance.hideFromCapture)
+        XCTAssertFalse(old.appearance.clickFeedback)
+        var s = Settings()
+        s.appearance.hideFromCapture = false
+        let back = try JSONDecoder().decode(Settings.self, from: JSONEncoder().encode(s))
+        XCTAssertFalse(back.appearance.hideFromCapture)
+    }
+
     func testEmptyJSONDecodesToAllDefaults() throws {
         let data = "{}".data(using: .utf8)!
         let decoded = try Settings.load(from: data)

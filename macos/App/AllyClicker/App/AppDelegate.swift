@@ -33,6 +33,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         BackgroundCursor.enable()   // allow cursor changes while never-active
         settings = settingsStore.load()
+        // Before the panel is made; the overlays made already are updated here.
+        PanelWindow.setHiddenFromCapture(settings.appearance.hideFromCapture)
         sound.enabled = settings.appearance.audio
         sound.volume = SoundPlayer.level(settings.appearance.audioVolume)
         sound.clickSoundName = settings.appearance.clickSound
@@ -226,6 +228,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         sound.armSoundName   = edited.appearance.armSound
         sound.armVolume      = SoundPlayer.level(edited.appearance.armVolume)
         clickFeedback.enabled = edited.appearance.clickFeedback
+        PanelWindow.setHiddenFromCapture(edited.appearance.hideFromCapture)
         controller.updateSettings(edited)   // engine reads these each tick
         rebuildAutoScroller()               // captures config/dwell at build time
 

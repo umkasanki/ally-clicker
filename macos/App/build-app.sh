@@ -17,10 +17,21 @@ rm -rf "$APP"
 mkdir -p "$MACOS"
 
 echo "[3/4] Compiling app layer against AppKit..."
+# Where swift build left the core depends on the build system: the old native
+# one put modules in Modules/ and objects in AllyClickerCore.build/; swiftbuild,
+# the default since Swift 6.4, puts the module and a static library next to the
+# products. Ask for the path rather than assume it.
+BIN=$(swift build --show-bin-path)
+if [ -d "$BIN/Modules" ]; then MODULES="$BIN/Modules"; else MODULES="$BIN"; fi
+if [ -f "$BIN/libAllyClickerCore.a" ]; then
+    CORE=("$BIN/libAllyClickerCore.a")
+else
+    CORE=("$BIN"/AllyClickerCore.build/*.o)
+fi
 swiftc -framework AppKit \
-    -I .build/debug/Modules \
+    -I "$MODULES" \
     $(find App -name "*.swift") \
-    .build/debug/AllyClickerCore.build/*.o \
+    "${CORE[@]}" \
     -o "$MACOS/AllyClicker"
 
 cp App/Info.plist "$APP/Contents/Info.plist"
