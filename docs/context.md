@@ -5,7 +5,7 @@
 
 ---
 
-## Hide from screenshots (2026-11-09) — not released yet
+## Hide from screenshots (2026-11-09) — released in v0.2.8
 
 Settings > Appearance > Screenshots: "Hide from screenshots and screen recordings"
 (`appearance.hideFromCapture`, default on). The panel, the scroll anchor dot and the
@@ -158,9 +158,9 @@ by the user; work continued from here.
 
 ## Статус проекта
 
-**Current phase:** the macOS version works, release **v0.2.7** (Homebrew tap + .dmg),
+**Current phase:** the macOS version works, release **v0.2.8** (Homebrew tap + .dmg),
 installed for the user via Homebrew. One branch — `main`; the Windows port is cancelled.
-**Last action:** hide from screenshots (`appearance.hideFromCapture`) and a build-script fix for Swift 6.4; not released yet.
+**Last action:** hide from screenshots (`appearance.hideFromCapture`) and a build-script fix for Swift 6.4; release v0.2.8, installed via Homebrew.
 
 ### Релизы после v0.2.0
 
